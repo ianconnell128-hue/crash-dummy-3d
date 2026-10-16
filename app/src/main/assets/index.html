@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Tiny Dummy: Vacuum Escape</title>
+  <title>Decorate The Backrooms</title>
   <style>
     * {
       box-sizing: border-box;
@@ -17,7 +17,7 @@
       width: 100%;
       height: 100%;
       overflow: hidden;
-      background: #111;
+      background: #050508;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
     #canvas-container {
@@ -29,329 +29,659 @@
       touch-action: none;
     }
 
+    /* Vignette & Horror Atmosphere Overlays */
+    #vignette {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      box-shadow: inset 0 0 70px rgba(0, 0, 0, 0.7);
+      transition: box-shadow 0.3s ease;
+      z-index: 5;
+    }
+    #flicker-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      background: rgba(0, 0, 0, 0);
+      z-index: 6;
+      transition: background 0.05s linear;
+    }
+
     /* Top HUD */
     #hud-top {
       position: absolute;
-      top: 16px;
-      left: 16px;
-      right: 16px;
+      top: 14px;
+      left: 14px;
+      right: 14px;
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
       pointer-events: none;
-      z-index: 10;
-    }
-    .hud-card {
-      background: #161b22;
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      border-radius: 16px;
-      padding: 10px 16px;
-      color: #fff;
-    }
-    .hud-title {
-      font-size: 10px;
-      font-weight: 800;
-      letter-spacing: 1.5px;
-      color: #ff9800;
-      text-transform: uppercase;
-    }
-    .hud-score {
-      font-size: 26px;
-      font-weight: 900;
-      color: #00e5ff;
-    }
-    .hud-sub {
-      font-size: 11px;
-      font-weight: 600;
-      color: #8b949e;
-      margin-top: 2px;
-    }
-
-    /* Threat Indicator */
-    #threat-bar-container {
-      background: #161b22;
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      border-radius: 16px;
-      padding: 10px 14px;
-      color: #fff;
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      min-width: 130px;
-    }
-    .danger-track {
-      width: 110px;
-      height: 10px;
-      background: #21262d;
-      border-radius: 5px;
-      margin-top: 6px;
-      overflow: hidden;
-      border: 1px solid #30363d;
-    }
-    #danger-fill {
-      width: 10%;
-      height: 100%;
-      background: #00e5ff;
-      border-radius: 5px;
-      transition: width 0.1s ease, background 0.2s ease;
-    }
-
-    /* On-Screen Touch Controls */
-    #touch-controls {
-      position: absolute;
-      bottom: 24px;
-      left: 20px;
-      right: 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-end;
-      pointer-events: none;
       z-index: 20;
     }
-
-    /* Virtual Joystick */
-    #joystick-zone {
-      width: 130px;
-      height: 130px;
-      background: rgba(22, 27, 34, 0.65);
-      border: 2px solid rgba(255, 255, 255, 0.2);
-      border-radius: 50%;
-      position: relative;
-      pointer-events: auto;
-      touch-action: none;
+    .hud-card {
+      background: rgba(18, 22, 28, 0.88);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: 14px;
+      padding: 8px 14px;
+      color: #fff;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.4);
     }
-    #joystick-knob {
-      width: 54px;
-      height: 54px;
-      background: linear-gradient(135deg, #ff9800, #ff5722);
-      border: 2px solid #fff;
-      border-radius: 50%;
-      position: absolute;
-      top: 36px;
-      left: 36px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-      pointer-events: none;
-      transform: translate(0, 0);
-    }
-
-    /* Action Buttons (Right Thumb) */
-    .action-col {
+    .hud-phase {
       display: flex;
-      flex-direction: column;
-      gap: 12px;
-      pointer-events: auto;
-    }
-    .action-btn {
-      width: 68px;
-      height: 68px;
-      border-radius: 50%;
-      background: #21262d;
-      border: 2px solid rgba(255, 255, 255, 0.25);
-      color: #fff;
-      font-size: 13px;
-      font-weight: 800;
-      display: flex;
-      flex-direction: column;
       align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      touch-action: manipulation;
-      box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+      gap: 10px;
     }
-    .action-btn:active {
-      transform: scale(0.92);
-      background: #ff5722;
-      border-color: #ffeb3b;
-    }
-    .action-btn span.emoji {
-      font-size: 24px;
-      line-height: 1;
-      margin-bottom: 2px;
-    }
-
-    /* Screen Suction Warning Vignette */
-    #vignette {
-      position: absolute;
-      top: 0; left: 0; width: 100%; height: 100%;
-      pointer-events: none;
-      box-shadow: inset 0 0 100px rgba(255, 0, 0, 0);
-      z-index: 5;
-      transition: box-shadow 0.2s ease;
-    }
-
-    /* Game Over Overlay */
-    #game-over-modal {
-      display: none;
-      position: fixed;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(10, 10, 15, 0.88);
-      z-index: 100;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      text-align: center;
-      color: #fff;
-      padding: 20px;
-    }
-    .go-card {
-      background: #161b22;
-      border: 2px solid #ff3b30;
-      border-radius: 24px;
-      padding: 30px;
-      max-width: 320px;
-      width: 90%;
-    }
-    .btn-restart {
-      margin-top: 20px;
-      background: linear-gradient(135deg, #ff6b35, #ff3b00);
-      color: #fff;
-      border: none;
-      padding: 14px 28px;
-      border-radius: 50px;
-      font-size: 18px;
+    .phase-badge {
+      font-size: 11px;
       font-weight: 800;
-      cursor: pointer;
       text-transform: uppercase;
       letter-spacing: 1px;
+      padding: 4px 8px;
+      border-radius: 8px;
+      background: #238636;
+      color: #fff;
+    }
+    .phase-badge.warning {
+      background: #d29922;
+      animation: pulse-warn 0.6s infinite alternate;
+    }
+    .phase-badge.night {
+      background: #da3633;
+      animation: pulse-danger 0.8s infinite alternate;
+    }
+    @keyframes pulse-warn {
+      from { transform: scale(1); opacity: 1; }
+      to { transform: scale(1.05); opacity: 0.8; }
+    }
+    @keyframes pulse-danger {
+      from { transform: scale(1); box-shadow: 0 0 10px #da3633; }
+      to { transform: scale(1.06); box-shadow: 0 0 20px #ff3b30; }
+    }
+    .timer-text {
+      font-size: 15px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      color: #e6edf3;
+    }
+    .safe-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      margin-top: 4px;
+      color: #58a6ff;
+    }
+    .safe-badge.in-light {
+      color: #3fb950;
+    }
+    .safe-badge.in-dark {
+      color: #f85149;
+      font-weight: 800;
     }
 
-    /* Top Right Buttons */
-    .top-right-group {
+    .top-actions {
       display: flex;
-      flex-direction: column;
-      align-items: flex-end;
       gap: 8px;
       pointer-events: auto;
     }
-    .mini-btn {
-      background: #161b22;
+    .btn-top {
+      background: rgba(30, 36, 45, 0.9);
       border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 10px;
-      padding: 6px 10px;
-      color: #cfd8dc;
-      font-size: 11px;
+      border-radius: 12px;
+      padding: 8px 12px;
+      color: #fff;
+      font-size: 12px;
       font-weight: 700;
       cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+    .btn-top:active {
+      transform: scale(0.94);
+      background: #30363d;
+    }
+
+    /* Banner notification */
+    #banner-alert {
+      position: absolute;
+      top: 75px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-20px);
+      background: rgba(13, 17, 23, 0.95);
+      border: 1px solid #58a6ff;
+      border-radius: 20px;
+      padding: 8px 20px;
+      color: #58a6ff;
+      font-size: 13px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      pointer-events: none;
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+      z-index: 25;
+      box-shadow: 0 4px 20px rgba(88, 166, 255, 0.3);
+    }
+    #banner-alert.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    /* Prompt indicator */
+    #interact-prompt {
+      position: absolute;
+      bottom: 220px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(13, 17, 23, 0.9);
+      border: 1px solid #3fb950;
+      border-radius: 12px;
+      padding: 6px 14px;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 700;
+      display: none;
+      align-items: center;
+      gap: 6px;
+      pointer-events: none;
+      z-index: 20;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    }
+
+    /* Carrying floating HUD */
+    #carry-hud {
+      position: absolute;
+      bottom: 165px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: none;
+      gap: 12px;
+      z-index: 30;
+      pointer-events: auto;
+    }
+    .carry-btn {
+      padding: 10px 18px;
+      border-radius: 14px;
+      font-size: 13px;
+      font-weight: 800;
+      border: none;
+      color: #fff;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.6);
+    }
+    .carry-btn.place {
+      background: linear-gradient(135deg, #2ea043, #238636);
+      border: 1px solid #3fb950;
+    }
+    .carry-btn.rotate {
+      background: linear-gradient(135deg, #1f6feb, #1158c7);
+      border: 1px solid #58a6ff;
+    }
+    .carry-btn.drop {
+      background: linear-gradient(135deg, #da3633, #b62324);
+      border: 1px solid #f85149;
+    }
+    .carry-btn:active {
+      transform: scale(0.92);
+    }
+
+    /* Touch controls */
+    #controls-container {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 15;
+    }
+    #joystick-zone {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      width: 150px;
+      height: 150px;
+      pointer-events: auto;
+      touch-action: none;
+    }
+    #joystick-base {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 110px;
+      height: 110px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.1);
+      border: 2px solid rgba(255, 255, 255, 0.25);
+      backdrop-filter: blur(4px);
+    }
+    #joystick-thumb {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: #f0883e;
+      box-shadow: 0 2px 10px rgba(240, 136, 62, 0.6);
+      transition: transform 0.05s ease-out;
+    }
+
+    /* Action buttons cluster */
+    #action-zone {
+      position: absolute;
+      bottom: 24px;
+      right: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 12px;
+      pointer-events: auto;
+    }
+    .action-row {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+    .action-btn {
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      background: rgba(25, 30, 38, 0.88);
+      border: 2px solid rgba(255, 255, 255, 0.22);
+      backdrop-filter: blur(8px);
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      font-size: 11px;
+      font-weight: 800;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+      touch-action: none;
+      cursor: pointer;
+      transition: all 0.12s ease;
+    }
+    .action-btn span.icon {
+      font-size: 20px;
+      margin-bottom: 2px;
+    }
+    .action-btn.active {
+      border-color: #f0883e;
+      background: rgba(240, 136, 62, 0.3);
+      box-shadow: 0 0 14px rgba(240, 136, 62, 0.6);
+    }
+    .action-btn.primary {
+      width: 72px;
+      height: 72px;
+      background: linear-gradient(135deg, #238636, #2ea043);
+      border-color: #3fb950;
+      box-shadow: 0 4px 20px rgba(46, 160, 67, 0.5);
+    }
+    .action-btn.primary span.icon {
+      font-size: 26px;
+    }
+    .action-btn:active {
+      transform: scale(0.9);
+    }
+
+    /* Stamina bar */
+    #stamina-container {
+      position: absolute;
+      bottom: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 140px;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 4px;
+      overflow: hidden;
+      pointer-events: none;
+      z-index: 20;
+    }
+    #stamina-fill {
+      width: 100%;
+      height: 100%;
+      background: #3fb950;
+      transition: width 0.1s linear, background 0.2s ease;
+    }
+
+    /* Modals */
+    .modal-backdrop {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+    }
+    .modal-card {
+      background: #161b22;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 20px;
+      padding: 24px;
+      width: 90%;
+      max-width: 420px;
+      color: #fff;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8);
+      text-align: center;
+    }
+    .modal-card h2 {
+      font-size: 22px;
+      margin-bottom: 12px;
+      color: #f0883e;
+    }
+    .modal-card p {
+      font-size: 14px;
+      color: #8b949e;
+      line-height: 1.5;
+      margin-bottom: 20px;
+    }
+    .btn-modal {
+      display: block;
+      width: 100%;
+      padding: 12px;
+      border-radius: 12px;
+      border: none;
+      background: #238636;
+      color: #fff;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-bottom: 10px;
+      transition: transform 0.1s ease;
+    }
+    .btn-modal:active {
+      transform: scale(0.97);
+    }
+    .btn-modal.secondary {
+      background: #21262d;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #c9d1d9;
+    }
+    .btn-modal.danger {
+      background: #da3633;
+    }
+
+    /* Jumpscare caught screen */
+    #caught-modal h2 {
+      color: #ff3b30;
+      font-size: 26px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
     }
   </style>
   <script src="libs/engine.bundle.js"></script>
 </head>
 <body>
   <div id="vignette"></div>
+  <div id="flicker-overlay"></div>
   <div id="canvas-container"></div>
 
-  <!-- Top HUD -->
+  <!-- HUD TOP -->
   <div id="hud-top">
     <div class="hud-card">
-      <div class="hud-title">SURVIVAL TIME</div>
-      <div id="survival-timer" class="hud-score">0.0s</div>
-      <div class="hud-sub">BATTERIES: <span id="coin-counter" style="color:#ffeb3b; font-weight:800;">0</span></div>
+      <div class="hud-phase">
+        <div id="phase-badge" class="phase-badge">☀️ STORE OPEN</div>
+        <div id="phase-timer" class="timer-text">01:15</div>
+      </div>
+      <div id="safe-status" class="safe-badge in-light">🛡️ SAFE HAVEN</div>
     </div>
 
-    <div class="top-right-group">
-      <div id="threat-bar-container">
-        <div class="hud-title" id="threat-label">VACUUM DISTANCE</div>
-        <div id="threat-dist" style="font-size:16px; font-weight:900; color:#00e5ff;">35.0 m</div>
-        <div class="danger-track">
-          <div id="danger-fill"></div>
-        </div>
-      </div>
-      <button class="mini-btn" id="btn-update">🔄 Check Update</button>
+    <div class="top-actions">
+      <button class="btn-top" id="btn-update" onclick="checkAppUpdate()">
+        <span>🔄</span> <span id="ver-text">v2.0</span>
+      </button>
+      <button class="btn-top" onclick="toggleMenu()">
+        <span>⚙️</span>
+      </button>
     </div>
+  </div>
+
+  <!-- Banner Notification -->
+  <div id="banner-alert">
+    <span id="banner-icon">🚛</span>
+    <span id="banner-msg">Cap'n Clarks restocked new furniture!</span>
+  </div>
+
+  <!-- Interaction Prompt -->
+  <div id="interact-prompt">
+    <span>🖐</span> <span id="prompt-label">Tap [GRAB] to pick up</span>
+  </div>
+
+  <!-- Carrying Controls -->
+  <div id="carry-hud">
+    <button class="carry-btn rotate" onclick="rotateCarriedItem()">
+      <span>🔄</span> Rotate
+    </button>
+    <button class="carry-btn place" onclick="placeCarriedItem()">
+      <span>📍</span> Place Base
+    </button>
+    <button class="carry-btn drop" onclick="dropCarriedItem()">
+      <span>✖</span> Drop
+    </button>
+  </div>
+
+  <!-- Stamina Bar -->
+  <div id="stamina-container">
+    <div id="stamina-fill"></div>
   </div>
 
   <!-- Touch Controls -->
-  <div id="touch-controls">
-    <!-- Joystick for Left Thumb -->
+  <div id="controls-container">
+    <!-- Joystick -->
     <div id="joystick-zone">
-      <div id="joystick-knob"></div>
+      <div id="joystick-base"></div>
+      <div id="joystick-thumb"></div>
     </div>
 
-    <!-- Buttons for Right Thumb -->
-    <div class="action-col">
-      <button class="action-btn" id="btn-boost" style="background:#00897b;">
-        <span class="emoji">⚡</span>
-        <span>Sprint</span>
-      </button>
-      <button class="action-btn" id="btn-jump">
-        <span class="emoji">🦘</span>
-        <span>Jump</span>
-      </button>
-    </div>
-  </div>
-
-  <!-- Game Over Modal -->
-  <div id="game-over-modal">
-    <div class="go-card">
-      <div style="font-size: 52px; margin-bottom: 8px;">🌪️</div>
-      <h2 style="font-size: 26px; font-weight: 900; color:#ff5252;">SUCKED IN!</h2>
-      <p style="font-size: 14px; color:#8b949e; margin-top: 6px;">The giant vacuum caught you!</p>
-      <div style="margin: 20px 0; background: #0d1117; padding: 14px; border-radius: 12px;">
-        <div style="font-size:12px; color:#8b949e;">SURVIVED</div>
-        <div id="final-time" style="font-size: 28px; font-weight: 900; color:#ffeb3b;">0.0s</div>
-        <div style="font-size:12px; color:#8b949e; margin-top:6px;">BATTERIES COLLECTED: <span id="final-coins" style="color:#00e5ff; font-weight:800;">0</span></div>
+    <!-- Actions -->
+    <div id="action-zone">
+      <div class="action-row">
+        <button class="action-btn" id="btn-pov" onclick="togglePOV()">
+          <span class="icon">🎥</span>
+          <span>POV</span>
+        </button>
+        <button class="action-btn" id="btn-light" onclick="toggleFlashlight()">
+          <span class="icon">🔦</span>
+          <span>LIGHT</span>
+        </button>
       </div>
-      <button class="btn-restart" id="btn-restart">PLAY AGAIN</button>
-    </div>
-  </div>
-
-  <!-- Update Modal -->
-  <div id="update-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:200; justify-content:center; align-items:center;">
-    <div style="background:#161b22; border:1px solid #30363d; border-radius:18px; padding:24px; max-width:320px; width:85%; color:#fff; text-align:center; box-shadow:0 12px 40px rgba(0,0,0,0.8);">
-      <div style="font-size:36px; margin-bottom:10px;">🚀</div>
-      <div style="font-size:18px; font-weight:800; margin-bottom:8px;" id="update-title">Update Available!</div>
-      <div style="font-size:13px; color:#8b949e; margin-bottom:20px;" id="update-desc">A newer version of Tiny Dummy: Vacuum Escape is available. Install now?</div>
-      <div style="display:flex; gap:10px; justify-content:center;">
-        <button id="update-cancel-btn" style="background:#21262d; border:1px solid #30363d; color:#c9d1d9; padding:10px 16px; border-radius:10px; font-weight:700; cursor:pointer;">Later</button>
-        <button id="update-confirm-btn" style="background:linear-gradient(135deg, #238636, #2ea043); border:none; color:#fff; padding:10px 18px; border-radius:10px; font-weight:700; cursor:pointer;">Install Now</button>
+      <div class="action-row">
+        <button class="action-btn" id="btn-sprint">
+          <span class="icon">🏃</span>
+          <span>RUN</span>
+        </button>
+        <button class="action-btn primary" id="btn-grab" onclick="handlePrimaryAction()">
+          <span class="icon">🖐</span>
+          <span id="grab-btn-label">GRAB</span>
+        </button>
       </div>
     </div>
   </div>
 
-  <!-- Error Diagnostics Modal (Shows if WebGL or script throws) -->
-  <div id="error-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,0,0,0.92); z-index:300; justify-content:center; align-items:center; padding:20px; box-sizing:border-box;">
-    <div style="background:#220d0d; border:2px solid #ff4444; border-radius:16px; padding:20px; max-width:90%; color:#fff; font-family:monospace; font-size:12px; word-break:break-word;">
-      <div style="font-size:16px; font-weight:bold; color:#ff6666; margin-bottom:8px;">⚠️ Game Engine Warning</div>
-      <div id="error-text" style="color:#ffcccc; margin-bottom:14px; white-space:pre-wrap;"></div>
-      <button onclick="document.getElementById('error-modal').style.display='none'" style="background:#ff4444; border:none; color:#fff; padding:8px 16px; border-radius:8px; font-weight:bold; cursor:pointer;">Dismiss</button>
+  <!-- Caught Modal -->
+  <div id="caught-modal" class="modal-backdrop">
+    <div class="modal-card">
+      <h2>💀 CAUGHT IN THE DARK</h2>
+      <p>The entity hunts in darkness. Place floor lamps and stay inside their golden glow to survive!</p>
+      <button class="btn-modal" onclick="respawnPlayer()">Respawn at Base</button>
+    </div>
+  </div>
+
+  <!-- Settings / Info Modal -->
+  <div id="menu-modal" class="modal-backdrop">
+    <div class="modal-card">
+      <h2>Decorate The Backrooms</h2>
+      <p>
+        <strong>How to play:</strong><br>
+        1. Explore <strong>Cap'n Clarks</strong> furniture store & grab furniture.<br>
+        2. Haul it into the endless yellow hallways & place your cozy base.<br>
+        3. <strong>CRITICAL:</strong> Placed lamps cast light safe zones. Stay inside them during <strong>LIGHTS OUT</strong> when creatures roam!
+      </p>
+      <p id="decor-stats" style="color: #58a6ff; font-weight: 700;"></p>
+      <button class="btn-modal secondary" onclick="toggleMenu()">Close</button>
+      <button class="btn-modal danger" onclick="resetBaseStorage()">Reset Base Furniture</button>
+    </div>
+  </div>
+
+  <!-- Update Available Modal -->
+  <div id="update-modal" class="modal-backdrop">
+    <div class="modal-card">
+      <h2 style="color: #3fb950;">🎉 Update Ready!</h2>
+      <p id="update-desc">A new version of Decorate The Backrooms is available on GitHub.</p>
+      <button class="btn-modal" id="btn-download-update">Install Update</button>
+      <button class="btn-modal secondary" onclick="document.getElementById('update-modal').style.display='none'">Later</button>
     </div>
   </div>
 
   <script>
-    // Audio synthesizer
+    /* ============================================================
+       1. AUDIO SYNTHESIZER (Pure Web Audio API - 100% Offline)
+       ============================================================ */
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    let ambientHumGain = null;
+    let monsterGrowlOsc = null;
+
+    function initAudio() {
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      if (!ambientHumGain) {
+        // Continuous 60Hz Backrooms fluorescent light hum
+        const osc = audioCtx.createOscillator();
+        const humGain = audioCtx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(60, audioCtx.currentTime);
+
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(140, audioCtx.currentTime);
+
+        humGain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+        osc.connect(filter);
+        filter.connect(humGain);
+        humGain.connect(audioCtx.destination);
+        osc.start();
+        ambientHumGain = humGain;
+      }
+    }
+
     function playSound(type) {
       if (audioCtx.state === 'suspended') audioCtx.resume();
-      const now = audioCtx.currentTime;
-      const osc = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
+      const t = audioCtx.currentTime;
 
-      if (type === 'jump') {
+      if (type === 'grab') {
+        const osc = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
         osc.type = 'sine';
-        osc.frequency.setValueAtTime(120, now);
-        osc.frequency.exponentialRampToValueAtTime(320, now + 0.12);
-        gain.gain.setValueAtTime(0.18, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
-        osc.start(now);
-        osc.stop(now + 0.12);
-      } else if (type === 'coin') {
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(587.33, now); // D5
-        osc.frequency.setValueAtTime(880, now + 0.08); // A5
-        gain.gain.setValueAtTime(0.2, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
-        osc.start(now);
-        osc.stop(now + 0.22);
-      } else if (type === 'caught') {
+        osc.frequency.setValueAtTime(160, t);
+        osc.frequency.exponentialRampToValueAtTime(320, t + 0.12);
+        g.gain.setValueAtTime(0.25, t);
+        g.gain.linearRampToValueAtTime(0.01, t + 0.15);
+        osc.connect(g);
+        g.connect(audioCtx.destination);
+        osc.start(t);
+        osc.stop(t + 0.16);
+      } else if (type === 'place') {
+        const osc = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(120, t);
+        osc.frequency.exponentialRampToValueAtTime(40, t + 0.18);
+        g.gain.setValueAtTime(0.35, t);
+        g.gain.linearRampToValueAtTime(0.01, t + 0.2);
+        osc.connect(g);
+        g.connect(audioCtx.destination);
+        osc.start(t);
+        osc.stop(t + 0.2);
+      } else if (type === 'flicker') {
+        const count = 4;
+        for (let i = 0; i < count; i++) {
+          const osc = audioCtx.createOscillator();
+          const g = audioCtx.createGain();
+          osc.type = 'square';
+          osc.frequency.setValueAtTime(450 + Math.random() * 200, t + i * 0.08);
+          g.gain.setValueAtTime(0.12, t + i * 0.08);
+          g.gain.exponentialRampToValueAtTime(0.01, t + i * 0.08 + 0.04);
+          osc.connect(g);
+          g.connect(audioCtx.destination);
+          osc.start(t + i * 0.08);
+          osc.stop(t + i * 0.08 + 0.05);
+        }
+      } else if (type === 'powerdown') {
+        const osc = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
         osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(300, now);
-        osc.frequency.exponentialRampToValueAtTime(40, now + 0.4);
-        gain.gain.setValueAtTime(0.35, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
-        osc.start(now);
-        osc.stop(now + 0.4);
+        osc.frequency.setValueAtTime(220, t);
+        osc.frequency.exponentialRampToValueAtTime(25, t + 0.6);
+        g.gain.setValueAtTime(0.4, t);
+        g.gain.linearRampToValueAtTime(0.01, t + 0.65);
+        osc.connect(g);
+        g.connect(audioCtx.destination);
+        osc.start(t);
+        osc.stop(t + 0.7);
+      } else if (type === 'dawn') {
+        const notes = [261.63, 329.63, 392.00, 523.25];
+        notes.forEach((f, idx) => {
+          const osc = audioCtx.createOscillator();
+          const g = audioCtx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(f, t + idx * 0.12);
+          g.gain.setValueAtTime(0.2, t + idx * 0.12);
+          g.gain.exponentialRampToValueAtTime(0.005, t + idx * 0.12 + 0.5);
+          osc.connect(g);
+          g.connect(audioCtx.destination);
+          osc.start(t + idx * 0.12);
+          osc.stop(t + idx * 0.12 + 0.52);
+        });
+      } else if (type === 'screech') {
+        const osc = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(700, t);
+        osc.frequency.linearRampToValueAtTime(140, t + 0.45);
+        g.gain.setValueAtTime(0.5, t);
+        g.gain.exponentialRampToValueAtTime(0.01, t + 0.5);
+        osc.connect(g);
+        g.connect(audioCtx.destination);
+        osc.start(t);
+        osc.stop(t + 0.52);
+      } else if (type === 'click') {
+        const osc = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(800, t);
+        g.gain.setValueAtTime(0.15, t);
+        g.gain.exponentialRampToValueAtTime(0.01, t + 0.05);
+        osc.connect(g);
+        g.connect(audioCtx.destination);
+        osc.start(t);
+        osc.stop(t + 0.06);
       }
     }
 
@@ -359,887 +689,1534 @@
       if (window.AndroidNative && window.AndroidNative.vibrate) {
         window.AndroidNative.vibrate(type);
       } else if (navigator.vibrate) {
-        navigator.vibrate(25);
+        if (type === 'light') navigator.vibrate(15);
+        else if (type === 'medium') navigator.vibrate(35);
+        else if (type === 'heavy') navigator.vibrate(70);
+        else if (type === 'explosion') navigator.vibrate([80, 50, 100]);
       }
     }
 
-    // Global Error Boundary & Diagnostic Reporter
-    window.onerror = function(msg, url, lineNo, columnNo, error) {
-      const errBox = document.getElementById('error-modal');
-      const errText = document.getElementById('error-text');
-      if (errBox && errText) {
-        errText.innerText = msg + '\nLine: ' + lineNo + (url ? ' (' + url.split('/').pop() + ')' : '');
-        errBox.style.display = 'flex';
-      }
-      return false;
-    };
-
-    // -------------------------------------------------------------
-    // THREE.JS SETUP: GIANT HOUSE ENVIRONMENT
-    // -------------------------------------------------------------
+    /* ============================================================
+       2. THREE.JS SCENE SETUP & PROCEDURAL TEXTURES
+       ============================================================ */
     const container = document.getElementById('canvas-container');
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x1a1612);
-    scene.fog = new THREE.Fog(0x1a1612, 18, 55);
+    scene.background = new THREE.Color(0xd6c278);
+    scene.fog = new THREE.FogExp2(0xd6c278, 0.022);
 
-    const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 120);
+    const camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 150);
 
-    let renderer;
-    try {
-      renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance' });
-    } catch (e) {
-      console.warn('Fallback standard WebGLRenderer:', e);
-      renderer = new THREE.WebGLRenderer();
-    }
+    const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
-    try {
-      renderer.shadowMap.enabled = true;
-      renderer.shadowMap.type = THREE.BasicShadowMap;
-    } catch (e) {
-      console.warn('Shadow map setup skipped:', e);
-    }
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.shadowMap.enabled = false; // Fast mobile rendering
     container.appendChild(renderer.domElement);
 
-    // Warm Ambient Living Room Lighting
-    const ambientLight = new THREE.AmbientLight(0xffecd2, 0.85);
-    scene.add(ambientLight);
+    // Procedural Backrooms Yellow Wallpaper Texture
+    function generateWallpaperTexture() {
+      const cv = document.createElement('canvas');
+      cv.width = 256;
+      cv.height = 256;
+      const ctx = cv.getContext('2d');
+      ctx.fillStyle = '#cfb972';
+      ctx.fillRect(0, 0, 256, 256);
 
-    const dirLight = new THREE.DirectionalLight(0xfff3e0, 1.4);
-    dirLight.position.set(15, 30, 20);
-    dirLight.castShadow = true;
-    dirLight.shadow.mapSize.width = 512;
-    dirLight.shadow.mapSize.height = 512;
-    dirLight.shadow.camera.near = 1;
-    dirLight.shadow.camera.far = 70;
-    dirLight.shadow.camera.left = -25;
-    dirLight.shadow.camera.right = 25;
-    dirLight.shadow.camera.top = 25;
-    dirLight.shadow.camera.bottom = -25;
-    scene.add(dirLight);
-
-    // Room boundaries (A massive 60m x 60m living room)
-    const ROOM_SIZE = 55;
-    const floorGeo = new THREE.PlaneGeometry(ROOM_SIZE * 2, ROOM_SIZE * 2);
-
-    // Procedural Parquet Wood Floor Canvas Texture
-    const floorCanvas = document.createElement('canvas');
-    floorCanvas.width = 512; floorCanvas.height = 512;
-    const fctx = floorCanvas.getContext('2d');
-    fctx.fillStyle = '#613b1d';
-    fctx.fillRect(0, 0, 512, 512);
-    // Draw wood planks
-    for (let y = 0; y < 512; y += 64) {
-      fctx.fillStyle = (y / 64) % 2 === 0 ? '#6e4423' : '#573317';
-      fctx.fillRect(0, y, 512, 60);
-      fctx.strokeStyle = '#3d220e';
-      fctx.lineWidth = 4;
-      fctx.strokeRect(0, y, 512, 64);
-      for (let x = (y % 128 === 0 ? 0 : 128); x < 512; x += 256) {
-        fctx.beginPath(); fctx.moveTo(x, y); fctx.lineTo(x, y + 64); fctx.stroke();
+      // Vertical micro-stripes
+      ctx.fillStyle = 'rgba(168, 148, 86, 0.35)';
+      for (let x = 0; x < 256; x += 16) {
+        ctx.fillRect(x, 0, 8, 256);
       }
-    }
-    const floorTex = new THREE.CanvasTexture(floorCanvas);
-    floorTex.wrapS = THREE.RepeatWrapping; floorTex.wrapT = THREE.RepeatWrapping;
-    floorTex.repeat.set(16, 16);
 
-    const floorMat = new THREE.MeshLambertMaterial({ map: floorTex });
-    const floorMesh = new THREE.Mesh(floorGeo, floorMat);
+      // Subtle vintage wallpaper damask floral/diamond stamp
+      ctx.strokeStyle = 'rgba(145, 126, 72, 0.28)';
+      ctx.lineWidth = 2;
+      for (let y = 16; y < 256; y += 32) {
+        for (let x = 16; x < 256; x += 32) {
+          ctx.beginPath();
+          ctx.moveTo(x, y - 8);
+          ctx.lineTo(x + 8, y);
+          ctx.lineTo(x, y + 8);
+          ctx.lineTo(x - 8, y);
+          ctx.closePath();
+          ctx.stroke();
+        }
+      }
+      const tex = new THREE.CanvasTexture(cv);
+      tex.wrapS = THREE.RepeatWrapping;
+      tex.wrapT = THREE.RepeatWrapping;
+      tex.repeat.set(4, 2);
+      return tex;
+    }
+
+    // Procedural Carpet Texture
+    function generateCarpetTexture() {
+      const cv = document.createElement('canvas');
+      cv.width = 256;
+      cv.height = 256;
+      const ctx = cv.getContext('2d');
+      ctx.fillStyle = '#9e8a52';
+      ctx.fillRect(0, 0, 256, 256);
+
+      // Noise & moisture blotches
+      for (let i = 0; i < 600; i++) {
+        const x = Math.random() * 256;
+        const y = Math.random() * 256;
+        const rad = Math.random() * 5 + 1;
+        ctx.fillStyle = Math.random() > 0.5 ? 'rgba(130, 112, 60, 0.35)' : 'rgba(180, 160, 105, 0.25)';
+        ctx.beginPath();
+        ctx.arc(x, y, rad, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      const tex = new THREE.CanvasTexture(cv);
+      tex.wrapS = THREE.RepeatWrapping;
+      tex.wrapT = THREE.RepeatWrapping;
+      tex.repeat.set(24, 24);
+      return tex;
+    }
+
+    // Procedural Cap'n Clarks White Store Tile
+    function generateStoreTileTexture() {
+      const cv = document.createElement('canvas');
+      cv.width = 128;
+      cv.height = 128;
+      const ctx = cv.getContext('2d');
+      ctx.fillStyle = '#e8ecf1';
+      ctx.fillRect(0, 0, 128, 128);
+      ctx.strokeStyle = '#c4cdd8';
+      ctx.lineWidth = 4;
+      ctx.strokeRect(0, 0, 128, 128);
+      const tex = new THREE.CanvasTexture(cv);
+      tex.wrapS = THREE.RepeatWrapping;
+      tex.wrapT = THREE.RepeatWrapping;
+      tex.repeat.set(16, 12);
+      return tex;
+    }
+
+    // Procedural Ceiling Tile Texture
+    function generateCeilingTexture() {
+      const cv = document.createElement('canvas');
+      cv.width = 128;
+      cv.height = 128;
+      const ctx = cv.getContext('2d');
+      ctx.fillStyle = '#c5bea7';
+      ctx.fillRect(0, 0, 128, 128);
+      ctx.strokeStyle = '#857e6c';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(0, 0, 128, 128);
+      const tex = new THREE.CanvasTexture(cv);
+      tex.wrapS = THREE.RepeatWrapping;
+      tex.wrapT = THREE.RepeatWrapping;
+      tex.repeat.set(30, 30);
+      return tex;
+    }
+
+    const wallpaperTex = generateWallpaperTexture();
+    const carpetTex = generateCarpetTexture();
+    const storeTileTex = generateStoreTileTexture();
+    const ceilingTex = generateCeilingTexture();
+
+    const wallpaperMat = new THREE.MeshLambertMaterial({ map: wallpaperTex });
+    const carpetMat = new THREE.MeshLambertMaterial({ map: carpetTex });
+    const storeTileMat = new THREE.MeshLambertMaterial({ map: storeTileTex });
+    const ceilingMat = new THREE.MeshLambertMaterial({ map: ceilingTex });
+
+    /* ============================================================
+       3. LEVEL 0 & CAP'N CLARKS ARCHITECTURE
+       ============================================================ */
+    const LEVEL_W = 100;
+    const LEVEL_D = 100;
+    const CEILING_H = 4.2;
+
+    // Floor Mesh (Backrooms Carpet)
+    const floorGeo = new THREE.PlaneGeometry(LEVEL_W, LEVEL_D);
+    const floorMesh = new THREE.Mesh(floorGeo, carpetMat);
     floorMesh.rotation.x = -Math.PI / 2;
-    floorMesh.receiveShadow = true;
+    floorMesh.position.set(0, 0, 0);
     scene.add(floorMesh);
 
-    // Walls & Skirting Boards (Baseboards)
-    const wallMat = new THREE.MeshLambertMaterial({ color: 0x3d352e });
-    const baseboardMat = new THREE.MeshLambertMaterial({ color: 0xded8ce });
+    // Ceiling Mesh
+    const ceilingGeo = new THREE.PlaneGeometry(LEVEL_W, LEVEL_D);
+    const ceilingMesh = new THREE.Mesh(ceilingGeo, ceilingMat);
+    ceilingMesh.rotation.x = Math.PI / 2;
+    ceilingMesh.position.set(0, CEILING_H, 0);
+    scene.add(ceilingMesh);
 
-    function createWallWithBaseboard(x, z, rotY) {
-      const wall = new THREE.Mesh(new THREE.PlaneGeometry(ROOM_SIZE * 2, 20), wallMat);
-      wall.position.set(x, 10, z);
-      wall.rotation.y = rotY;
-      scene.add(wall);
+    // Cap'n Clarks Store Floor Tile (East Wing from X = 25 to 50, Z = -35 to 35)
+    const storeFloorGeo = new THREE.PlaneGeometry(25, 70);
+    const storeFloorMesh = new THREE.Mesh(storeFloorGeo, storeTileMat);
+    storeFloorMesh.rotation.x = -Math.PI / 2;
+    storeFloorMesh.position.set(37.5, 0.02, 0);
+    scene.add(storeFloorMesh);
 
-      const baseboard = new THREE.Mesh(new THREE.BoxGeometry(ROOM_SIZE * 2, 1.2, 0.4), baseboardMat);
-      baseboard.position.set(x, 0.6, z);
-      baseboard.rotation.y = rotY;
-      scene.add(baseboard);
-    }
-    createWallWithBaseboard(0, -ROOM_SIZE, 0);
-    createWallWithBaseboard(0, ROOM_SIZE, Math.PI);
-    createWallWithBaseboard(-ROOM_SIZE, 0, Math.PI / 2);
-    createWallWithBaseboard(ROOM_SIZE, 0, -Math.PI / 2);
+    // Store Entrance Sign & Portal
+    const portalGroup = new THREE.Group();
+    portalGroup.position.set(25, 0, 0);
+    const signGeo = new THREE.BoxGeometry(0.8, 1.2, 16);
+    const signMat = new THREE.MeshLambertMaterial({ color: 0x1f6feb, emissive: 0x0a3069, emissiveIntensity: 0.6 });
+    const signMesh = new THREE.Mesh(signGeo, signMat);
+    signMesh.position.set(0, 3.4, 0);
+    portalGroup.add(signMesh);
 
-    // Rug in the middle of room
-    const rugGeo = new THREE.PlaneGeometry(28, 20);
-    const rugMat = new THREE.MeshLambertMaterial({ color: 0x8b2635 });
-    const rug = new THREE.Mesh(rugGeo, rugMat);
-    rug.rotation.x = -Math.PI / 2;
-    rug.position.set(0, 0.02, 0);
-    rug.receiveShadow = true;
-    scene.add(rug);
+    // Glowing Sign text banner canvas
+    const signCanvas = document.createElement('canvas');
+    signCanvas.width = 512;
+    signCanvas.height = 128;
+    const sctx = signCanvas.getContext('2d');
+    sctx.fillStyle = '#0f53b5';
+    sctx.fillRect(0, 0, 512, 128);
+    sctx.fillStyle = '#ffdf5d';
+    sctx.font = 'bold 36px sans-serif';
+    sctx.textAlign = 'center';
+    sctx.textBaseline = 'middle';
+    sctx.fillText("🛒 CAP'N CLARKS FURNITURE", 256, 64);
+    const signTex = new THREE.CanvasTexture(signCanvas);
+    const signFaceGeo = new THREE.PlaneGeometry(15, 1.1);
+    const signFaceMat = new THREE.MeshBasicMaterial({ map: signTex });
+    const signFaceMesh = new THREE.Mesh(signFaceGeo, signFaceMat);
+    signFaceMesh.rotation.y = -Math.PI / 2;
+    signFaceMesh.position.set(-0.45, 3.4, 0);
+    portalGroup.add(signFaceMesh);
+    scene.add(portalGroup);
 
-    // -------------------------------------------------------------
-    // GIANT FURNITURE & OBSTACLES (Shrunk Down Scale!)
-    // The dummy is 0.5m tall; table legs are 5m tall, sofa is huge!
-    // -------------------------------------------------------------
-    const obstacles = []; // { box3: THREE.Box3, minX, maxX, minZ, maxZ, minY, maxY }
+    // Walls & Collision System
+    const walls = []; // Array of THREE.Box3 bounding boxes for physics collision
+    const wallMeshes = [];
 
-    function addObstacle(mesh, isClimbable = true) {
-      mesh.castShadow = true;
-      mesh.receiveShadow = true;
+    function addWall(x, z, width, depth, height = CEILING_H, isStore = false) {
+      const geo = new THREE.BoxGeometry(width, height, depth);
+      const mat = isStore
+        ? new THREE.MeshLambertMaterial({ color: 0x48586c })
+        : wallpaperMat;
+      const mesh = new THREE.Mesh(geo, mat);
+      mesh.position.set(x, height / 2, z);
       scene.add(mesh);
-      mesh.updateMatrixWorld();
+      wallMeshes.push(mesh);
+
       const b3 = new THREE.Box3().setFromObject(mesh);
-      obstacles.push({ box3: b3, isClimbable: isClimbable });
+      walls.push(b3);
+      return mesh;
     }
 
-    // 1. Giant Wooden Dining Table
-    const woodMat = new THREE.MeshLambertMaterial({ color: 0x422817 });
-    const legMat = new THREE.MeshLambertMaterial({ color: 0x2e1b0e });
-    // Table Top
-    const tableTop = new THREE.Mesh(new THREE.BoxGeometry(16, 0.8, 10), woodMat);
-    tableTop.position.set(0, 5.0, -12);
-    addObstacle(tableTop);
-    // Table Legs (Obstacles)
-    const legGeo = new THREE.CylinderGeometry(0.5, 0.5, 5, 8);
-    const legOffsets = [[-7, -4], [7, -4], [-7, 4], [7, 4]];
-    legOffsets.forEach(([lx, lz]) => {
-      const leg = new THREE.Mesh(legGeo, legMat);
-      leg.position.set(lx, 2.5, -12 + lz);
-      addObstacle(leg, false);
+    // Outer Boundary Walls
+    addWall(0, -LEVEL_D / 2, LEVEL_W, 1.2);
+    addWall(0, LEVEL_D / 2, LEVEL_W, 1.2);
+    addWall(-LEVEL_W / 2, 0, 1.2, LEVEL_D);
+    addWall(LEVEL_W / 2, 0, 1.2, LEVEL_D);
+
+    // Cap'n Clarks Partition Wall with Big Opening in middle
+    addWall(25, -24, 1.0, 22, CEILING_H, true);
+    addWall(25, 24, 1.0, 22, CEILING_H, true);
+
+    // Procedural Backrooms Labyrinth Corridors & Pillars
+    const corridorLayout = [
+      // Major dividing corridors
+      { x: -28, z: 0, w: 1.0, d: 42 },
+      { x: -14, z: -18, w: 26, d: 1.0 },
+      { x: -14, z: 18, w: 26, d: 1.0 },
+      { x: 5, z: -12, w: 1.0, d: 36 },
+      { x: 5, z: 24, w: 1.0, d: 24 },
+      { x: -20, z: -32, w: 20, d: 1.0 },
+      { x: -20, z: 32, w: 20, d: 1.0 },
+
+      // Classic Yellow Corridors Pillars
+      { x: -38, z: -20, w: 2.2, d: 2.2 },
+      { x: -38, z: 0, w: 2.2, d: 2.2 },
+      { x: -38, z: 20, w: 2.2, d: 2.2 },
+      { x: -10, z: 0, w: 2.5, d: 2.5 },
+      { x: -10, z: -28, w: 2.2, d: 2.2 },
+      { x: -10, z: 28, w: 2.2, d: 2.2 },
+      { x: 15, z: -25, w: 2.2, d: 2.2 },
+      { x: 15, z: 25, w: 2.2, d: 2.2 },
+      { x: -25, z: 10, w: 2.2, d: 2.2 },
+      { x: -25, z: -10, w: 2.2, d: 2.2 },
+
+      // Store Aisle Shelving Dividers (Inside Cap'n Clarks)
+      { x: 38, z: -16, w: 14, d: 1.2 },
+      { x: 38, z: 16, w: 14, d: 1.2 }
+    ];
+
+    corridorLayout.forEach(c => addWall(c.x, c.z, c.w, c.d));
+
+    /* ============================================================
+       4. LIGHTING & DAY/NIGHT FLICKER SYSTEM
+       ============================================================ */
+    const ambientLight = new THREE.AmbientLight(0xfff1c2, 0.75);
+    scene.add(ambientLight);
+
+    const mainStoreLight = new THREE.PointLight(0xffffff, 1.2, 55);
+    mainStoreLight.position.set(37, 3.8, 0);
+    scene.add(mainStoreLight);
+
+    // Fluorescent ceiling lights across Backrooms hallways
+    const ceilingLights = [];
+    const lightPositions = [
+      { x: -35, z: -25 }, { x: -35, z: 25 },
+      { x: -15, z: -10 }, { x: -15, z: 10 },
+      { x: 0, z: -28 },   { x: 0, z: 28 },
+      { x: 15, z: 0 },    { x: -35, z: 0 }
+    ];
+
+    lightPositions.forEach(pos => {
+      const pl = new THREE.PointLight(0xffeaad, 0.9, 24);
+      pl.position.set(pos.x, CEILING_H - 0.2, pos.z);
+      scene.add(pl);
+      ceilingLights.push(pl);
+
+      // Glowing light panel fixture
+      const fixtureGeo = new THREE.BoxGeometry(2.2, 0.15, 1.0);
+      const fixtureMat = new THREE.MeshBasicMaterial({ color: 0xfff6cf });
+      const fixtureMesh = new THREE.Mesh(fixtureGeo, fixtureMat);
+      fixtureMesh.position.set(pos.x, CEILING_H - 0.1, pos.z);
+      scene.add(fixtureMesh);
     });
 
-    // 2. Giant Sofa (Climbable cushions!)
-    const sofaFabric = new THREE.MeshLambertMaterial({ color: 0x1f3c5b });
-    const sofaBase = new THREE.Mesh(new THREE.BoxGeometry(18, 1.8, 8), sofaFabric);
-    sofaBase.position.set(-18, 0.9, 8);
-    addObstacle(sofaBase);
+    // Flashlight (Attached to player)
+    const flashlight = new THREE.SpotLight(0xffffff, 0, 26, Math.PI / 5, 0.4, 1.2);
+    scene.add(flashlight);
+    scene.add(flashlight.target);
+    let flashlightOn = false;
 
-    const sofaBack = new THREE.Mesh(new THREE.BoxGeometry(18, 4.0, 2), sofaFabric);
-    sofaBack.position.set(-18, 2.5, 12);
-    addObstacle(sofaBack);
+    /* ============================================================
+       5. FURNITURE GENERATOR & CATALOG
+       ============================================================ */
+    const FURNITURE_TYPES = {
+      // 1. FLOOR LAMP (Sanctuary Light!)
+      floor_lamp: {
+        name: "Floor Lamp",
+        isLight: true,
+        lightRadius: 8.5,
+        create() {
+          const group = new THREE.Group();
+          // Base
+          const base = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.6, 0.12, 16), new THREE.MeshLambertMaterial({ color: 0x222 }));
+          base.position.y = 0.06;
+          group.add(base);
+          // Stem
+          const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 2.8, 8), new THREE.MeshLambertMaterial({ color: 0xb59458 }));
+          stem.position.y = 1.45;
+          group.add(stem);
+          // Lamp shade
+          const shade = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.85, 0.9, 16, 1, true), new THREE.MeshLambertMaterial({ color: 0xfffaea, side: THREE.DoubleSide }));
+          shade.position.y = 2.65;
+          group.add(shade);
+          // Glowing bulb
+          const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.2, 12, 12), new THREE.MeshBasicMaterial({ color: 0xffea88 }));
+          bulb.position.y = 2.55;
+          group.add(bulb);
+          return group;
+        }
+      },
 
-    // 3. Books & Cardboard Boxes on the floor (Ramps & platforms)
-    const bookColors = [0xbf360c, 0x1b5e20, 0x4a148c, 0x006064];
-    for (let i = 0; i < 8; i++) {
-      const bMat = new THREE.MeshLambertMaterial({ color: bookColors[i % bookColors.length] });
-      const book = new THREE.Mesh(new THREE.BoxGeometry(2.2 + Math.random()*0.8, 0.45, 1.8), bMat);
-      const bx = (Math.random() - 0.5) * 40;
-      const bz = (Math.random() - 0.5) * 40;
-      book.position.set(bx, 0.22, bz);
-      book.rotation.y = Math.random() * Math.PI;
-      addObstacle(book);
-    }
+      // 2. RETRO DESK & COMPUTER
+      exec_desk: {
+        name: "Retro Computer Desk",
+        isLight: false,
+        create() {
+          const group = new THREE.Group();
+          // Wood desktop
+          const top = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.12, 1.4), new THREE.MeshLambertMaterial({ color: 0x4a2e18 }));
+          top.position.y = 1.1;
+          group.add(top);
+          // Side drawer pillars
+          const sideL = new THREE.Mesh(new THREE.BoxGeometry(0.6, 1.05, 1.3), new THREE.MeshLambertMaterial({ color: 0x331e0f }));
+          sideL.position.set(-0.85, 0.53, 0);
+          group.add(sideL);
+          const sideR = new THREE.Mesh(new THREE.BoxGeometry(0.6, 1.05, 1.3), new THREE.MeshLambertMaterial({ color: 0x331e0f }));
+          sideR.position.set(0.85, 0.53, 0);
+          group.add(sideR);
+          // CRT Monitor
+          const mon = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.7, 0.75), new THREE.MeshLambertMaterial({ color: 0xd4cbbf }));
+          mon.position.set(0, 1.55, 0);
+          group.add(mon);
+          // Screen
+          const screen = new THREE.Mesh(new THREE.PlaneGeometry(0.65, 0.5), new THREE.MeshBasicMaterial({ color: 0x33ff66 }));
+          screen.position.set(0, 1.55, 0.38);
+          group.add(screen);
+          return group;
+        }
+      },
 
-    // Giant Coffee Mug & Soda Can (Obstacles to run around)
-    const mugMat = new THREE.MeshLambertMaterial({ color: 0xf5f5f5 });
-    const mug = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.0, 2.2, 16), mugMat);
-    mug.position.set(10, 1.1, 4);
-    addObstacle(mug);
+      // 3. COZY SOFA (Leather 2-Seater)
+      sofa: {
+        name: "Cozy Leather Sofa",
+        isLight: false,
+        create() {
+          const group = new THREE.Group();
+          const mat = new THREE.MeshLambertMaterial({ color: 0x6e2c14 });
+          // Base Seat
+          const seat = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.45, 1.3), mat);
+          seat.position.y = 0.4;
+          group.add(seat);
+          // Backrest
+          const back = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.9, 0.4), mat);
+          back.position.set(0, 0.85, -0.45);
+          group.add(back);
+          // Armrests
+          const armL = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.65, 1.3), mat);
+          armL.position.set(-1.3, 0.65, 0);
+          group.add(armL);
+          const armR = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.65, 1.3), mat);
+          armR.position.set(1.3, 0.65, 0);
+          group.add(armR);
+          return group;
+        }
+      },
 
-    const canMat = new THREE.MeshLambertMaterial({ color: 0xe53935 });
-    const can = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.8, 2.4, 16), canMat);
-    can.position.set(-8, 1.2, -6);
-    addObstacle(can);
+      // 4. PLUSH ARMCHAIR
+      armchair: {
+        name: "Red Velvet Armchair",
+        isLight: false,
+        create() {
+          const group = new THREE.Group();
+          const mat = new THREE.MeshLambertMaterial({ color: 0x8b1e28 });
+          const seat = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.4, 1.2), mat);
+          seat.position.y = 0.4;
+          group.add(seat);
+          const back = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.85, 0.3), mat);
+          back.position.set(0, 0.85, -0.45);
+          group.add(back);
+          const armL = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.55, 1.2), mat);
+          armL.position.set(-0.6, 0.6, 0);
+          group.add(armL);
+          const armR = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.55, 1.2), mat);
+          armR.position.set(0.6, 0.6, 0);
+          group.add(armR);
+          return group;
+        }
+      },
 
-    // -------------------------------------------------------------
-    // COLLECTIBLE ENERGY BATTERIES (Adds Score & Speed)
-    // -------------------------------------------------------------
-    const coins = [];
-    const batteryGeo = new THREE.CylinderGeometry(0.25, 0.25, 0.65, 12);
-    const batteryMat = new THREE.MeshLambertMaterial({ color: 0x00e676 });
-    const batCapMat = new THREE.MeshLambertMaterial({ color: 0xffd600 });
+      // 5. COZY BED
+      bed: {
+        name: "Comfy Bed",
+        isLight: false,
+        create() {
+          const group = new THREE.Group();
+          // Frame
+          const frame = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.35, 2.8), new THREE.MeshLambertMaterial({ color: 0x3d2716 }));
+          frame.position.y = 0.2;
+          group.add(frame);
+          // Mattress
+          const mat = new THREE.Mesh(new THREE.BoxGeometry(1.85, 0.4, 2.65), new THREE.MeshLambertMaterial({ color: 0x1f4b82 }));
+          mat.position.y = 0.5;
+          group.add(mat);
+          // Pillows
+          const pillowMat = new THREE.MeshLambertMaterial({ color: 0xf5f5f5 });
+          const p1 = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.18, 0.45), pillowMat);
+          p1.position.set(-0.45, 0.75, -1.0);
+          group.add(p1);
+          const p2 = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.18, 0.45), pillowMat);
+          p2.position.set(0.45, 0.75, -1.0);
+          group.add(p2);
+          return group;
+        }
+      },
 
-    function spawnBatteries(count = 12) {
-      for (let i = 0; i < count; i++) {
-        const group = new THREE.Group();
-        const body = new THREE.Mesh(batteryGeo, batteryMat);
-        const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.15, 12), batCapMat);
-        cap.position.y = 0.35;
-        group.add(body);
-        group.add(cap);
+      // 6. BOOKSHELF
+      bookshelf: {
+        name: "Wooden Bookshelf",
+        isLight: false,
+        create() {
+          const group = new THREE.Group();
+          const wood = new THREE.MeshLambertMaterial({ color: 0x482b15 });
+          // Frame
+          const back = new THREE.Mesh(new THREE.BoxGeometry(1.8, 2.6, 0.1), wood);
+          back.position.set(0, 1.3, -0.3);
+          group.add(back);
+          const sideL = new THREE.Mesh(new THREE.BoxGeometry(0.1, 2.6, 0.7), wood);
+          sideL.position.set(-0.85, 1.3, 0);
+          group.add(sideL);
+          const sideR = new THREE.Mesh(new THREE.BoxGeometry(0.1, 2.6, 0.7), wood);
+          sideR.position.set(0.85, 1.3, 0);
+          group.add(sideR);
+          // Shelves with books
+          for (let y = 0.5; y <= 2.2; y += 0.55) {
+            const shelf = new THREE.Mesh(new THREE.BoxGeometry(1.65, 0.08, 0.65), wood);
+            shelf.position.set(0, y, 0);
+            group.add(shelf);
 
-        const x = (Math.random() - 0.5) * 60;
-        const z = (Math.random() - 0.5) * 60;
-        group.position.set(x, 0.55, z);
-        scene.add(group);
-        coins.push(group);
+            const bookColors = [0x992222, 0x225599, 0x228833, 0xddaa22];
+            const books = new THREE.Mesh(
+              new THREE.BoxGeometry(1.2, 0.38, 0.45),
+              new THREE.MeshLambertMaterial({ color: bookColors[Math.floor(Math.random() * bookColors.length)] })
+            );
+            books.position.set(0, y + 0.22, 0);
+            group.add(books);
+          }
+          return group;
+        }
+      },
+
+      // 7. RETRO ARCADE MACHINE
+      arcade: {
+        name: "Retro Arcade Cabinet",
+        isLight: true,
+        lightRadius: 5.5,
+        create() {
+          const group = new THREE.Group();
+          const body = new THREE.Mesh(new THREE.BoxGeometry(1.1, 2.4, 1.0), new THREE.MeshLambertMaterial({ color: 0x111 }));
+          body.position.y = 1.2;
+          group.add(body);
+          // Glowing screen
+          const screen = new THREE.Mesh(new THREE.PlaneGeometry(0.8, 0.6), new THREE.MeshBasicMaterial({ color: 0xff007f }));
+          screen.position.set(0, 1.5, 0.51);
+          group.add(screen);
+          // Marquee sign
+          const marquee = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.3, 0.2), new THREE.MeshBasicMaterial({ color: 0x00f0ff }));
+          marquee.position.set(0, 2.2, 0.45);
+          group.add(marquee);
+          return group;
+        }
+      },
+
+      // 8. POTTED PLANT
+      plant: {
+        name: "Potted Monstera Plant",
+        isLight: false,
+        create() {
+          const group = new THREE.Group();
+          // Pot
+          const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.35, 0.7, 12), new THREE.MeshLambertMaterial({ color: 0xf5ede4 }));
+          pot.position.y = 0.35;
+          group.add(pot);
+          // Leaves
+          const leafMat = new THREE.MeshLambertMaterial({ color: 0x228833 });
+          for (let i = 0; i < 6; i++) {
+            const leaf = new THREE.Mesh(new THREE.ConeGeometry(0.35, 1.1, 5), leafMat);
+            const ang = (i / 6) * Math.PI * 2;
+            leaf.position.set(Math.cos(ang) * 0.2, 0.85, Math.sin(ang) * 0.2);
+            leaf.rotation.z = Math.cos(ang) * 0.5;
+            leaf.rotation.x = Math.sin(ang) * 0.5;
+            group.add(leaf);
+          }
+          return group;
+        }
+      },
+
+      // 9. WALL PARTITION (Build custom bedrooms!)
+      wall_panel: {
+        name: "Wall Partition Divider",
+        isLight: false,
+        create() {
+          const group = new THREE.Group();
+          const wall = new THREE.Mesh(new THREE.BoxGeometry(3.0, 3.2, 0.25), wallpaperMat);
+          wall.position.y = 1.6;
+          group.add(wall);
+          const trim = new THREE.Mesh(new THREE.BoxGeometry(3.0, 0.2, 0.32), new THREE.MeshLambertMaterial({ color: 0xded8ce }));
+          trim.position.y = 0.1;
+          group.add(trim);
+          return group;
+        }
       }
+    };
+
+    /* ============================================================
+       6. FURNITURE INSTANCES & SPAWN IN STORE
+       ============================================================ */
+    const furnitureItems = []; // List of all furniture objects in world
+    let furnitureIdCounter = 1;
+
+    function spawnFurniture(typeKey, x, z, rotY = 0, isSaved = false) {
+      const typeDef = FURNITURE_TYPES[typeKey];
+      if (!typeDef) return null;
+
+      const group = typeDef.create();
+      group.position.set(x, 0, z);
+      group.rotation.y = rotY;
+
+      // Attach light if it's an illuminated item
+      let pLight = null;
+      let haloMesh = null;
+      if (typeDef.isLight) {
+        pLight = new THREE.PointLight(0xffdf88, 1.4, typeDef.lightRadius);
+        pLight.position.set(0, 2.5, 0);
+        group.add(pLight);
+
+        // Ground golden sanctuary safe circle
+        const haloGeo = new THREE.RingGeometry(typeDef.lightRadius * 0.3, typeDef.lightRadius * 0.8, 32);
+        const haloMat = new THREE.MeshBasicMaterial({ color: 0xffcc33, side: THREE.DoubleSide, transparent: true, opacity: 0.18 });
+        haloMesh = new THREE.Mesh(haloGeo, haloMat);
+        haloMesh.rotation.x = -Math.PI / 2;
+        haloMesh.position.y = 0.03;
+        group.add(haloMesh);
+      }
+
+      scene.add(group);
+
+      const itemData = {
+        id: 'furn_' + (furnitureIdCounter++),
+        typeKey: typeKey,
+        name: typeDef.name,
+        isLight: typeDef.isLight,
+        lightRadius: typeDef.lightRadius || 0,
+        group: group,
+        pointLight: pLight,
+        halo: haloMesh,
+        isCarried: false,
+        inStore: !isSaved && (x > 25)
+      };
+
+      furnitureItems.push(itemData);
+      return itemData;
     }
-    spawnBatteries(14);
 
-    // -------------------------------------------------------------
-    // THE TINY CRASH DUMMY PLAYER (Smooth Fully Attached Human Body)
-    // -------------------------------------------------------------
-    const dummyGroup = new THREE.Group();
-    scene.add(dummyGroup);
+    // Populate Cap'n Clarks Initial Store Showrooms
+    function populateStore() {
+      // Clear unsaved store items
+      for (let i = furnitureItems.length - 1; i >= 0; i--) {
+        if (furnitureItems[i].inStore && !furnitureItems[i].isCarried) {
+          scene.remove(furnitureItems[i].group);
+          furnitureItems.splice(i, 1);
+        }
+      }
 
-    // High quality smooth materials with physical standard shading
-    const dummyMatYellow = new THREE.MeshStandardMaterial({
-      color: 0xffb703,
-      roughness: 0.35,
-      metalness: 0.12
-    });
-    const dummyMatDark = new THREE.MeshStandardMaterial({
-      color: 0x1e232a,
-      roughness: 0.45,
-      metalness: 0.2
-    });
-    const dummyMatWhite = new THREE.MeshStandardMaterial({
-      color: 0xf1f5f9,
-      roughness: 0.35,
-      metalness: 0.08
-    });
+      // Display Aisle 1: Lighting & Living Room
+      spawnFurniture('floor_lamp', 32, -10);
+      spawnFurniture('floor_lamp', 32, 10);
+      spawnFurniture('sofa', 36, -8, Math.PI / 2);
+      spawnFurniture('armchair', 36, -3, Math.PI / 2);
+      spawnFurniture('sofa', 36, 8, -Math.PI / 2);
+      spawnFurniture('plant', 32, -4);
+      spawnFurniture('plant', 32, 4);
 
-    // Crash target decal texture for head & chest
-    function createTargetCanvas() {
-      const c = document.createElement('canvas');
-      c.width = 128; c.height = 128;
-      const ctx = c.getContext('2d');
-      ctx.fillStyle = '#ffb703'; ctx.fillRect(0, 0, 128, 128);
-      ctx.fillStyle = '#1e232a';
-      ctx.beginPath(); ctx.moveTo(64, 64); ctx.arc(64, 64, 52, 0, Math.PI / 2); ctx.fill();
-      ctx.beginPath(); ctx.moveTo(64, 64); ctx.arc(64, 64, 52, Math.PI, Math.PI * 1.5); ctx.fill();
-      ctx.strokeStyle = '#fff'; ctx.lineWidth = 3;
-      ctx.beginPath(); ctx.arc(64, 64, 52, 0, Math.PI * 2); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(12, 64); ctx.lineTo(116, 64); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(64, 12); ctx.lineTo(64, 116); ctx.stroke();
-      return new THREE.CanvasTexture(c);
+      // Display Aisle 2: Bedroom & Office
+      spawnFurniture('bed', 43, -12, Math.PI);
+      spawnFurniture('bed', 43, 12, 0);
+      spawnFurniture('exec_desk', 43, -2, -Math.PI / 2);
+      spawnFurniture('bookshelf', 43, 4, -Math.PI / 2);
+      spawnFurniture('floor_lamp', 46, 0);
+
+      // Display Aisle 3: Arcade & Walls
+      spawnFurniture('arcade', 46, -8, -Math.PI / 2);
+      spawnFurniture('arcade', 46, -14, -Math.PI / 2);
+      spawnFurniture('wall_panel', 36, -26);
+      spawnFurniture('wall_panel', 36, 26);
+      spawnFurniture('wall_panel', 42, -26);
+      spawnFurniture('wall_panel', 42, 26);
     }
-    const targetTex = createTargetCanvas();
-    const headMat = new THREE.MeshStandardMaterial({
-      map: targetTex,
-      roughness: 0.35,
-      metalness: 0.15
-    });
 
-    // 1. Pelvis / Hips (Smooth anatomical pelvis capsule)
-    const pelvisGeo = new THREE.CapsuleGeometry(0.12, 0.08, 14, 16);
-    pelvisGeo.rotateZ(Math.PI / 2);
-    const pelvis = new THREE.Mesh(pelvisGeo, dummyMatDark);
-    pelvis.position.y = 0.47;
-    pelvis.castShadow = true;
-    dummyGroup.add(pelvis);
+    /* ============================================================
+       7. PLAYER SURVIVOR MODEL & BIOMECHANICS
+       ============================================================ */
+    const playerGroup = new THREE.Group();
+    scene.add(playerGroup);
 
-    // 2. Waist / Abdomen (Smooth transition connecting hips to chest)
-    const waistGeo = new THREE.CylinderGeometry(0.115, 0.122, 0.09, 18);
-    const waist = new THREE.Mesh(waistGeo, dummyMatYellow);
-    waist.position.y = 0.54;
-    waist.castShadow = true;
-    dummyGroup.add(waist);
+    // Anatomical Stylized Survivor Model
+    const dummyMat = new THREE.MeshLambertMaterial({ color: 0xf5b041 }); // Warm hazardous yellow
+    const jointMat = new THREE.MeshLambertMaterial({ color: 0x222222 });
+    const clothMat = new THREE.MeshLambertMaterial({ color: 0x2e4053 }); // Survivor navy shirt
 
-    // 3. Ribcage & Chest (Tapered athletic torso)
-    const chestGeo = new THREE.CylinderGeometry(0.155, 0.115, 0.20, 18);
-    const chest = new THREE.Mesh(chestGeo, dummyMatYellow);
-    chest.position.y = 0.67;
-    chest.castShadow = true;
-    dummyGroup.add(chest);
+    // Pelvis
+    const pelvis = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.28, 0.35, 12), jointMat);
+    pelvis.position.y = 0.95;
+    playerGroup.add(pelvis);
 
-    // Upper Chest / Pectorals & Shoulders blend
-    const upperChestGeo = new THREE.SphereGeometry(0.16, 18, 14);
-    upperChestGeo.scale(1.02, 0.72, 0.82);
-    const upperChest = new THREE.Mesh(upperChestGeo, dummyMatYellow);
-    upperChest.position.set(0, 0.74, 0.01);
-    upperChest.castShadow = true;
-    dummyGroup.add(upperChest);
+    // Torso / Chest
+    const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.28, 0.75, 12), clothMat);
+    torso.position.y = 1.45;
+    playerGroup.add(torso);
 
-    // Target badge on front of chest
-    const chestDecalGeo = new THREE.CircleGeometry(0.055, 16);
-    const chestDecalMat = new THREE.MeshStandardMaterial({
-      map: targetTex,
-      roughness: 0.4,
-      transparent: true
-    });
-    const chestBadge = new THREE.Mesh(chestDecalGeo, chestDecalMat);
-    chestBadge.position.set(0, 0.71, 0.14);
-    chestBadge.castShadow = true;
-    dummyGroup.add(chestBadge);
+    // Neck & Head
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.3, 16, 16), dummyMat);
+    head.position.y = 2.08;
+    playerGroup.add(head);
 
-    // 4. Neck (Tapered cervical cylinder connecting torso to head)
-    const neckGeo = new THREE.CylinderGeometry(0.062, 0.072, 0.07, 16);
-    const neck = new THREE.Mesh(neckGeo, dummyMatYellow);
-    neck.position.y = 0.84;
-    neck.castShadow = true;
-    dummyGroup.add(neck);
+    // Hazard Face Markings
+    const faceMark = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.05, 8), jointMat);
+    faceMark.rotation.x = Math.PI / 2;
+    faceMark.position.set(0, 2.08, 0.28);
+    playerGroup.add(faceMark);
 
-    // 5. Head Group (Organic cranium with jawline contour)
-    const headGroup = new THREE.Group();
-    headGroup.position.y = 0.96;
-
-    const craniumGeo = new THREE.SphereGeometry(0.108, 20, 18);
-    craniumGeo.scale(0.92, 1.05, 0.98);
-    const cranium = new THREE.Mesh(craniumGeo, headMat);
-    cranium.castShadow = true;
-    headGroup.add(cranium);
-
-    const jawGeo = new THREE.CylinderGeometry(0.08, 0.05, 0.07, 16);
-    jawGeo.scale(0.9, 1.0, 0.8);
-    const jaw = new THREE.Mesh(jawGeo, dummyMatYellow);
-    jaw.position.set(0, -0.065, 0.02);
-    jaw.castShadow = true;
-    headGroup.add(jaw);
-
-    dummyGroup.add(headGroup);
-
-    // 6. Seamless Articulated Human Arms
-    function createSmoothArm(isLeft) {
-      const side = isLeft ? -1 : 1;
+    // Arms & Carrying Rig
+    function createArm(isLeft) {
       const shoulderPivot = new THREE.Group();
-      shoulderPivot.position.set(side * 0.18, 0.76, 0);
+      shoulderPivot.position.set(isLeft ? -0.45 : 0.45, 1.72, 0);
 
-      // Rounded shoulder joint (deltoid)
-      const shoulderBallGeo = new THREE.SphereGeometry(0.062, 16, 12);
-      const shoulderBall = new THREE.Mesh(shoulderBallGeo, dummyMatYellow);
-      shoulderBall.castShadow = true;
-      shoulderPivot.add(shoulderBall);
-
-      // Upper Arm (Bicep/Tricep)
-      const bicepGeo = new THREE.CylinderGeometry(0.054, 0.046, 0.18, 16);
-      bicepGeo.translate(0, -0.09, 0);
-      const bicep = new THREE.Mesh(bicepGeo, dummyMatYellow);
-      bicep.castShadow = true;
+      const bicep = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.09, 0.45, 8), clothMat);
+      bicep.position.y = -0.22;
       shoulderPivot.add(bicep);
 
-      // Elbow Joint & Pivot
       const elbowPivot = new THREE.Group();
-      elbowPivot.position.set(0, -0.18, 0);
+      elbowPivot.position.y = -0.45;
       shoulderPivot.add(elbowPivot);
 
-      const elbowBallGeo = new THREE.SphereGeometry(0.046, 14, 10);
-      const elbowBall = new THREE.Mesh(elbowBallGeo, dummyMatDark);
-      elbowBall.castShadow = true;
-      elbowPivot.add(elbowBall);
-
-      // Forearm with white test marking cuff
-      const forearmGeo = new THREE.CylinderGeometry(0.044, 0.036, 0.18, 16);
-      forearmGeo.translate(0, -0.09, 0);
-      const forearm = new THREE.Mesh(forearmGeo, dummyMatWhite);
-      forearm.castShadow = true;
+      const forearm = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.08, 0.45, 8), dummyMat);
+      forearm.position.y = -0.22;
       elbowPivot.add(forearm);
 
-      // Hand (Smooth curved palm/fist)
-      const handGeo = new THREE.SphereGeometry(0.038, 14, 10);
-      handGeo.scale(0.8, 1.35, 0.55);
-      handGeo.translate(0, -0.04, 0);
-      const hand = new THREE.Mesh(handGeo, dummyMatYellow);
-      hand.position.set(0, -0.18, 0);
-      hand.castShadow = true;
-      elbowPivot.add(hand);
-
-      dummyGroup.add(shoulderPivot);
+      playerGroup.add(shoulderPivot);
       return { shoulderPivot, elbowPivot };
     }
 
-    // 7. Seamless Articulated Human Legs
-    function createSmoothLeg(isLeft) {
-      const side = isLeft ? -1 : 1;
+    // Legs
+    function createLeg(isLeft) {
       const hipPivot = new THREE.Group();
-      hipPivot.position.set(side * 0.088, 0.45, 0);
+      hipPivot.position.set(isLeft ? -0.2 : 0.2, 0.85, 0);
 
-      // Hip ball joint
-      const hipBallGeo = new THREE.SphereGeometry(0.068, 16, 12);
-      const hipBall = new THREE.Mesh(hipBallGeo, dummyMatDark);
-      hipBall.castShadow = true;
-      hipPivot.add(hipBall);
-
-      // Thigh (Anatomically tapered leg)
-      const thighGeo = new THREE.CylinderGeometry(0.068, 0.054, 0.22, 16);
-      thighGeo.translate(0, -0.11, 0);
-      const thigh = new THREE.Mesh(thighGeo, dummyMatYellow);
-      thigh.castShadow = true;
+      const thigh = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.1, 0.48, 8), jointMat);
+      thigh.position.y = -0.24;
       hipPivot.add(thigh);
 
-      // Knee Pivot & Ball Joint
       const kneePivot = new THREE.Group();
-      kneePivot.position.set(0, -0.22, 0);
+      kneePivot.position.y = -0.48;
       hipPivot.add(kneePivot);
 
-      const kneeBallGeo = new THREE.SphereGeometry(0.054, 14, 10);
-      const kneeBall = new THREE.Mesh(kneeBallGeo, dummyMatDark);
-      kneeBall.castShadow = true;
-      kneePivot.add(kneeBall);
-
-      // Calf / Shin
-      const calfGeo = new THREE.CylinderGeometry(0.052, 0.040, 0.22, 16);
-      calfGeo.translate(0, -0.11, 0);
-      const calf = new THREE.Mesh(calfGeo, dummyMatDark);
-      calf.castShadow = true;
+      const calf = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.09, 0.48, 8), jointMat);
+      calf.position.y = -0.24;
       kneePivot.add(calf);
 
-      // Foot (Smooth curved athletic shoe)
-      const footGroup = new THREE.Group();
-      footGroup.position.set(0, -0.22, 0);
+      const foot = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.12, 0.32), dummyMat);
+      foot.position.set(0, -0.48, 0.08);
+      kneePivot.add(foot);
 
-      const shoeGeo = new THREE.CapsuleGeometry(0.038, 0.09, 12, 14);
-      shoeGeo.rotateX(Math.PI / 2);
-      shoeGeo.translate(0, -0.02, 0.035);
-      const shoe = new THREE.Mesh(shoeGeo, dummyMatYellow);
-      shoe.castShadow = true;
-      footGroup.add(shoe);
-      kneePivot.add(footGroup);
-
-      dummyGroup.add(hipPivot);
+      playerGroup.add(hipPivot);
       return { hipPivot, kneePivot };
     }
 
-    const leftArmRig = createSmoothArm(true);
-    const rightArmRig = createSmoothArm(false);
-    const leftLegRig = createSmoothLeg(true);
-    const rightLegRig = createSmoothLeg(false);
+    const leftArm = createArm(true);
+    const rightArm = createArm(false);
+    const leftLeg = createLeg(true);
+    const rightLeg = createLeg(false);
 
-    // Player Physics State
+    // Carried Item Anchor Node (attached directly to player's front hands)
+    const carryAnchor = new THREE.Group();
+    carryAnchor.position.set(0, 1.2, 1.4);
+    playerGroup.add(carryAnchor);
+
+    // Placement Ghost Hologram (Shows on floor when carrying)
+    const ghostGroup = new THREE.Group();
+    scene.add(ghostGroup);
+    ghostGroup.visible = false;
+
+    /* ============================================================
+       8. THE SMILER & NIGHT HUNTERS AI
+       ============================================================ */
+    const smilerGroup = new THREE.Group();
+    smilerGroup.position.set(-30, 1.6, -30);
+    scene.add(smilerGroup);
+
+    // Iconic glowing razor smile & wide white eyes
+    const eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.16, 12, 12), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+    eyeL.position.set(-0.35, 0.35, 0);
+    smilerGroup.add(eyeL);
+
+    const eyeR = new THREE.Mesh(new THREE.SphereGeometry(0.16, 12, 12), new THREE.MeshBasicMaterial({ color: 0xffffff }));
+    eyeR.position.set(0.35, 0.35, 0);
+    smilerGroup.add(eyeR);
+
+    // Crescent sharp teeth smile
+    const smileCanvas = document.createElement('canvas');
+    smileCanvas.width = 256;
+    smileCanvas.height = 128;
+    const smCtx = smileCanvas.getContext('2d');
+    smCtx.fillStyle = '#ffffff';
+    smCtx.beginPath();
+    smCtx.arc(128, 40, 75, 0.15 * Math.PI, 0.85 * Math.PI, false);
+    smCtx.lineWidth = 14;
+    smCtx.strokeStyle = '#ffffff';
+    smCtx.stroke();
+    // Sharp razor teeth
+    for (let x = 60; x <= 196; x += 18) {
+      smCtx.beginPath();
+      smCtx.moveTo(x - 5, 80);
+      smCtx.lineTo(x, 105);
+      smCtx.lineTo(x + 5, 80);
+      smCtx.fill();
+    }
+    const smileTex = new THREE.CanvasTexture(smileCanvas);
+    const smileMesh = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 0.8), new THREE.MeshBasicMaterial({ map: smileTex, transparent: true }));
+    smileMesh.position.set(0, -0.15, 0.05);
+    smilerGroup.add(smileMesh);
+
+    // Shadow aura
+    const smilerAura = new THREE.Mesh(
+      new THREE.SphereGeometry(0.9, 12, 12),
+      new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.85 })
+    );
+    smilerGroup.add(smilerAura);
+
+    const smilerLight = new THREE.PointLight(0xffffff, 0.4, 6);
+    smilerGroup.add(smilerLight);
+    smilerGroup.visible = false;
+
+    const smilerState = {
+      pos: new THREE.Vector3(-30, 1.6, -30),
+      speed: 4.8,
+      isHunting: false,
+      isRepelled: false,
+      repelTimer: 0
+    };
+
+    /* ============================================================
+       9. GAME STATE & CYCLE ENGINE
+       ============================================================ */
     const player = {
-      pos: new THREE.Vector3(0, 0, 10),
-      vel: new THREE.Vector3(0, 0, 0),
-      rotY: 0,
-      radius: 0.28,
-      height: 1.1,
-      isGrounded: true,
-      baseSpeed: 7.5,
-      boostSpeed: 12.0,
-      jumpForce: 7.2,
-      isSprinting: false
-    };
-    dummyGroup.position.copy(player.pos);
-
-    // -------------------------------------------------------------
-    // THE GIANT MENACING VACUUM CLEANER
-    // -------------------------------------------------------------
-    const vacuumGroup = new THREE.Group();
-    scene.add(vacuumGroup);
-
-    // Big Roaring Vacuum Nozzle Head
-    const vacNozzleMat = new THREE.MeshLambertMaterial({ color: 0xd32f2f });
-    const vacChromeMat = new THREE.MeshLambertMaterial({ color: 0x455a64 });
-    const vacGlowMat = new THREE.MeshBasicMaterial({ color: 0xff3d00, wireframe: true });
-
-    // Suction Mouth
-    const vacMouth = new THREE.Mesh(new THREE.BoxGeometry(4.8, 1.4, 2.2), vacNozzleMat);
-    vacMouth.position.set(0, 0.7, 0);
-    vacMouth.castShadow = true;
-    vacuumGroup.add(vacMouth);
-
-    // Chrome Rollers & Edge Lights
-    const roller = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 4.4, 12), vacChromeMat);
-    roller.rotation.z = Math.PI / 2;
-    roller.position.set(0, 0.3, 0.8);
-    vacuumGroup.add(roller);
-
-    // Suction Vortex Ring (Visual danger zone)
-    const suctionRing = new THREE.Mesh(new THREE.RingGeometry(1.0, 2.2, 16), vacGlowMat);
-    suctionRing.rotation.x = -Math.PI / 2;
-    suctionRing.position.set(0, 0.05, 1.2);
-    vacuumGroup.add(suctionRing);
-
-    // Vacuum Body / Neck Extension
-    const vacNeck = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.9, 4.0, 12), vacChromeMat);
-    vacNeck.rotation.x = -Math.PI / 4;
-    vacNeck.position.set(0, 2.4, -1.2);
-    vacuumGroup.add(vacNeck);
-
-    // Giant Red Canister Body in back
-    const vacBody = new THREE.Mesh(new THREE.CylinderGeometry(2.2, 2.2, 5.0, 16), vacNozzleMat);
-    vacBody.rotation.x = -Math.PI / 3;
-    vacBody.position.set(0, 5.2, -4.5);
-    vacuumGroup.add(vacBody);
-
-    // Giant Headlight (Illuminates you when in range!)
-    const vacSpot = new THREE.SpotLight(0xff5722, 5.0, 25, Math.PI / 4, 0.6);
-    vacSpot.position.set(0, 1.5, 0.8);
-    vacSpot.target.position.set(0, 0, 8);
-    vacuumGroup.add(vacSpot);
-    vacuumGroup.add(vacSpot.target);
-
-    // Vacuum AI Tracker State
-    const vacuum = {
-      pos: new THREE.Vector3(0, 0, -32),
-      speed: 3.2,
-      baseSpeed: 3.2,
-      maxSpeed: 6.8,
-      suctionRadius: 3.2
-    };
-    vacuumGroup.position.copy(vacuum.pos);
-
-    // Dust particles sucked into the vacuum
-    const dustCount = 40;
-    const dustGeo = new THREE.BufferGeometry();
-    const dustPos = new Float32Array(dustCount * 3);
-    for (let i = 0; i < dustCount * 3; i++) dustPos[i] = 0;
-    dustGeo.setAttribute('position', new THREE.BufferAttribute(dustPos, 3));
-    const dustMat = new THREE.PointsMaterial({ color: 0xffab91, size: 0.18, transparent: true, opacity: 0.8 });
-    const dustParticles = new THREE.Points(dustGeo, dustMat);
-    vacuumGroup.add(dustParticles);
-
-    // -------------------------------------------------------------
-    // CONTROLS & JOYSTICK
-    // -------------------------------------------------------------
-    let moveInput = { x: 0, y: 0 };
-    const joystickZone = document.getElementById('joystick-zone');
-    const joystickKnob = document.getElementById('joystick-knob');
-    let joystickActive = false;
-    let joystickOrigin = { x: 0, y: 0 };
-
-    function handleJoyStart(touchX, touchY) {
-      joystickActive = true;
-      const rect = joystickZone.getBoundingClientRect();
-      joystickOrigin = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
-      handleJoyMove(touchX, touchY);
-    }
-
-    function handleJoyMove(touchX, touchY) {
-      if (!joystickActive) return;
-      const dx = touchX - joystickOrigin.x;
-      const dy = touchY - joystickOrigin.y;
-      const maxDist = 45;
-      const dist = Math.min(Math.sqrt(dx * dx + dy * dy), maxDist);
-      const angle = Math.atan2(dy, dx);
-
-      const kx = Math.cos(angle) * dist;
-      const ky = Math.sin(angle) * dist;
-      joystickKnob.style.transform = `translate(${kx}px, ${ky}px)`;
-
-      moveInput.x = kx / maxDist;
-      moveInput.y = ky / maxDist;
-    }
-
-    function handleJoyEnd() {
-      joystickActive = false;
-      joystickKnob.style.transform = 'translate(0px, 0px)';
-      moveInput.x = 0;
-      moveInput.y = 0;
-    }
-
-    joystickZone.addEventListener('touchstart', (e) => {
-      e.preventDefault();
-      handleJoyStart(e.touches[0].clientX, e.touches[0].clientY);
-    }, { passive: false });
-
-    window.addEventListener('touchmove', (e) => {
-      if (joystickActive) {
-        for (let i = 0; i < e.touches.length; i++) {
-          if (e.touches[i].target === joystickZone || e.touches[i].identifier === 0) {
-            handleJoyMove(e.touches[i].clientX, e.touches[i].clientY);
-            break;
-          }
-        }
-      }
-    });
-
-    window.addEventListener('touchend', (e) => {
-      if (e.touches.length === 0) handleJoyEnd();
-    });
-
-    // Keyboard support for desktop testing
-    const keys = {};
-    window.addEventListener('keydown', (e) => { keys[e.code] = true; });
-    window.addEventListener('keyup', (e) => { keys[e.code] = false; });
-
-    // Buttons
-    const btnJump = document.getElementById('btn-jump');
-    btnJump.addEventListener('touchstart', (e) => {
-      e.preventDefault();
-      if (player.isGrounded) {
-        player.vel.y = player.jumpForce;
-        player.isGrounded = false;
-        playSound('jump');
-        nativeVibrate('light');
-      }
-    });
-
-    const btnBoost = document.getElementById('btn-boost');
-    btnBoost.addEventListener('touchstart', (e) => {
-      e.preventDefault();
-      player.isSprinting = true;
-      btnBoost.style.background = '#ff5722';
-      nativeVibrate('light');
-    });
-    btnBoost.addEventListener('touchend', (e) => {
-      e.preventDefault();
-      player.isSprinting = false;
-      btnBoost.style.background = '#00897b';
-    });
-
-    // Check updates button & modal wiring
-    const updateModal = document.getElementById('update-modal');
-    const updateTitle = document.getElementById('update-title');
-    const updateDesc = document.getElementById('update-desc');
-    const updateConfirmBtn = document.getElementById('update-confirm-btn');
-    const updateCancelBtn = document.getElementById('update-cancel-btn');
-    let pendingDownloadUrl = null;
-
-    document.getElementById('btn-update').addEventListener('click', () => {
-      nativeVibrate('light');
-      if (window.AndroidNative && window.AndroidNative.checkForUpdates) {
-        window.AndroidNative.checkForUpdates();
-      } else {
-        alert('Check for updates is available inside the Android APK.');
-      }
-    });
-
-    window.onUpdateResult = function(event, version, downloadUrl) {
-      if (event === 'updateAvailable') {
-        pendingDownloadUrl = downloadUrl;
-        updateTitle.innerText = 'New Update (v' + version + ')';
-        updateDesc.innerText = 'A newer version of Tiny Dummy: Vacuum Escape is ready to install. Update now?';
-        updateModal.style.display = 'flex';
-      }
+      pos: new THREE.Vector3(35, 0, 0), // Start in Cap'n Clarks Safe Haven
+      vel: new THREE.Vector3(),
+      rotY: -Math.PI / 2,
+      speed: 4.8,
+      sprintMult: 1.6,
+      radius: 0.45,
+      stamina: 100,
+      isSprinting: false,
+      firstPerson: false,
+      carriedItem: null,
+      placementRot: 0
     };
 
-    updateCancelBtn.addEventListener('click', () => {
-      updateModal.style.display = 'none';
-    });
+    // Cycle Config
+    const DAY_DURATION = 75; // 75s of peaceful scavenging & base decorating
+    const WARN_DURATION = 8; // 8s warning flickering
+    const NIGHT_DURATION = 42; // 42s Lights Out survival horror
 
-    updateConfirmBtn.addEventListener('click', () => {
-      updateModal.style.display = 'none';
-      if (pendingDownloadUrl && window.AndroidNative && window.AndroidNative.downloadAndInstallUpdate) {
-        window.AndroidNative.downloadAndInstallUpdate(pendingDownloadUrl);
-      }
-    });
-
-    // -------------------------------------------------------------
-    // GAME LOOP & PHYSICS
-    // -------------------------------------------------------------
-    let gameStartTime = performance.now();
+    let cyclePhase = 'DAY'; // 'DAY' | 'WARNING' | 'NIGHT'
+    let phaseTimeRemaining = DAY_DURATION;
+    let totalScore = 0;
     let isGameOver = false;
-    let scoreCoins = 0;
-    let runTime = 0;
 
-    const timerEl = document.getElementById('survival-timer');
-    const coinEl = document.getElementById('coin-counter');
-    const threatDistEl = document.getElementById('threat-dist');
-    const dangerFill = document.getElementById('danger-fill');
-    const vignette = document.getElementById('vignette');
-    const gameOverModal = document.getElementById('game-over-modal');
-    const finalTimeEl = document.getElementById('final-time');
-    const finalCoinsEl = document.getElementById('final-coins');
+    // Elements
+    const phaseBadgeEl = document.getElementById('phase-badge');
+    const phaseTimerEl = document.getElementById('phase-timer');
+    const safeStatusEl = document.getElementById('safe-status');
+    const flickerOverlay = document.getElementById('flicker-overlay');
+    const bannerEl = document.getElementById('banner-alert');
+    const bannerMsg = document.getElementById('banner-msg');
+    const interactPrompt = document.getElementById('interact-prompt');
+    const promptLabel = document.getElementById('prompt-label');
+    const carryHud = document.getElementById('carry-hud');
+    const staminaFill = document.getElementById('stamina-fill');
+    const grabBtnLabel = document.getElementById('grab-btn-label');
 
-    function resetGame() {
-      player.pos.set(0, 0, 10);
-      player.vel.set(0, 0, 0);
-      player.isGrounded = true;
-      dummyGroup.position.copy(player.pos);
-
-      vacuum.pos.set(0, 0, -32);
-      vacuum.speed = vacuum.baseSpeed;
-      vacuumGroup.position.copy(vacuum.pos);
-
-      gameStartTime = performance.now();
-      isGameOver = false;
-      scoreCoins = 0;
-      coinEl.innerText = '0';
-      gameOverModal.style.display = 'none';
-      vignette.style.boxShadow = 'inset 0 0 100px rgba(255, 0, 0, 0)';
+    function showBanner(msg, icon = '🚛') {
+      document.getElementById('banner-icon').innerText = icon;
+      bannerMsg.innerText = msg;
+      bannerEl.classList.add('show');
+      setTimeout(() => bannerEl.classList.remove('show'), 3500);
     }
 
-    document.getElementById('btn-restart').addEventListener('click', () => {
-      nativeVibrate('medium');
-      resetGame();
-    });
+    /* ============================================================
+       10. BASE PERSISTENCE (LOCAL STORAGE)
+       ============================================================ */
+    const STORAGE_KEY = 'backrooms_decor_base_v2';
 
-    const clock = new THREE.Clock();
+    function saveBaseToStorage() {
+      const savedList = [];
+      furnitureItems.forEach(item => {
+        if (!item.inStore && !item.isCarried) {
+          savedList.push({
+            typeKey: item.typeKey,
+            x: Number(item.group.position.x.toFixed(2)),
+            z: Number(item.group.position.z.toFixed(2)),
+            rotY: Number(item.group.rotation.y.toFixed(2))
+          });
+        }
+      });
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(savedList));
+      updateDecorCounter();
+    }
 
-    function animate() {
-      requestAnimationFrame(animate);
-
-      const dt = Math.min(clock.getDelta(), 0.1);
-      if (isGameOver) {
-        renderer.render(scene, camera);
-        return;
+    function loadBaseFromStorage() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return;
+        const savedList = JSON.parse(raw);
+        if (Array.isArray(savedList)) {
+          savedList.forEach(item => {
+            spawnFurniture(item.typeKey, item.x, item.z, item.rotY, true);
+          });
+        }
+      } catch (e) {
+        console.warn("Could not load base items", e);
       }
+      updateDecorCounter();
+    }
 
-      runTime = ((performance.now() - gameStartTime) / 1000);
-      timerEl.innerText = runTime.toFixed(1) + 's';
+    function updateDecorCounter() {
+      const placedCount = furnitureItems.filter(i => !i.inStore && !i.isCarried).length;
+      document.getElementById('decor-stats').innerText = `Base Items Placed: ${placedCount}`;
+    }
 
-      // 1. Process Input
-      let moveX = moveInput.x;
-      let moveZ = moveInput.y;
-
-      if (keys['KeyW'] || keys['ArrowUp']) moveZ -= 1;
-      if (keys['KeyS'] || keys['ArrowDown']) moveZ += 1;
-      if (keys['KeyA'] || keys['ArrowLeft']) moveX -= 1;
-      if (keys['KeyD'] || keys['ArrowRight']) moveX += 1;
-      if (keys['Space'] && player.isGrounded) {
-        player.vel.y = player.jumpForce;
-        player.isGrounded = false;
-        playSound('jump');
+    function resetBaseStorage() {
+      if (confirm("Reset all decorated furniture in your base?")) {
+        localStorage.removeItem(STORAGE_KEY);
+        for (let i = furnitureItems.length - 1; i >= 0; i--) {
+          if (!furnitureItems[i].inStore) {
+            scene.remove(furnitureItems[i].group);
+            furnitureItems.splice(i, 1);
+          }
+        }
+        toggleMenu();
+        showBanner("Base items reset to clean slate", "🧹");
       }
+    }
 
-      const inputLen = Math.sqrt(moveX * moveX + moveZ * moveZ);
-      const isMoving = inputLen > 0.08;
-      const speed = (player.isSprinting || keys['ShiftLeft']) ? player.boostSpeed : player.baseSpeed;
-      let runBob = 0;
+    /* ============================================================
+       11. GRAB, CARRY, ROTATE & PLACE MECHANICS
+       ============================================================ */
+    function getNearestFurniture() {
+      let nearest = null;
+      let minDist = 2.8;
+      furnitureItems.forEach(item => {
+        if (item.isCarried) return;
+        const dist = player.pos.distanceTo(item.group.position);
+        if (dist < minDist) {
+          minDist = dist;
+          nearest = item;
+        }
+      });
+      return nearest;
+    }
 
-      if (isMoving) {
-        const normX = moveX / Math.max(1, inputLen);
-        const normZ = moveZ / Math.max(1, inputLen);
-        player.pos.x += normX * speed * dt;
-        player.pos.z += normZ * speed * dt;
-        player.rotY = Math.atan2(normX, normZ);
-        dummyGroup.rotation.y = player.rotY;
-
-        // Running human biomechanics animation
-        const runCycle = performance.now() * 0.015;
-        const sinCycle = Math.sin(runCycle);
-        const cosCycle = Math.cos(runCycle);
-
-        // Arms swing naturally at shoulders and flex at elbows
-        leftArmRig.shoulderPivot.rotation.x = sinCycle * 0.75;
-        leftArmRig.elbowPivot.rotation.x = Math.max(0, -sinCycle * 0.6) + 0.3;
-
-        rightArmRig.shoulderPivot.rotation.x = -sinCycle * 0.75;
-        rightArmRig.elbowPivot.rotation.x = Math.max(0, sinCycle * 0.6) + 0.3;
-
-        // Legs swing at hips and bend at knees (human stride)
-        leftLegRig.hipPivot.rotation.x = -sinCycle * 0.85;
-        leftLegRig.kneePivot.rotation.x = Math.max(0, sinCycle * 0.95);
-
-        rightLegRig.hipPivot.rotation.x = sinCycle * 0.85;
-        rightLegRig.kneePivot.rotation.x = Math.max(0, -sinCycle * 0.95);
-
-        // Subtle torso bounce during running stride
-        const torsoBob = Math.abs(sinCycle) * 0.035;
-        runBob = torsoBob;
+    function handlePrimaryAction() {
+      initAudio();
+      if (player.carriedItem) {
+        placeCarriedItem();
       } else {
-        runBob = 0;
-        // Natural relaxed idle pose
-        leftArmRig.shoulderPivot.rotation.x = 0;
-        leftArmRig.elbowPivot.rotation.x = 0.15;
-        rightArmRig.shoulderPivot.rotation.x = 0;
-        rightArmRig.elbowPivot.rotation.x = 0.15;
+        const target = getNearestFurniture();
+        if (target) {
+          grabFurniture(target);
+        } else {
+          nativeVibrate('light');
+        }
+      }
+    }
 
-        leftLegRig.hipPivot.rotation.x = 0;
-        leftLegRig.kneePivot.rotation.x = 0;
-        rightLegRig.hipPivot.rotation.x = 0;
-        rightLegRig.kneePivot.rotation.x = 0;
+    function grabFurniture(item) {
+      if (player.carriedItem) return;
+      initAudio();
+      playSound('grab');
+      nativeVibrate('medium');
+
+      player.carriedItem = item;
+      item.isCarried = true;
+      item.inStore = false; // Claimed by player!
+      player.placementRot = item.group.rotation.y;
+
+      // Hide real group, attach to carry anchor
+      scene.remove(item.group);
+      carryAnchor.add(item.group);
+      item.group.position.set(0, 0, 0);
+      item.group.rotation.y = 0;
+
+      // Update Ghost Hologram
+      rebuildGhostMesh(item.typeKey);
+      ghostGroup.visible = true;
+
+      // Arm pose
+      leftArm.shoulderPivot.rotation.x = -Math.PI / 3;
+      rightArm.shoulderPivot.rotation.x = -Math.PI / 3;
+
+      // HUD update
+      carryHud.style.display = 'flex';
+      grabBtnLabel.innerText = 'PLACE';
+      showBanner(`Carrying: ${item.name}`, '🖐');
+    }
+
+    function rebuildGhostMesh(typeKey) {
+      while (ghostGroup.children.length > 0) {
+        ghostGroup.remove(ghostGroup.children[0]);
+      }
+      const typeDef = FURNITURE_TYPES[typeKey];
+      if (!typeDef) return;
+
+      const preview = typeDef.create();
+      // Apply holographic transparent material
+      preview.traverse(child => {
+        if (child.isMesh) {
+          child.material = new THREE.MeshBasicMaterial({
+            color: 0x3fb950,
+            wireframe: true,
+            transparent: true,
+            opacity: 0.6
+          });
+        }
+      });
+      ghostGroup.add(preview);
+    }
+
+    function rotateCarriedItem() {
+      if (!player.carriedItem) return;
+      initAudio();
+      playSound('click');
+      nativeVibrate('light');
+      player.placementRot += Math.PI / 4;
+      ghostGroup.rotation.y = player.placementRot;
+    }
+
+    function placeCarriedItem() {
+      if (!player.carriedItem) return;
+      initAudio();
+      playSound('place');
+      nativeVibrate('heavy');
+
+      const item = player.carriedItem;
+      carryAnchor.remove(item.group);
+      scene.add(item.group);
+
+      item.group.position.copy(ghostGroup.position);
+      item.group.rotation.y = player.placementRot;
+      item.isCarried = false;
+      player.carriedItem = null;
+
+      ghostGroup.visible = false;
+      carryHud.style.display = 'none';
+      grabBtnLabel.innerText = 'GRAB';
+
+      // Reset arm pose
+      leftArm.shoulderPivot.rotation.x = 0;
+      rightArm.shoulderPivot.rotation.x = 0;
+
+      saveBaseToStorage();
+      showBanner(`Placed ${item.name} in Base!`, '📍');
+    }
+
+    function dropCarriedItem() {
+      if (!player.carriedItem) return;
+      initAudio();
+      playSound('place');
+      nativeVibrate('light');
+
+      const item = player.carriedItem;
+      carryAnchor.remove(item.group);
+      scene.add(item.group);
+
+      const fwd = new THREE.Vector3(0, 0, 1.2).applyAxisAngle(new THREE.Vector3(0, 1, 0), player.rotY);
+      item.group.position.copy(player.pos).add(fwd);
+      item.group.position.y = 0;
+      item.group.rotation.y = player.placementRot;
+      item.isCarried = false;
+      player.carriedItem = null;
+
+      ghostGroup.visible = false;
+      carryHud.style.display = 'none';
+      grabBtnLabel.innerText = 'GRAB';
+
+      leftArm.shoulderPivot.rotation.x = 0;
+      rightArm.shoulderPivot.rotation.x = 0;
+      saveBaseToStorage();
+    }
+
+    /* ============================================================
+       12. DAY / NIGHT & LIGHTS OUT LOGIC
+       ============================================================ */
+    function updateCycle(dt) {
+      phaseTimeRemaining -= dt;
+
+      // Update timer HUD
+      const mins = Math.floor(Math.max(0, phaseTimeRemaining) / 60);
+      const secs = Math.floor(Math.max(0, phaseTimeRemaining) % 60);
+      phaseTimerEl.innerText = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+
+      if (cyclePhase === 'DAY') {
+        if (phaseTimeRemaining <= 0) {
+          // Switch to Warning
+          cyclePhase = 'WARNING';
+          phaseTimeRemaining = WARN_DURATION;
+          phaseBadgeEl.className = 'phase-badge warning';
+          phaseBadgeEl.innerText = '⚠️ POWER FLICKER';
+          playSound('flicker');
+          nativeVibrate('explosion');
+          showBanner('WARNING: Store closing! Lights Out in 8s!', '⚠️');
+        }
+      } else if (cyclePhase === 'WARNING') {
+        // Fast random electrical flicker
+        if (Math.random() > 0.45) {
+          flickerOverlay.style.background = 'rgba(0,0,0,0.85)';
+          ambientLight.intensity = 0.08;
+        } else {
+          flickerOverlay.style.background = 'rgba(0,0,0,0)';
+          ambientLight.intensity = 0.75;
+        }
+
+        if (phaseTimeRemaining <= 0) {
+          // BLACKOUT!
+          cyclePhase = 'NIGHT';
+          phaseTimeRemaining = NIGHT_DURATION;
+          phaseBadgeEl.className = 'phase-badge night';
+          phaseBadgeEl.innerText = '🌑 LIGHTS OUT';
+          flickerOverlay.style.background = 'rgba(0,0,0,0)';
+          playSound('powerdown');
+          nativeVibrate('explosion');
+
+          // Turn off all ceiling & store lights
+          ambientLight.intensity = 0.02;
+          ambientLight.color.setHex(0x0a0c14);
+          scene.background.setHex(0x020204);
+          scene.fog.color.setHex(0x020204);
+          scene.fog.density = 0.08;
+          mainStoreLight.intensity = 0;
+          ceilingLights.forEach(l => l.intensity = 0);
+
+          smilerGroup.visible = true;
+          smilerState.isHunting = true;
+          // Spawn Smiler in corridor far from player
+          smilerState.pos.set(-player.pos.x * 0.8, 1.6, -player.pos.z * 0.8);
+          smilerGroup.position.copy(smilerState.pos);
+
+          showBanner('LIGHTS OUT! Stay inside lamp light or die!', '💀');
+        }
+      } else if (cyclePhase === 'NIGHT') {
+        if (phaseTimeRemaining <= 0) {
+          // Morning Dawn!
+          cyclePhase = 'DAY';
+          phaseTimeRemaining = DAY_DURATION;
+          phaseBadgeEl.className = 'phase-badge';
+          phaseBadgeEl.innerText = '☀️ STORE OPEN';
+
+          // Restore lights
+          ambientLight.intensity = 0.75;
+          ambientLight.color.setHex(0xfff1c2);
+          scene.background.setHex(0xd6c278);
+          scene.fog.color.setHex(0xd6c278);
+          scene.fog.density = 0.022;
+          mainStoreLight.intensity = 1.2;
+          ceilingLights.forEach(l => l.intensity = 0.9);
+
+          smilerGroup.visible = false;
+          smilerState.isHunting = false;
+
+          playSound('dawn');
+          nativeVibrate('medium');
+          totalScore += 100;
+          populateStore(); // Fresh furniture restock!
+          showBanner("SURVIVED THE NIGHT! Cap'n Clarks restocked!", '🎉');
+        }
       }
 
-      // Gravity & Jumping
-      player.vel.y -= 18.0 * dt;
-      player.pos.y += player.vel.y * dt;
+      // Check if Player is inside any Light Safe Zone
+      checkPlayerSafety();
+    }
 
-      // Floor & Obstacle Collision
-      let groundY = 0;
-      for (let i = 0; i < obstacles.length; i++) {
-        const obs = obstacles[i];
-        if (
-          player.pos.x >= obs.box3.min.x - player.radius &&
-          player.pos.x <= obs.box3.max.x + player.radius &&
-          player.pos.z >= obs.box3.min.z - player.radius &&
-          player.pos.z <= obs.box3.max.z + player.radius
-        ) {
-          // If falling from top onto obstacle
-          if (player.pos.y >= obs.box3.max.y - 0.25 && player.vel.y <= 0) {
-            groundY = Math.max(groundY, obs.box3.max.y);
-          } else {
-            // Push back horizontal collision
-            const pushX = (player.pos.x < (obs.box3.min.x + obs.box3.max.x)/2) ? (obs.box3.min.x - player.radius) : (obs.box3.max.x + player.radius);
-            const pushZ = (player.pos.z < (obs.box3.min.z + obs.box3.max.z)/2) ? (obs.box3.min.z - player.radius) : (obs.box3.max.z + player.radius);
-            const distFromX = Math.abs(player.pos.x - (obs.box3.min.x + obs.box3.max.x)/2);
-            const distFromZ = Math.abs(player.pos.z - (obs.box3.min.z + obs.box3.max.z)/2);
-            if (distFromX > distFromZ) player.pos.x = pushX;
-            else player.pos.z = pushZ;
+    function checkPlayerSafety() {
+      let isSafe = false;
+
+      // In DAY or inside Cap'n Clarks store during daytime, safe
+      if (cyclePhase === 'DAY') {
+        isSafe = true;
+      } else {
+        // Check proximity to any placed active lamp or glowing arcade
+        for (let i = 0; i < furnitureItems.length; i++) {
+          const item = furnitureItems[i];
+          if (item.isLight && !item.isCarried) {
+            const dist = player.pos.distanceTo(item.group.position);
+            if (dist <= item.lightRadius) {
+              isSafe = true;
+              break;
+            }
           }
         }
       }
 
-      if (player.pos.y <= groundY) {
-        player.pos.y = groundY;
-        player.vel.y = 0;
-        player.isGrounded = true;
+      if (isSafe) {
+        safeStatusEl.className = 'safe-badge in-light';
+        safeStatusEl.innerHTML = '🛡️ SAFE (IN LIGHT)';
+        document.getElementById('vignette').style.boxShadow = 'inset 0 0 60px rgba(0, 0, 0, 0.6)';
+      } else {
+        safeStatusEl.className = 'safe-badge in-dark';
+        safeStatusEl.innerHTML = '⚠️ EXPOSED IN DARKNESS';
+        document.getElementById('vignette').style.boxShadow = 'inset 0 0 100px rgba(255, 0, 0, 0.7)';
       }
 
-      // Boundary clamp
-      player.pos.x = Math.max(-ROOM_SIZE + 1.5, Math.min(ROOM_SIZE - 1.5, player.pos.x));
-      player.pos.z = Math.max(-ROOM_SIZE + 1.5, Math.min(ROOM_SIZE - 1.5, player.pos.z));
-      dummyGroup.position.copy(player.pos);
-      dummyGroup.position.y += runBob;
+      return isSafe;
+    }
 
-      // 2. Giant Vacuum AI Chaser
-      // Vacuum slowly accelerates over time!
-      vacuum.speed = Math.min(vacuum.maxSpeed, vacuum.baseSpeed + runTime * 0.05);
+    /* ============================================================
+       13. SMILER AI & LIGHT REPULSION
+       ============================================================ */
+    function updateSmiler(dt) {
+      if (!smilerState.isHunting || cyclePhase !== 'NIGHT') return;
 
-      const toPlayer = new THREE.Vector3().subVectors(player.pos, vacuum.pos);
-      const distToPlayer = toPlayer.length();
+      const toPlayer = new THREE.Vector3().subVectors(player.pos, smilerState.pos);
+      const dist = toPlayer.length();
       toPlayer.y = 0;
       toPlayer.normalize();
 
-      vacuum.pos.addScaledVector(toPlayer, vacuum.speed * dt);
-      vacuumGroup.position.copy(vacuum.pos);
-      vacuumGroup.rotation.y = Math.atan2(toPlayer.x, toPlayer.z);
+      // Check if player is protected by placed light
+      const isPlayerSafe = checkPlayerSafety();
 
-      // Vacuum dust intake animation
-      const dAttr = dustGeo.attributes.position;
-      for (let i = 0; i < dustCount; i++) {
-        const idx = i * 3;
-        let px = dAttr.getX(i);
-        let py = dAttr.getY(i);
-        let pz = dAttr.getZ(i);
-        pz -= 0.35;
-        if (pz < 1.0) {
-          px = (Math.random() - 0.5) * 6;
-          py = Math.random() * 1.5 + 0.1;
-          pz = Math.random() * 8 + 4;
+      if (smilerState.isRepelled) {
+        smilerState.repelTimer -= dt;
+        if (smilerState.repelTimer <= 0) {
+          smilerState.isRepelled = false;
         }
-        dAttr.setXYZ(i, px, py, pz);
-      }
-      dAttr.needsUpdate = true;
-
-      // 3. Suction Pull on Player when near!
-      if (distToPlayer < 9.0) {
-        // Gravitational suction pull toward vacuum nozzle
-        const pullStrength = (9.0 - distToPlayer) * 1.8;
-        const pullDir = new THREE.Vector3().subVectors(vacuum.pos, player.pos).normalize();
-        player.pos.addScaledVector(pullDir, pullStrength * dt);
-      }
-
-      // Threat HUD & Warning Vignette
-      threatDistEl.innerText = distToPlayer.toFixed(1) + ' m';
-      const dangerPct = Math.max(0, Math.min(100, ((18.0 - distToPlayer) / 16.0) * 100));
-      dangerFill.style.width = dangerPct + '%';
-      if (dangerPct > 65) {
-        dangerFill.style.background = '#ff3b30';
-        vignette.style.boxShadow = `inset 0 0 ${Math.floor(dangerPct * 1.4)}px rgba(255, 0, 0, 0.65)`;
+        // Move backward away from light
+        smilerState.pos.addScaledVector(toPlayer, -3.5 * dt);
       } else {
-        dangerFill.style.background = '#00e5ff';
-        vignette.style.boxShadow = 'inset 0 0 0px rgba(0,0,0,0)';
-      }
-
-      // 4. Catch / Game Over Check
-      if (distToPlayer <= vacuum.suctionRadius) {
-        isGameOver = true;
-        playSound('caught');
-        nativeVibrate('explosion');
-        finalTimeEl.innerText = runTime.toFixed(1) + 's';
-        finalCoinsEl.innerText = scoreCoins;
-        gameOverModal.style.display = 'flex';
-      }
-
-      // 5. Collect Batteries
-      for (let i = coins.length - 1; i >= 0; i--) {
-        const c = coins[i];
-        c.rotation.y += 2.5 * dt;
-        if (player.pos.distanceTo(c.position) < 1.2) {
-          playSound('coin');
-          nativeVibrate('light');
-          scoreCoins++;
-          coinEl.innerText = scoreCoins;
-          scene.remove(c);
-          coins.splice(i, 1);
+        // Stalk player
+        if (isPlayerSafe && dist < 7.5) {
+          // Entity hits the light sanctuary barrier!
+          playSound('screech');
+          nativeVibrate('heavy');
+          smilerState.isRepelled = true;
+          smilerState.repelTimer = 2.5;
+          showBanner("Creature recoiled from your lamp's light!", "⚡");
+        } else {
+          // Chasing in darkness
+          smilerState.pos.addScaledVector(toPlayer, smilerState.speed * dt);
         }
       }
 
-      // 6. Camera Follow (Dynamic 3rd Person Over-The-Shoulder / Arena View)
-      const targetCamPos = new THREE.Vector3(
-        player.pos.x,
-        player.pos.y + 4.5,
-        player.pos.z + 7.5
-      );
-      camera.position.lerp(targetCamPos, 0.12);
-      camera.lookAt(player.pos.x, player.pos.y + 1.0, player.pos.z);
+      smilerGroup.position.copy(smilerState.pos);
+      smilerGroup.lookAt(player.pos.x, 1.6, player.pos.z);
+
+      // Heartbeat sound frequency increases as monster approaches
+      if (dist < 12.0 && Math.random() < 0.08) {
+        playSound('click');
+        nativeVibrate('light');
+      }
+
+      // Caught check
+      if (dist < 1.2 && !isPlayerSafe) {
+        playerCaught();
+      }
+    }
+
+    function playerCaught() {
+      if (isGameOver) return;
+      isGameOver = true;
+      playSound('screech');
+      nativeVibrate('explosion');
+      document.getElementById('caught-modal').style.display = 'flex';
+    }
+
+    function respawnPlayer() {
+      document.getElementById('caught-modal').style.display = 'none';
+      isGameOver = false;
+
+      // Find player's placed bed, or default back to Cap'n Clarks
+      let bedPos = new THREE.Vector3(35, 0, 0);
+      const bedItem = furnitureItems.find(i => i.typeKey === 'bed' && !i.inStore);
+      if (bedItem) {
+        bedPos.copy(bedItem.group.position).add(new THREE.Vector3(0, 0, 1.5));
+      }
+
+      player.pos.copy(bedPos);
+      player.vel.set(0, 0, 0);
+      showBanner("Respawned at shelter. Stay in the light!", "🛏️");
+    }
+
+    /* ============================================================
+       14. CONTROLS, JOYSTICK & TOUCH ORBIT
+       ============================================================ */
+    const joyZone = document.getElementById('joystick-zone');
+    const joyThumb = document.getElementById('joystick-thumb');
+    let joyTouchId = null;
+    let joyMove = { x: 0, y: 0 };
+    const joyCenter = { x: 75, y: 75 };
+
+    joyZone.addEventListener('touchstart', e => {
+      initAudio();
+      e.preventDefault();
+      const t = e.changedTouches[0];
+      joyTouchId = t.identifier;
+      handleJoyTouch(t);
+    }, { passive: false });
+
+    joyZone.addEventListener('touchmove', e => {
+      e.preventDefault();
+      for (let i = 0; i < e.changedTouches.length; i++) {
+        if (e.changedTouches[i].identifier === joyTouchId) {
+          handleJoyTouch(e.changedTouches[i]);
+          break;
+        }
+      }
+    }, { passive: false });
+
+    function resetJoystick() {
+      joyTouchId = null;
+      joyMove = { x: 0, y: 0 };
+      joyThumb.style.transform = `translate(-50%, -50%)`;
+    }
+
+    joyZone.addEventListener('touchend', resetJoystick);
+    joyZone.addEventListener('touchcancel', resetJoystick);
+
+    function handleJoyTouch(touch) {
+      const rect = joyZone.getBoundingClientRect();
+      const dx = touch.clientX - (rect.left + rect.width / 2);
+      const dy = touch.clientY - (rect.top + rect.height / 2);
+      const maxR = 45;
+      const dist = Math.hypot(dx, dy);
+      const clampedDist = Math.min(maxR, dist);
+      const angle = Math.atan2(dy, dx);
+
+      joyMove.x = (Math.cos(angle) * clampedDist) / maxR;
+      joyMove.y = (Math.sin(angle) * clampedDist) / maxR;
+
+      joyThumb.style.transform = `translate(calc(-50% + ${Math.cos(angle) * clampedDist}px), calc(-50% + ${Math.sin(angle) * clampedDist}px))`;
+    }
+
+    // Sprint Button
+    const btnSprint = document.getElementById('btn-sprint');
+    btnSprint.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      player.isSprinting = true;
+      btnSprint.classList.add('active');
+    }, { passive: false });
+    btnSprint.addEventListener('touchend', () => {
+      player.isSprinting = false;
+      btnSprint.classList.remove('active');
+    });
+
+    // Touch Screen Swipe Camera Orbit
+    let lastTouchX = null;
+    let lastTouchY = null;
+    let camPitch = 0.25;
+
+    window.addEventListener('touchstart', e => {
+      for (let i = 0; i < e.changedTouches.length; i++) {
+        const t = e.changedTouches[i];
+        if (t.clientX > window.innerWidth * 0.45 && t.clientY < window.innerHeight * 0.75) {
+          lastTouchX = t.clientX;
+          lastTouchY = t.clientY;
+          break;
+        }
+      }
+    }, { passive: true });
+
+    window.addEventListener('touchmove', e => {
+      for (let i = 0; i < e.changedTouches.length; i++) {
+        const t = e.changedTouches[i];
+        if (lastTouchX !== null) {
+          const dx = t.clientX - lastTouchX;
+          const dy = t.clientY - lastTouchY;
+          player.rotY -= dx * 0.006;
+          camPitch = Math.max(-0.4, Math.min(0.8, camPitch + dy * 0.005));
+          lastTouchX = t.clientX;
+          lastTouchY = t.clientY;
+          break;
+        }
+      }
+    }, { passive: true });
+
+    window.addEventListener('touchend', () => {
+      lastTouchX = null;
+      lastTouchY = null;
+    });
+
+    // POV Toggle
+    function togglePOV() {
+      initAudio();
+      playSound('click');
+      nativeVibrate('light');
+      player.firstPerson = !player.firstPerson;
+      playerGroup.visible = !player.firstPerson;
+      document.getElementById('btn-pov').classList.toggle('active', player.firstPerson);
+    }
+
+    // Flashlight Toggle
+    function toggleFlashlight() {
+      initAudio();
+      playSound('click');
+      nativeVibrate('light');
+      flashlightOn = !flashlightOn;
+      flashlight.intensity = flashlightOn ? 2.2 : 0;
+      document.getElementById('btn-light').classList.toggle('active', flashlightOn);
+    }
+
+    function toggleMenu() {
+      initAudio();
+      const m = document.getElementById('menu-modal');
+      m.style.display = m.style.display === 'flex' ? 'none' : 'flex';
+      updateDecorCounter();
+    }
+
+    // Keyboard support for desktop browser testing
+    const keys = {};
+    window.addEventListener('keydown', e => {
+      initAudio();
+      keys[e.key.toLowerCase()] = true;
+      if (e.key === 'e' || e.key === 'E') handlePrimaryAction();
+      if (e.key === 'r' || e.key === 'R') rotateCarriedItem();
+      if (e.key === 'f' || e.key === 'F') toggleFlashlight();
+      if (e.key === 'v' || e.key === 'V') togglePOV();
+    });
+    window.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
+
+    /* ============================================================
+       15. MAIN LOOP & COLLISION RESOLUTION
+       ============================================================ */
+    let lastTime = performance.now();
+    let walkAnimTime = 0;
+
+    function animate(now) {
+      requestAnimationFrame(animate);
+      const dt = Math.min((now - lastTime) / 1000, 0.1);
+      lastTime = now;
+
+      if (!isGameOver) {
+        updateCycle(dt);
+        updateSmiler(dt);
+      }
+
+      // Movement Vector
+      let moveX = joyMove.x;
+      let moveZ = joyMove.y;
+
+      // Keyboard fallback
+      if (keys['w'] || keys['arrowup']) moveZ = -1;
+      if (keys['s'] || keys['arrowdown']) moveZ = 1;
+      if (keys['a'] || keys['arrowleft']) moveX = -1;
+      if (keys['d'] || keys['arrowright']) moveX = 1;
+      if (keys['shift']) player.isSprinting = true;
+
+      // Stamina system
+      if (player.isSprinting && (moveX !== 0 || moveZ !== 0)) {
+        player.stamina = Math.max(0, player.stamina - dt * 25);
+        if (player.stamina <= 0) player.isSprinting = false;
+      } else {
+        player.stamina = Math.min(100, player.stamina + dt * 18);
+      }
+      staminaFill.style.width = player.stamina + '%';
+
+      const currentSpeed = player.speed * (player.isSprinting ? player.sprintMult : 1.0);
+      const moveMag = Math.hypot(moveX, moveZ);
+
+      if (moveMag > 0.05) {
+        const normX = moveX / Math.max(1, moveMag);
+        const normZ = moveZ / Math.max(1, moveMag);
+
+        // Movement relative to player's view rotation
+        const forward = new THREE.Vector3(0, 0, -1).applyAxisAngle(new THREE.Vector3(0, 1, 0), player.rotY);
+        const right = new THREE.Vector3(1, 0, 0).applyAxisAngle(new THREE.Vector3(0, 1, 0), player.rotY);
+
+        const worldDir = new THREE.Vector3()
+          .addScaledVector(forward, -normZ)
+          .addScaledVector(right, normX)
+          .normalize();
+
+        const stepX = worldDir.x * currentSpeed * dt;
+        const stepZ = worldDir.z * currentSpeed * dt;
+
+        // Wall collision check
+        let newX = player.pos.x + stepX;
+        let newZ = player.pos.z + stepZ;
+
+        // Bounding box collision resolution
+        for (let i = 0; i < walls.length; i++) {
+          const w = walls[i];
+          if (
+            newX + player.radius > w.min.x &&
+            newX - player.radius < w.max.x &&
+            player.pos.z + player.radius > w.min.z &&
+            player.pos.z - player.radius < w.max.z
+          ) {
+            newX = player.pos.x; // Block X
+          }
+          if (
+            player.pos.x + player.radius > w.min.x &&
+            player.pos.x - player.radius < w.max.x &&
+            newZ + player.radius > w.min.z &&
+            newZ - player.radius < w.max.z
+          ) {
+            newZ = player.pos.z; // Block Z
+          }
+        }
+
+        player.pos.x = newX;
+        player.pos.z = newZ;
+
+        // Limb walk animation
+        walkAnimTime += dt * currentSpeed * 2.4;
+        const legSwing = Math.sin(walkAnimTime) * 0.6;
+        leftLeg.hipPivot.rotation.x = legSwing;
+        leftLeg.kneePivot.rotation.x = Math.max(0, -legSwing * 0.8);
+        rightLeg.hipPivot.rotation.x = -legSwing;
+        rightLeg.kneePivot.rotation.x = Math.max(0, legSwing * 0.8);
+
+        if (!player.carriedItem) {
+          leftArm.shoulderPivot.rotation.x = -legSwing * 0.6;
+          rightArm.shoulderPivot.rotation.x = legSwing * 0.6;
+        }
+      } else {
+        // Idle pose
+        leftLeg.hipPivot.rotation.x = 0;
+        leftLeg.kneePivot.rotation.x = 0;
+        rightLeg.hipPivot.rotation.x = 0;
+        rightLeg.kneePivot.rotation.x = 0;
+        if (!player.carriedItem) {
+          leftArm.shoulderPivot.rotation.x = 0;
+          rightArm.shoulderPivot.rotation.x = 0;
+        }
+      }
+
+      // Sync player group
+      playerGroup.position.copy(player.pos);
+      playerGroup.rotation.y = player.rotY;
+
+      // Update Flashlight
+      flashlight.position.set(player.pos.x, 1.6, player.pos.z);
+      const fwd = new THREE.Vector3(0, -0.15, 1).applyAxisAngle(new THREE.Vector3(0, 1, 0), player.rotY);
+      flashlight.target.position.copy(flashlight.position).add(fwd);
+
+      // Ghost placement projection
+      if (player.carriedItem) {
+        const placeOffset = new THREE.Vector3(0, 0, 2.2).applyAxisAngle(new THREE.Vector3(0, 1, 0), player.rotY);
+        ghostGroup.position.copy(player.pos).add(placeOffset);
+        ghostGroup.position.y = 0;
+        ghostGroup.rotation.y = player.placementRot;
+      }
+
+      // Proximity prompt indicator
+      if (!player.carriedItem) {
+        const target = getNearestFurniture();
+        if (target) {
+          interactPrompt.style.display = 'flex';
+          promptLabel.innerText = `[GRAB] ${target.name}`;
+        } else {
+          interactPrompt.style.display = 'none';
+        }
+      } else {
+        interactPrompt.style.display = 'none';
+      }
+
+      // Camera Positioning
+      if (player.firstPerson) {
+        camera.position.set(player.pos.x, 2.05, player.pos.z);
+        const camDir = new THREE.Vector3(0, camPitch, 1).applyAxisAngle(new THREE.Vector3(0, 1, 0), player.rotY);
+        camera.lookAt(camera.position.clone().add(camDir));
+      } else {
+        // Third Person Orbit
+        const camDist = 5.2;
+        const camY = 3.2 + camPitch * 3;
+        const camOffset = new THREE.Vector3(0, camY, -camDist).applyAxisAngle(new THREE.Vector3(0, 1, 0), player.rotY);
+        camera.position.copy(player.pos).add(camOffset);
+        camera.lookAt(player.pos.x, 1.4, player.pos.z);
+      }
 
       renderer.render(scene, camera);
     }
+
+    // Initialize Map, Audio & Save State
+    populateStore();
+    loadBaseFromStorage();
     requestAnimationFrame(animate);
+
+    /* ============================================================
+       16. IN-APP UPDATE SYSTEM
+       ============================================================ */
+    function checkAppUpdate() {
+      initAudio();
+      playSound('click');
+      if (window.AndroidNative && window.AndroidNative.checkForUpdates) {
+        window.AndroidNative.checkForUpdates();
+      } else {
+        alert("Running in web browser mode. On Android, this triggers direct GitHub APK updates.");
+      }
+    }
+
+    window.onUpdateResult = function(event, version, downloadUrl) {
+      if (event === 'updateAvailable') {
+        const modal = document.getElementById('update-modal');
+        document.getElementById('update-desc').innerText = `Version v${version} of Decorate The Backrooms is ready!`;
+        const btn = document.getElementById('btn-download-update');
+        btn.onclick = function() {
+          if (window.AndroidNative && window.AndroidNative.downloadAndInstallUpdate) {
+            window.AndroidNative.downloadAndInstallUpdate(downloadUrl);
+          }
+        };
+        modal.style.display = 'flex';
+      }
+    };
 
     window.addEventListener('resize', () => {
       camera.aspect = window.innerWidth / window.innerHeight;
