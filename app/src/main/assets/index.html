@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Crash Dummy 3D</title>
+  <title>Tiny Dummy: Vacuum Escape</title>
   <style>
     * {
       box-sizing: border-box;
@@ -17,8 +17,8 @@
       width: 100%;
       height: 100%;
       overflow: hidden;
-      background: #0d1117;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: #111;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
     #canvas-container {
       position: absolute;
@@ -42,314 +42,294 @@
       z-index: 10;
     }
     .hud-card {
-      background: #121826;
+      background: #161b22;
       border: 1px solid rgba(255, 255, 255, 0.15);
       border-radius: 16px;
       padding: 10px 16px;
       color: #fff;
     }
-    .score-label {
-      font-size: 11px;
-      font-weight: 700;
-      letter-spacing: 1.2px;
-      text-transform: uppercase;
+    .hud-title {
+      font-size: 10px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
       color: #ff9800;
+      text-transform: uppercase;
     }
-    .score-value {
+    .hud-score {
       font-size: 26px;
       font-weight: 900;
-      letter-spacing: -0.5px;
-      color: #ffffff;
-      text-shadow: 0 0 12px rgba(255, 152, 0, 0.6);
-      transition: transform 0.1s ease;
-    }
-    .score-bounce {
-      transform: scale(1.25);
-      color: #ffeb3b;
-    }
-
-    .stat-row {
-      display: flex;
-      gap: 12px;
-      font-size: 12px;
-      font-weight: 600;
-      color: #90a4ae;
-    }
-    .stat-val {
       color: #00e5ff;
-      font-weight: 700;
+    }
+    .hud-sub {
+      font-size: 11px;
+      font-weight: 600;
+      color: #8b949e;
+      margin-top: 2px;
     }
 
-    /* Floating Hit Text */
-    .hit-popup {
-      position: absolute;
-      pointer-events: none;
-      font-weight: 900;
-      font-size: 22px;
-      transform: translate(-50%, -50%);
-      color: #ffeb3b;
-      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8), 0 0 10px rgba(255, 87, 34, 0.8);
-      animation: popFade 0.75s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
-      z-index: 50;
-    }
-    @keyframes popFade {
-      0% { opacity: 0; transform: translate(-50%, 0) scale(0.4); }
-      20% { opacity: 1; transform: translate(-50%, -20px) scale(1.2); }
-      100% { opacity: 0; transform: translate(-50%, -60px) scale(0.9); }
-    }
-
-    /* Quick Action Controls on Left/Right */
-    .side-btn {
-      pointer-events: auto;
+    /* Threat Indicator */
+    #threat-bar-container {
       background: #161b22;
       border: 1px solid rgba(255, 255, 255, 0.15);
-      border-radius: 12px;
+      border-radius: 16px;
       padding: 10px 14px;
-      color: #cfd8dc;
-      font-size: 12px;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      cursor: pointer;
-      transition: background 0.15s, transform 0.1s;
-    }
-    .side-btn:active {
-      transform: scale(0.94);
-      background: rgba(255, 87, 34, 0.4);
-    }
-
-    /* Bottom Weapon Dock */
-    #weapon-bar-container {
-      position: absolute;
-      bottom: 16px;
-      left: 12px;
-      right: 12px;
-      z-index: 20;
+      color: #fff;
       display: flex;
       flex-direction: column;
-      align-items: center;
-      gap: 10px;
-      pointer-events: none;
+      align-items: flex-end;
+      min-width: 130px;
     }
-    #weapon-bar {
+    .danger-track {
+      width: 110px;
+      height: 10px;
+      background: #21262d;
+      border-radius: 5px;
+      margin-top: 6px;
+      overflow: hidden;
+      border: 1px solid #30363d;
+    }
+    #danger-fill {
+      width: 10%;
+      height: 100%;
+      background: #00e5ff;
+      border-radius: 5px;
+      transition: width 0.1s ease, background 0.2s ease;
+    }
+
+    /* On-Screen Touch Controls */
+    #touch-controls {
+      position: absolute;
+      bottom: 24px;
+      left: 20px;
+      right: 20px;
       display: flex;
-      gap: 8px;
-      background: #0d1117;
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      padding: 8px 12px;
-      border-radius: 20px;
+      justify-content: space-between;
+      align-items: flex-end;
+      pointer-events: none;
+      z-index: 20;
+    }
+
+    /* Virtual Joystick */
+    #joystick-zone {
+      width: 130px;
+      height: 130px;
+      background: rgba(22, 27, 34, 0.65);
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      border-radius: 50%;
+      position: relative;
       pointer-events: auto;
-      max-width: 100%;
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
+      touch-action: none;
     }
-    #weapon-bar::-webkit-scrollbar {
-      display: none;
+    #joystick-knob {
+      width: 54px;
+      height: 54px;
+      background: linear-gradient(135deg, #ff9800, #ff5722);
+      border: 2px solid #fff;
+      border-radius: 50%;
+      position: absolute;
+      top: 36px;
+      left: 36px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      pointer-events: none;
+      transform: translate(0, 0);
     }
-    .tool-btn {
-      flex: 0 0 auto;
-      min-width: 58px;
-      height: 58px;
-      border-radius: 14px;
-      background: rgba(30, 41, 59, 0.7);
-      border: 2px solid transparent;
+
+    /* Action Buttons (Right Thumb) */
+    .action-col {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      pointer-events: auto;
+    }
+    .action-btn {
+      width: 68px;
+      height: 68px;
+      border-radius: 50%;
+      background: #21262d;
+      border: 2px solid rgba(255, 255, 255, 0.25);
+      color: #fff;
+      font-size: 13px;
+      font-weight: 800;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      color: #e2e8f0;
-      font-size: 10px;
+      cursor: pointer;
+      touch-action: manipulation;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.4);
+    }
+    .action-btn:active {
+      transform: scale(0.92);
+      background: #ff5722;
+      border-color: #ffeb3b;
+    }
+    .action-btn span.emoji {
+      font-size: 24px;
+      line-height: 1;
+      margin-bottom: 2px;
+    }
+
+    /* Screen Suction Warning Vignette */
+    #vignette {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      pointer-events: none;
+      box-shadow: inset 0 0 100px rgba(255, 0, 0, 0);
+      z-index: 5;
+      transition: box-shadow 0.2s ease;
+    }
+
+    /* Game Over Overlay */
+    #game-over-modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(10, 10, 15, 0.88);
+      z-index: 100;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      color: #fff;
+      padding: 20px;
+    }
+    .go-card {
+      background: #161b22;
+      border: 2px solid #ff3b30;
+      border-radius: 24px;
+      padding: 30px;
+      max-width: 320px;
+      width: 90%;
+    }
+    .btn-restart {
+      margin-top: 20px;
+      background: linear-gradient(135deg, #ff6b35, #ff3b00);
+      color: #fff;
+      border: none;
+      padding: 14px 28px;
+      border-radius: 50px;
+      font-size: 18px;
+      font-weight: 800;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* Top Right Buttons */
+    .top-right-group {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 8px;
+      pointer-events: auto;
+    }
+    .mini-btn {
+      background: #161b22;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 10px;
+      padding: 6px 10px;
+      color: #cfd8dc;
+      font-size: 11px;
       font-weight: 700;
       cursor: pointer;
-      transition: all 0.15s ease;
-      touch-action: manipulation;
-    }
-    .tool-btn .icon {
-      font-size: 22px;
-      margin-bottom: 2px;
-      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
-    }
-    .tool-btn.active {
-      background: linear-gradient(135deg, #ff6b35, #ff3b00);
-      border-color: #ffeb3b;
-      color: #ffffff;
-      transform: translateY(-4px) scale(1.05);
-      box-shadow: 0 6px 16px rgba(255, 87, 34, 0.5);
-    }
-    .tool-btn:active {
-      transform: scale(0.92);
-    }
-
-    #tip-banner {
-      color: rgba(255, 255, 255, 0.7);
-      font-size: 11px;
-      font-weight: 600;
-      background: rgba(0,0,0,0.4);
-      padding: 4px 12px;
-      border-radius: 12px;
-      letter-spacing: 0.5px;
-    }
-
-    /* Screen Flash FX */
-    #flash-overlay {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-      background: white;
-      opacity: 0;
-      z-index: 100;
-      transition: opacity 0.08s ease-out;
     }
   </style>
   <script src="libs/engine.bundle.js"></script>
 </head>
 <body>
-  <div id="flash-overlay"></div>
+  <div id="vignette"></div>
   <div id="canvas-container"></div>
 
   <!-- Top HUD -->
   <div id="hud-top">
     <div class="hud-card">
-      <div class="score-label">IMPACT SCORE</div>
-      <div id="score" class="score-value">0</div>
-      <div class="stat-row">
-        <span>HITS: <span id="hit-count" class="stat-val">0</span></span>
-        <span>VEL: <span id="speed-val" class="stat-val">0.0 m/s</span></span>
-      </div>
+      <div class="hud-title">SURVIVAL TIME</div>
+      <div id="survival-timer" class="hud-score">0.0s</div>
+      <div class="hud-sub">BATTERIES: <span id="coin-counter" style="color:#ffeb3b; font-weight:800;">0</span></div>
     </div>
 
-    <div style="display:flex; flex-direction:column; gap:8px;">
-      <button class="side-btn" id="btn-update">
-        <span>🔄</span> Check Update
+    <div class="top-right-group">
+      <div id="threat-bar-container">
+        <div class="hud-title" id="threat-label">VACUUM DISTANCE</div>
+        <div id="threat-dist" style="font-size:16px; font-weight:900; color:#00e5ff;">35.0 m</div>
+        <div class="danger-track">
+          <div id="danger-fill"></div>
+        </div>
+      </div>
+      <button class="mini-btn" id="btn-update">🔄 Check Update</button>
+    </div>
+  </div>
+
+  <!-- Touch Controls -->
+  <div id="touch-controls">
+    <!-- Joystick for Left Thumb -->
+    <div id="joystick-zone">
+      <div id="joystick-knob"></div>
+    </div>
+
+    <!-- Buttons for Right Thumb -->
+    <div class="action-col">
+      <button class="action-btn" id="btn-boost" style="background:#00897b;">
+        <span class="emoji">⚡</span>
+        <span>Sprint</span>
       </button>
-      <button class="side-btn" id="btn-reset">
-        <span>🔄</span> Reset
-      </button>
-      <button class="side-btn" id="btn-gravity">
-        <span>🌍</span> Zero G
-      </button>
-      <button class="side-btn" id="btn-slowmo">
-        <span>⏱️</span> Slow-Mo
+      <button class="action-btn" id="btn-jump">
+        <span class="emoji">🦘</span>
+        <span>Jump</span>
       </button>
     </div>
   </div>
 
-  <!-- Update Modal -->
-  <div id="update-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.75); z-index:200; justify-content:center; align-items:center;">
-    <div style="background:#161b22; border:1px solid #30363d; border-radius:18px; padding:24px; max-width:320px; width:85%; color:#fff; text-align:center; box-shadow:0 12px 40px rgba(0,0,0,0.8);">
-      <div style="font-size:36px; margin-bottom:10px;">🚀</div>
-      <div style="font-size:18px; font-weight:800; margin-bottom:8px;" id="update-title">Update Available!</div>
-      <div style="font-size:13px; color:#8b949e; margin-bottom:20px;" id="update-desc">A new version of Crash Dummy 3D is available on GitHub.</div>
-      <div style="display:flex; gap:10px; justify-content:center;">
-        <button id="update-cancel-btn" style="background:#21262d; border:1px solid #30363d; color:#c9d1d9; padding:10px 16px; border-radius:10px; font-weight:700; cursor:pointer;">Later</button>
-        <button id="update-confirm-btn" style="background:linear-gradient(135deg, #238636, #2ea043); border:none; color:#fff; padding:10px 18px; border-radius:10px; font-weight:700; cursor:pointer;">Install Now</button>
+  <!-- Game Over Modal -->
+  <div id="game-over-modal">
+    <div class="go-card">
+      <div style="font-size: 52px; margin-bottom: 8px;">🌪️</div>
+      <h2 style="font-size: 26px; font-weight: 900; color:#ff5252;">SUCKED IN!</h2>
+      <p style="font-size: 14px; color:#8b949e; margin-top: 6px;">The giant vacuum caught you!</p>
+      <div style="margin: 20px 0; background: #0d1117; padding: 14px; border-radius: 12px;">
+        <div style="font-size:12px; color:#8b949e;">SURVIVED</div>
+        <div id="final-time" style="font-size: 28px; font-weight: 900; color:#ffeb3b;">0.0s</div>
+        <div style="font-size:12px; color:#8b949e; margin-top:6px;">BATTERIES COLLECTED: <span id="final-coins" style="color:#00e5ff; font-weight:800;">0</span></div>
       </div>
-    </div>
-  </div>
-
-  <!-- Weapon / Tool selector -->
-  <div id="weapon-bar-container">
-    <div id="tip-banner">Tap & drag to grab dummy limb | Select a tool to unleash chaos</div>
-    <div id="weapon-bar">
-      <button class="tool-btn active" data-tool="hand">
-        <span class="icon">🖐️</span>
-        <span>Grab</span>
-      </button>
-      <button class="tool-btn" data-tool="bat">
-        <span class="icon">🏏</span>
-        <span>Bat</span>
-      </button>
-      <button class="tool-btn" data-tool="bomb">
-        <span class="icon">💣</span>
-        <span>Bomb</span>
-      </button>
-      <button class="tool-btn" data-tool="cannon">
-        <span class="icon">🚀</span>
-        <span>Rocket</span>
-      </button>
-      <button class="tool-btn" data-tool="glove">
-        <span class="icon">🥊</span>
-        <span>Punch</span>
-      </button>
-      <button class="tool-btn" data-tool="laser">
-        <span class="icon">⚡</span>
-        <span>Laser</span>
-      </button>
+      <button class="btn-restart" id="btn-restart">PLAY AGAIN</button>
     </div>
   </div>
 
   <script>
-    // Audio synthesizer (Procedural Web Audio API for zero-lag juicy punches/explosions)
+    // Audio synthesizer
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     function playSound(type) {
-      if (audioCtx.state === 'suspended') {
-        audioCtx.resume();
-      }
+      if (audioCtx.state === 'suspended') audioCtx.resume();
       const now = audioCtx.currentTime;
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
       osc.connect(gain);
       gain.connect(audioCtx.destination);
 
-      if (type === 'hit') {
-        // Soft, subtle low-frequency acoustic thud
+      if (type === 'jump') {
         osc.type = 'sine';
-        const startFreq = 85 + Math.random() * 25;
-        osc.frequency.setValueAtTime(startFreq, now);
-        osc.frequency.exponentialRampToValueAtTime(25, now + 0.08);
-
-        // Gentle volume curve (much quieter, non-harsh)
+        osc.frequency.setValueAtTime(120, now);
+        osc.frequency.exponentialRampToValueAtTime(320, now + 0.12);
         gain.gain.setValueAtTime(0.18, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
-
-        osc.start(now);
-        osc.stop(now + 0.08);
-      } else if (type === 'punch') {
-        // Deep soft bass punch (warm sine wave, quiet)
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(110, now);
-        osc.frequency.exponentialRampToValueAtTime(32, now + 0.12);
-
-        gain.gain.setValueAtTime(0.28, now);
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
-
         osc.start(now);
         osc.stop(now + 0.12);
-      } else if (type === 'explosion') {
-        // Low muffled rumble instead of loud harsh noise
-        const bufferSize = audioCtx.sampleRate * 0.25;
-        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-        const data = buffer.getChannelData(0);
-        for (let i = 0; i < bufferSize; i++) {
-          data[i] = Math.random() * 2 - 1;
-        }
-        const noise = audioCtx.createBufferSource();
-        noise.buffer = buffer;
-        const filter = audioCtx.createBiquadFilter();
-        filter.type = 'lowpass';
-        filter.frequency.setValueAtTime(250, now);
-        filter.frequency.exponentialRampToValueAtTime(40, now + 0.25);
-
-        const expGain = audioCtx.createGain();
-        expGain.gain.setValueAtTime(0.35, now);
-        expGain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
-
-        noise.connect(filter);
-        filter.connect(expGain);
-        expGain.connect(audioCtx.destination);
-        noise.start(now);
-      } else if (type === 'laser') {
+      } else if (type === 'coin') {
         osc.type = 'sine';
-        osc.frequency.setValueAtTime(480, now);
-        osc.frequency.exponentialRampToValueAtTime(180, now + 0.1);
-        gain.gain.setValueAtTime(0.12, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+        osc.frequency.setValueAtTime(587.33, now); // D5
+        osc.frequency.setValueAtTime(880, now + 0.08); // A5
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
         osc.start(now);
-        osc.stop(now + 0.1);
+        osc.stop(now + 0.22);
+      } else if (type === 'caught') {
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(300, now);
+        osc.frequency.exponentialRampToValueAtTime(40, now + 0.4);
+        gain.gain.setValueAtTime(0.35, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+        osc.start(now);
+        osc.stop(now + 0.4);
       }
     }
 
@@ -357,787 +337,654 @@
       if (window.AndroidNative && window.AndroidNative.vibrate) {
         window.AndroidNative.vibrate(type);
       } else if (navigator.vibrate) {
-        if (type === 'light') navigator.vibrate(15);
-        else if (type === 'heavy') navigator.vibrate(60);
-        else if (type === 'explosion') navigator.vibrate([40, 30, 80]);
-        else navigator.vibrate(25);
+        navigator.vibrate(25);
       }
     }
 
     // -------------------------------------------------------------
-    // THREE.JS & CANNON-ES SETUP
+    // THREE.JS SETUP: GIANT HOUSE ENVIRONMENT
     // -------------------------------------------------------------
     const container = document.getElementById('canvas-container');
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x0e131f);
-    scene.fog = new THREE.FogExp2(0x0e131f, 0.035);
+    scene.background = new THREE.Color(0x1a1612);
+    scene.fog = new THREE.Fog(0x1a1612, 18, 55);
 
-    const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100);
-    camera.position.set(0, 4.2, 11);
-    camera.lookAt(0, 2.5, 0);
+    const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 120);
 
-    const renderer = new THREE.WebGLRenderer({
-      antialias: false,
-      powerPreference: 'high-performance',
-      precision: 'mediump'
-    });
+    const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance', precision: 'mediump' });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.BasicShadowMap;
-    renderer.toneMapping = THREE.NoToneMapping;
     container.appendChild(renderer.domElement);
 
-    // Lights
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.85);
+    // Warm Ambient Living Room Lighting
+    const ambientLight = new THREE.AmbientLight(0xffecd2, 0.85);
     scene.add(ambientLight);
 
-    const dirLight = new THREE.DirectionalLight(0xfff3e0, 1.5);
-    dirLight.position.set(5, 12, 8);
+    const dirLight = new THREE.DirectionalLight(0xfff3e0, 1.4);
+    dirLight.position.set(15, 30, 20);
     dirLight.castShadow = true;
     dirLight.shadow.mapSize.width = 512;
     dirLight.shadow.mapSize.height = 512;
-    dirLight.shadow.camera.near = 0.5;
-    dirLight.shadow.camera.far = 25;
-    dirLight.shadow.camera.left = -6;
-    dirLight.shadow.camera.right = 6;
-    dirLight.shadow.camera.top = 8;
-    dirLight.shadow.camera.bottom = -4;
+    dirLight.shadow.camera.near = 1;
+    dirLight.shadow.camera.far = 70;
+    dirLight.shadow.camera.left = -25;
+    dirLight.shadow.camera.right = 25;
+    dirLight.shadow.camera.top = 25;
+    dirLight.shadow.camera.bottom = -25;
     scene.add(dirLight);
 
-    // Simple Point Lights
-    const rimLightBlue = new THREE.PointLight(0x00d9ff, 2.0, 12);
-    rimLightBlue.position.set(-5, 3, 2);
-    scene.add(rimLightBlue);
+    // Room boundaries (A massive 60m x 60m living room)
+    const ROOM_SIZE = 55;
+    const floorGeo = new THREE.PlaneGeometry(ROOM_SIZE * 2, ROOM_SIZE * 2);
 
-    const rimLightOrange = new THREE.PointLight(0xff5722, 2.0, 12);
-    rimLightOrange.position.set(5, 4, -2);
-    scene.add(rimLightOrange);
-
-    // Physics World
-    const world = new CANNON.World();
-    world.gravity.set(0, -18, 0);
-    world.solver.iterations = 6;
-    world.defaultContactMaterial.friction = 0.4;
-    world.defaultContactMaterial.restitution = 0.3;
-
-    // Room Enclosure (Ground & Walls)
-    function createGroundAndWalls() {
-      // Floor
-      const floorGeo = new THREE.PlaneGeometry(24, 24);
-      // Procedural grid texture
-      const canvas = document.createElement('canvas');
-      canvas.width = 512;
-      canvas.height = 512;
-      const ctx = canvas.getContext('2d');
-      ctx.fillStyle = '#181f2c';
-      ctx.fillRect(0, 0, 512, 512);
-      ctx.strokeStyle = '#273449';
-      ctx.lineWidth = 4;
-      for (let i = 0; i <= 512; i += 64) {
-        ctx.beginPath();
-        ctx.moveTo(i, 0); ctx.lineTo(i, 512);
-        ctx.moveTo(0, i); ctx.lineTo(512, i);
-        ctx.stroke();
+    // Procedural Parquet Wood Floor Canvas Texture
+    const floorCanvas = document.createElement('canvas');
+    floorCanvas.width = 512; floorCanvas.height = 512;
+    const fctx = floorCanvas.getContext('2d');
+    fctx.fillStyle = '#613b1d';
+    fctx.fillRect(0, 0, 512, 512);
+    // Draw wood planks
+    for (let y = 0; y < 512; y += 64) {
+      fctx.fillStyle = (y / 64) % 2 === 0 ? '#6e4423' : '#573317';
+      fctx.fillRect(0, y, 512, 60);
+      fctx.strokeStyle = '#3d220e';
+      fctx.lineWidth = 4;
+      fctx.strokeRect(0, y, 512, 64);
+      for (let x = (y % 128 === 0 ? 0 : 128); x < 512; x += 256) {
+        fctx.beginPath(); fctx.moveTo(x, y); fctx.lineTo(x, y + 64); fctx.stroke();
       }
-      // Target bullseye circle in center of room
-      ctx.strokeStyle = '#ff9800';
-      ctx.lineWidth = 6;
-      ctx.beginPath(); ctx.arc(256, 256, 120, 0, Math.PI * 2); ctx.stroke();
-      ctx.beginPath(); ctx.arc(256, 256, 60, 0, Math.PI * 2); ctx.stroke();
-      ctx.fillStyle = '#ff9800';
-      ctx.beginPath(); ctx.arc(256, 256, 18, 0, Math.PI * 2); ctx.fill();
-
-      const floorTex = new THREE.CanvasTexture(canvas);
-      floorTex.wrapS = THREE.RepeatWrapping;
-      floorTex.wrapT = THREE.RepeatWrapping;
-      floorTex.repeat.set(2, 2);
-
-      const floorMat = new THREE.MeshStandardMaterial({
-        map: floorTex,
-        roughness: 0.5,
-        metalness: 0.2
-      });
-      const floorMesh = new THREE.Mesh(floorGeo, floorMat);
-      floorMesh.rotation.x = -Math.PI / 2;
-      floorMesh.receiveShadow = true;
-      scene.add(floorMesh);
-
-      const floorBody = new CANNON.Body({
-        mass: 0,
-        shape: new CANNON.Plane()
-      });
-      floorBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI / 2);
-      world.addBody(floorBody);
-
-      // Hazard Back Wall
-      const wallMat = new THREE.MeshStandardMaterial({ color: 0x141b27, roughness: 0.7 });
-      const backWall = new THREE.Mesh(new THREE.PlaneGeometry(24, 16), wallMat);
-      backWall.position.set(0, 8, -6);
-      backWall.receiveShadow = true;
-      scene.add(backWall);
-
-      const backWallBody = new CANNON.Body({ mass: 0, shape: new CANNON.Plane() });
-      backWallBody.position.set(0, 8, -6);
-      world.addBody(backWallBody);
-
-      // Left & Right invisible boundary cushions
-      const leftWallBody = new CANNON.Body({ mass: 0, shape: new CANNON.Plane() });
-      leftWallBody.position.set(-6.5, 5, 0);
-      leftWallBody.quaternion.setFromAxisAngle(new CANNON.Vec3(0, 1, 0), Math.PI / 2);
-      world.addBody(leftWallBody);
-
-      const rightWallBody = new CANNON.Body({ mass: 0, shape: new CANNON.Plane() });
-      rightWallBody.position.set(6.5, 5, 0);
-      rightWallBody.quaternion.setFromAxisAngle(new CANNON.Vec3(0, 1, 0), -Math.PI / 2);
-      world.addBody(rightWallBody);
-
-      // Ceiling
-      const ceilingBody = new CANNON.Body({ mass: 0, shape: new CANNON.Plane() });
-      ceilingBody.position.set(0, 12, 0);
-      ceilingBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), Math.PI / 2);
-      world.addBody(ceilingBody);
     }
-    createGroundAndWalls();
+    const floorTex = new THREE.CanvasTexture(floorCanvas);
+    floorTex.wrapS = THREE.RepeatWrapping; floorTex.wrapT = THREE.RepeatWrapping;
+    floorTex.repeat.set(16, 16);
+
+    const floorMat = new THREE.MeshLambertMaterial({ map: floorTex });
+    const floorMesh = new THREE.Mesh(floorGeo, floorMat);
+    floorMesh.rotation.x = -Math.PI / 2;
+    floorMesh.receiveShadow = true;
+    scene.add(floorMesh);
+
+    // Walls & Skirting Boards (Baseboards)
+    const wallMat = new THREE.MeshLambertMaterial({ color: 0x3d352e });
+    const baseboardMat = new THREE.MeshLambertMaterial({ color: 0xded8ce });
+
+    function createWallWithBaseboard(x, z, rotY) {
+      const wall = new THREE.Mesh(new THREE.PlaneGeometry(ROOM_SIZE * 2, 20), wallMat);
+      wall.position.set(x, 10, z);
+      wall.rotation.y = rotY;
+      scene.add(wall);
+
+      const baseboard = new THREE.Mesh(new THREE.BoxGeometry(ROOM_SIZE * 2, 1.2, 0.4), baseboardMat);
+      baseboard.position.set(x, 0.6, z);
+      baseboard.rotation.y = rotY;
+      scene.add(baseboard);
+    }
+    createWallWithBaseboard(0, -ROOM_SIZE, 0);
+    createWallWithBaseboard(0, ROOM_SIZE, Math.PI);
+    createWallWithBaseboard(-ROOM_SIZE, 0, Math.PI / 2);
+    createWallWithBaseboard(ROOM_SIZE, 0, -Math.PI / 2);
+
+    // Rug in the middle of room
+    const rugGeo = new THREE.PlaneGeometry(28, 20);
+    const rugMat = new THREE.MeshLambertMaterial({ color: 0x8b2635 });
+    const rug = new THREE.Mesh(rugGeo, rugMat);
+    rug.rotation.x = -Math.PI / 2;
+    rug.position.set(0, 0.02, 0);
+    rug.receiveShadow = true;
+    scene.add(rug);
 
     // -------------------------------------------------------------
-    // CRASH TEST DUMMY RAGDOLL GENERATION
+    // GIANT FURNITURE & OBSTACLES (Shrunk Down Scale!)
+    // The dummy is 0.5m tall; table legs are 5m tall, sofa is huge!
     // -------------------------------------------------------------
-    // Crash dummy materials: iconic yellow body with black/white hazard markings
-    const dummyMatYellow = new THREE.MeshStandardMaterial({
-      color: 0xffb703,
-      roughness: 0.35,
-      metalness: 0.15
-    });
-    const dummyMatBlack = new THREE.MeshStandardMaterial({
-      color: 0x1f242d,
-      roughness: 0.5,
-      metalness: 0.3
-    });
-    const dummyMatWhite = new THREE.MeshStandardMaterial({
-      color: 0xf0f4f8,
-      roughness: 0.4
-    });
+    const obstacles = []; // { box3: THREE.Box3, minX, maxX, minZ, maxZ, minY, maxY }
 
-    // Crash target circle texture for head
-    function createTargetTexture() {
-      const c = document.createElement('canvas');
-      c.width = 256; c.height = 256;
-      const x = c.getContext('2d');
-      x.fillStyle = '#ffb703';
-      x.fillRect(0, 0, 256, 256);
-      x.fillStyle = '#1a1e24';
-      x.beginPath(); x.moveTo(128, 128); x.arc(128, 128, 100, 0, Math.PI / 2); x.fill();
-      x.beginPath(); x.moveTo(128, 128); x.arc(128, 128, 100, Math.PI, Math.PI * 1.5); x.fill();
-      x.strokeStyle = '#fff'; x.lineWidth = 6;
-      x.beginPath(); x.arc(128, 128, 100, 0, Math.PI * 2); x.stroke();
-      x.beginPath(); x.moveTo(28, 128); x.lineTo(228, 128); x.stroke();
-      x.beginPath(); x.moveTo(128, 28); x.lineTo(128, 228); x.stroke();
-      return new THREE.CanvasTexture(c);
-    }
-    const headMat = new THREE.MeshStandardMaterial({
-      map: createTargetTexture(),
-      roughness: 0.35,
-      metalness: 0.2
-    });
-
-    let dummyBodies = [];
-    let dummyMeshes = [];
-    let dummyConstraints = [];
-
-    function createDummyLimb(mesh, shape, mass, position) {
+    function addObstacle(mesh, isClimbable = true) {
       mesh.castShadow = true;
       mesh.receiveShadow = true;
-      mesh.position.copy(position);
       scene.add(mesh);
-
-      const body = new CANNON.Body({
-        mass: mass,
-        linearDamping: 0.25,
-        angularDamping: 0.3
-      });
-      body.addShape(shape);
-      body.position.set(position.x, position.y, position.z);
-      world.addBody(body);
-
-      // Tag body for hit identification
-      body.isDummyLimb = true;
-      body.meshRef = mesh;
-      dummyBodies.push(body);
-      dummyMeshes.push(mesh);
-
-      // Collision sound & score tracking (filtered so light grazing doesn't make noise)
-      let lastHitTime = 0;
-      body.addEventListener('collide', function(e) {
-        const now = performance.now();
-        if (now - lastHitTime < 120) return; // Debounce rapid micro-collisions
-        const relVel = e.contact.getImpactVelocityAlongNormal();
-        if (relVel > 7.0) {
-          lastHitTime = now;
-          handleLimbImpact(body.position, relVel);
-        }
-      });
-
-      return body;
+      mesh.updateMatrixWorld();
+      const b3 = new THREE.Box3().setFromObject(mesh);
+      obstacles.push({ box3: b3, isClimbable: isClimbable });
     }
 
-    function buildRagdoll(startX = 0, startY = 3.8, startZ = 0) {
-      // Clean previous
-      dummyConstraints.forEach(c => world.removeConstraint(c));
-      dummyConstraints = [];
-      dummyBodies.forEach(b => world.removeBody(b));
-      dummyBodies = [];
-      dummyMeshes.forEach(m => scene.remove(m));
-      dummyMeshes = [];
-
-      // 1. Torso (Chest & Pelvis)
-      const chestMesh = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.95, 0.5), dummyMatYellow);
-      const chestBody = createDummyLimb(chestMesh, new CANNON.Box(new CANNON.Vec3(0.42, 0.47, 0.25)), 12, new THREE.Vector3(startX, startY + 0.65, startZ));
-
-      const pelvisMesh = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.55, 0.46), dummyMatBlack);
-      const pelvisBody = createDummyLimb(pelvisMesh, new CANNON.Box(new CANNON.Vec3(0.37, 0.27, 0.23)), 10, new THREE.Vector3(startX, startY, startZ));
-
-      // Spine Joint (Chest - Pelvis)
-      const spineJoint = new CANNON.ConeTwistConstraint(chestBody, pelvisBody, {
-        pivotA: new CANNON.Vec3(0, -0.47, 0),
-        pivotB: new CANNON.Vec3(0, 0.27, 0),
-        axisA: CANNON.Vec3.UNIT_Y,
-        axisB: CANNON.Vec3.UNIT_Y,
-        angle: Math.PI / 8,
-        twistAngle: Math.PI / 10
-      });
-      world.addConstraint(spineJoint);
-      dummyConstraints.push(spineJoint);
-
-      // 2. Head
-      const headMesh = new THREE.Mesh(new THREE.SphereGeometry(0.38, 24, 24), headMat);
-      const headBody = createDummyLimb(headMesh, new CANNON.Sphere(0.38), 5, new THREE.Vector3(startX, startY + 1.45, startZ));
-
-      // Neck Joint
-      const neckJoint = new CANNON.ConeTwistConstraint(headBody, chestBody, {
-        pivotA: new CANNON.Vec3(0, -0.38, 0),
-        pivotB: new CANNON.Vec3(0, 0.52, 0),
-        axisA: CANNON.Vec3.UNIT_Y,
-        axisB: CANNON.Vec3.UNIT_Y,
-        angle: Math.PI / 6,
-        twistAngle: Math.PI / 8
-      });
-      world.addConstraint(neckJoint);
-      dummyConstraints.push(neckJoint);
-
-      // 3. Arms (Upper & Forearm)
-      const armGeo = new THREE.CylinderGeometry(0.14, 0.14, 0.6, 16);
-      const foreArmGeo = new THREE.CylinderGeometry(0.12, 0.12, 0.55, 16);
-
-      // Left Arm
-      const leftUpperArmMesh = new THREE.Mesh(armGeo, dummyMatYellow);
-      const leftUpperArmBody = createDummyLimb(leftUpperArmMesh, new CANNON.Cylinder(0.14, 0.14, 0.6, 12), 3, new THREE.Vector3(startX - 0.72, startY + 0.65, startZ));
-      const leftForearmMesh = new THREE.Mesh(foreArmGeo, dummyMatWhite);
-      const leftForearmBody = createDummyLimb(leftForearmMesh, new CANNON.Cylinder(0.12, 0.12, 0.55, 12), 2.5, new THREE.Vector3(startX - 0.72, startY + 0.05, startZ));
-
-      const leftShoulder = new CANNON.PointToPointConstraint(chestBody, new CANNON.Vec3(-0.52, 0.35, 0), leftUpperArmBody, new CANNON.Vec3(0, 0.3, 0));
-      const leftElbow = new CANNON.PointToPointConstraint(leftUpperArmBody, new CANNON.Vec3(0, -0.3, 0), leftForearmBody, new CANNON.Vec3(0, 0.28, 0));
-      world.addConstraint(leftShoulder);
-      world.addConstraint(leftElbow);
-      dummyConstraints.push(leftShoulder, leftElbow);
-
-      // Right Arm
-      const rightUpperArmMesh = new THREE.Mesh(armGeo, dummyMatYellow);
-      const rightUpperArmBody = createDummyLimb(rightUpperArmMesh, new CANNON.Cylinder(0.14, 0.14, 0.6, 12), 3, new THREE.Vector3(startX + 0.72, startY + 0.65, startZ));
-      const rightForearmMesh = new THREE.Mesh(foreArmGeo, dummyMatWhite);
-      const rightForearmBody = createDummyLimb(rightForearmMesh, new CANNON.Cylinder(0.12, 0.12, 0.55, 12), 2.5, new THREE.Vector3(startX + 0.72, startY + 0.05, startZ));
-
-      const rightShoulder = new CANNON.PointToPointConstraint(chestBody, new CANNON.Vec3(0.52, 0.35, 0), rightUpperArmBody, new CANNON.Vec3(0, 0.3, 0));
-      const rightElbow = new CANNON.PointToPointConstraint(rightUpperArmBody, new CANNON.Vec3(0, -0.3, 0), rightForearmBody, new CANNON.Vec3(0, 0.28, 0));
-      world.addConstraint(rightShoulder);
-      world.addConstraint(rightElbow);
-      dummyConstraints.push(rightShoulder, rightElbow);
-
-      // 4. Legs (Thigh & Shin)
-      const legGeo = new THREE.CylinderGeometry(0.18, 0.15, 0.75, 16);
-      const shinGeo = new THREE.CylinderGeometry(0.14, 0.12, 0.7, 16);
-
-      // Left Leg
-      const leftThighMesh = new THREE.Mesh(legGeo, dummyMatYellow);
-      const leftThighBody = createDummyLimb(leftThighMesh, new CANNON.Cylinder(0.18, 0.15, 0.75, 12), 6, new THREE.Vector3(startX - 0.28, startY - 0.65, startZ));
-      const leftShinMesh = new THREE.Mesh(shinGeo, dummyMatBlack);
-      const leftShinBody = createDummyLimb(leftShinMesh, new CANNON.Cylinder(0.14, 0.12, 0.7, 12), 4, new THREE.Vector3(startX - 0.28, startY - 1.45, startZ));
-
-      const leftHip = new CANNON.PointToPointConstraint(pelvisBody, new CANNON.Vec3(-0.25, -0.28, 0), leftThighBody, new CANNON.Vec3(0, 0.38, 0));
-      const leftKnee = new CANNON.PointToPointConstraint(leftThighBody, new CANNON.Vec3(0, -0.38, 0), leftShinBody, new CANNON.Vec3(0, 0.35, 0));
-      world.addConstraint(leftHip);
-      world.addConstraint(leftKnee);
-      dummyConstraints.push(leftHip, leftKnee);
-
-      // Right Leg
-      const rightThighMesh = new THREE.Mesh(legGeo, dummyMatYellow);
-      const rightThighBody = createDummyLimb(rightThighMesh, new CANNON.Cylinder(0.18, 0.15, 0.75, 12), 6, new THREE.Vector3(startX + 0.28, startY - 0.65, startZ));
-      const rightShinMesh = new THREE.Mesh(shinGeo, dummyMatBlack);
-      const rightShinBody = createDummyLimb(rightShinMesh, new CANNON.Cylinder(0.14, 0.12, 0.7, 12), 4, new THREE.Vector3(startX + 0.28, startY - 1.45, startZ));
-
-      const rightHip = new CANNON.PointToPointConstraint(pelvisBody, new CANNON.Vec3(0.25, -0.28, 0), rightThighBody, new CANNON.Vec3(0, 0.38, 0));
-      const rightKnee = new CANNON.PointToPointConstraint(rightThighBody, new CANNON.Vec3(0, -0.38, 0), rightShinBody, new CANNON.Vec3(0, 0.35, 0));
-      world.addConstraint(rightHip);
-      world.addConstraint(rightKnee);
-      dummyConstraints.push(rightHip, rightKnee);
-    }
-    buildRagdoll();
-
-    // -------------------------------------------------------------
-    // PARTICLES & JUICE
-    // -------------------------------------------------------------
-    const particles = [];
-    const pGeo = new THREE.BufferGeometry();
-    const pCount = 200;
-    const pPositions = new Float32Array(pCount * 3);
-    const pColors = new Float32Array(pCount * 3);
-    pGeo.setAttribute('position', new THREE.BufferAttribute(pPositions, 3));
-    pGeo.setAttribute('color', new THREE.BufferAttribute(pColors, 3));
-
-    const pMat = new THREE.PointsMaterial({
-      size: 0.22,
-      vertexColors: true,
-      transparent: true,
-      opacity: 0.95,
-      blending: THREE.AdditiveBlending
+    // 1. Giant Wooden Dining Table
+    const woodMat = new THREE.MeshLambertMaterial({ color: 0x422817 });
+    const legMat = new THREE.MeshLambertMaterial({ color: 0x2e1b0e });
+    // Table Top
+    const tableTop = new THREE.Mesh(new THREE.BoxGeometry(16, 0.8, 10), woodMat);
+    tableTop.position.set(0, 5.0, -12);
+    addObstacle(tableTop);
+    // Table Legs (Obstacles)
+    const legGeo = new THREE.CylinderGeometry(0.5, 0.5, 5, 8);
+    const legOffsets = [[-7, -4], [7, -4], [-7, 4], [7, 4]];
+    legOffsets.forEach(([lx, lz]) => {
+      const leg = new THREE.Mesh(legGeo, legMat);
+      leg.position.set(lx, 2.5, -12 + lz);
+      addObstacle(leg, false);
     });
-    const particleSystem = new THREE.Points(pGeo, pMat);
-    scene.add(particleSystem);
 
-    function spawnSparks(x, y, z, count = 20, isExplosion = false) {
+    // 2. Giant Sofa (Climbable cushions!)
+    const sofaFabric = new THREE.MeshLambertMaterial({ color: 0x1f3c5b });
+    const sofaBase = new THREE.Mesh(new THREE.BoxGeometry(18, 1.8, 8), sofaFabric);
+    sofaBase.position.set(-18, 0.9, 8);
+    addObstacle(sofaBase);
+
+    const sofaBack = new THREE.Mesh(new THREE.BoxGeometry(18, 4.0, 2), sofaFabric);
+    sofaBack.position.set(-18, 2.5, 12);
+    addObstacle(sofaBack);
+
+    // 3. Books & Cardboard Boxes on the floor (Ramps & platforms)
+    const bookColors = [0xbf360c, 0x1b5e20, 0x4a148c, 0x006064];
+    for (let i = 0; i < 8; i++) {
+      const bMat = new THREE.MeshLambertMaterial({ color: bookColors[i % bookColors.length] });
+      const book = new THREE.Mesh(new THREE.BoxGeometry(2.2 + Math.random()*0.8, 0.45, 1.8), bMat);
+      const bx = (Math.random() - 0.5) * 40;
+      const bz = (Math.random() - 0.5) * 40;
+      book.position.set(bx, 0.22, bz);
+      book.rotation.y = Math.random() * Math.PI;
+      addObstacle(book);
+    }
+
+    // Giant Coffee Mug & Soda Can (Obstacles to run around)
+    const mugMat = new THREE.MeshLambertMaterial({ color: 0xf5f5f5 });
+    const mug = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.0, 2.2, 16), mugMat);
+    mug.position.set(10, 1.1, 4);
+    addObstacle(mug);
+
+    const canMat = new THREE.MeshLambertMaterial({ color: 0xe53935 });
+    const can = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.8, 2.4, 16), canMat);
+    can.position.set(-8, 1.2, -6);
+    addObstacle(can);
+
+    // -------------------------------------------------------------
+    // COLLECTIBLE ENERGY BATTERIES (Adds Score & Speed)
+    // -------------------------------------------------------------
+    const coins = [];
+    const batteryGeo = new THREE.CylinderGeometry(0.25, 0.25, 0.65, 12);
+    const batteryMat = new THREE.MeshLambertMaterial({ color: 0x00e676 });
+    const batCapMat = new THREE.MeshLambertMaterial({ color: 0xffd600 });
+
+    function spawnBatteries(count = 12) {
       for (let i = 0; i < count; i++) {
-        const vel = new THREE.Vector3(
-          (Math.random() - 0.5) * (isExplosion ? 16 : 8),
-          Math.random() * (isExplosion ? 14 : 7) + 2,
-          (Math.random() - 0.5) * (isExplosion ? 16 : 8)
-        );
-        particles.push({
-          pos: new THREE.Vector3(x, y, z),
-          vel: vel,
-          life: 1.0,
-          decay: Math.random() * 0.04 + 0.02,
-          color: isExplosion ? [1.0, 0.4 + Math.random()*0.4, 0.1] : [1.0, 0.85, 0.2]
-        });
-      }
-    }
+        const group = new THREE.Group();
+        const body = new THREE.Mesh(batteryGeo, batteryMat);
+        const cap = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.15, 12), batCapMat);
+        cap.position.y = 0.35;
+        group.add(body);
+        group.add(cap);
 
-    function updateParticles() {
-      for (let i = particles.length - 1; i >= 0; i--) {
-        const p = particles[i];
-        p.pos.addScaledVector(p.vel, 0.016);
-        p.vel.y -= 0.3; // gravity
-        p.life -= p.decay;
-        if (p.life <= 0) {
-          particles.splice(i, 1);
-        }
-      }
-
-      const posAttr = pGeo.attributes.position;
-      const colAttr = pGeo.attributes.color;
-      let idx = 0;
-      for (let i = 0; i < pCount; i++) {
-        if (i < particles.length) {
-          const p = particles[i];
-          posAttr.setXYZ(i, p.pos.x, p.pos.y, p.pos.z);
-          colAttr.setXYZ(i, p.color[0] * p.life, p.color[1] * p.life, p.color[2] * p.life);
-        } else {
-          posAttr.setXYZ(i, 0, -999, 0);
-        }
-      }
-      posAttr.needsUpdate = true;
-      colAttr.needsUpdate = true;
-    }
-
-    // Screen Shake
-    let trauma = 0;
-    function addTrauma(amount) {
-      trauma = Math.min(trauma + amount, 1.0);
-    }
-    function updateCameraShake() {
-      if (trauma > 0) {
-        const shake = trauma * trauma;
-        camera.position.x = (Math.random() - 0.5) * 0.4 * shake;
-        camera.position.y = 4.2 + (Math.random() - 0.5) * 0.4 * shake;
-        trauma = Math.max(0, trauma - 0.035);
-      } else {
-        camera.position.x = 0;
-        camera.position.y = 4.2;
+        const x = (Math.random() - 0.5) * 60;
+        const z = (Math.random() - 0.5) * 60;
+        group.position.set(x, 0.55, z);
+        scene.add(group);
+        coins.push(group);
       }
     }
+    spawnBatteries(14);
 
     // -------------------------------------------------------------
-    // GAMEPLAY STATE & INTERACTIONS
+    // THE TINY CRASH DUMMY PLAYER
     // -------------------------------------------------------------
-    let currentScore = 0;
-    let totalHits = 0;
-    let activeTool = 'hand';
-    let isZeroG = false;
-    let isSlowMo = false;
+    const dummyGroup = new THREE.Group();
+    scene.add(dummyGroup);
 
-    const scoreEl = document.getElementById('score');
-    const hitCountEl = document.getElementById('hit-count');
-    const speedValEl = document.getElementById('speed-val');
-    const flashEl = document.getElementById('flash-overlay');
+    // Create Dummy Model (Iconic yellow with crash target)
+    const dummyMatYellow = new THREE.MeshLambertMaterial({ color: 0xffb703 });
+    const dummyMatBlack = new THREE.MeshLambertMaterial({ color: 0x212121 });
 
-    function flashScreen() {
-      flashEl.style.opacity = '0.35';
-      setTimeout(() => flashEl.style.opacity = '0', 70);
+    // Target Head texture
+    const hc = document.createElement('canvas');
+    hc.width = 128; hc.height = 128;
+    const hctx = hc.getContext('2d');
+    hctx.fillStyle = '#ffb703'; hctx.fillRect(0,0,128,128);
+    hctx.fillStyle = '#111';
+    hctx.beginPath(); hctx.moveTo(64,64); hctx.arc(64,64,50,0,Math.PI/2); hctx.fill();
+    hctx.beginPath(); hctx.moveTo(64,64); hctx.arc(64,64,50,Math.PI,Math.PI*1.5); hctx.fill();
+    const headMat = new THREE.MeshLambertMaterial({ map: new THREE.CanvasTexture(hc) });
+
+    // Torso
+    const torsoMesh = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.5, 0.28), dummyMatYellow);
+    torsoMesh.position.y = 0.55;
+    torsoMesh.castShadow = true;
+    dummyGroup.add(torsoMesh);
+
+    // Pelvis
+    const pelvisMesh = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.22, 0.26), dummyMatBlack);
+    pelvisMesh.position.y = 0.28;
+    pelvisMesh.castShadow = true;
+    dummyGroup.add(pelvisMesh);
+
+    // Head
+    const headMesh = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 16), headMat);
+    headMesh.position.y = 0.95;
+    headMesh.castShadow = true;
+    dummyGroup.add(headMesh);
+
+    // Animated Limbs for Running
+    const armGeo = new THREE.CylinderGeometry(0.06, 0.06, 0.35, 8);
+    const legGeo = new THREE.CylinderGeometry(0.08, 0.07, 0.42, 8);
+
+    const leftArm = new THREE.Mesh(armGeo, dummyMatYellow);
+    leftArm.position.set(-0.26, 0.55, 0);
+    dummyGroup.add(leftArm);
+
+    const rightArm = new THREE.Mesh(armGeo, dummyMatYellow);
+    rightArm.position.set(0.26, 0.55, 0);
+    dummyGroup.add(rightArm);
+
+    const leftLeg = new THREE.Mesh(legGeo, dummyMatBlack);
+    leftLeg.position.set(-0.12, 0.2, 0);
+    dummyGroup.add(leftLeg);
+
+    const rightLeg = new THREE.Mesh(legGeo, dummyMatBlack);
+    rightLeg.position.set(0.12, 0.2, 0);
+    dummyGroup.add(rightLeg);
+
+    // Player Physics State
+    const player = {
+      pos: new THREE.Vector3(0, 0, 10),
+      vel: new THREE.Vector3(0, 0, 0),
+      rotY: 0,
+      radius: 0.28,
+      height: 1.1,
+      isGrounded: true,
+      baseSpeed: 7.5,
+      boostSpeed: 12.0,
+      jumpForce: 7.2,
+      isSprinting: false
+    };
+    dummyGroup.position.copy(player.pos);
+
+    // -------------------------------------------------------------
+    // THE GIANT MENACING VACUUM CLEANER
+    // -------------------------------------------------------------
+    const vacuumGroup = new THREE.Group();
+    scene.add(vacuumGroup);
+
+    // Big Roaring Vacuum Nozzle Head
+    const vacNozzleMat = new THREE.MeshLambertMaterial({ color: 0xd32f2f });
+    const vacChromeMat = new THREE.MeshLambertMaterial({ color: 0x455a64 });
+    const vacGlowMat = new THREE.MeshBasicMaterial({ color: 0xff3d00, wireframe: true });
+
+    // Suction Mouth
+    const vacMouth = new THREE.Mesh(new THREE.BoxGeometry(4.8, 1.4, 2.2), vacNozzleMat);
+    vacMouth.position.set(0, 0.7, 0);
+    vacMouth.castShadow = true;
+    vacuumGroup.add(vacMouth);
+
+    // Chrome Rollers & Edge Lights
+    const roller = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.3, 4.4, 12), vacChromeMat);
+    roller.rotation.z = Math.PI / 2;
+    roller.position.set(0, 0.3, 0.8);
+    vacuumGroup.add(roller);
+
+    // Suction Vortex Ring (Visual danger zone)
+    const suctionRing = new THREE.Mesh(new THREE.RingGeometry(1.0, 2.2, 16), vacGlowMat);
+    suctionRing.rotation.x = -Math.PI / 2;
+    suctionRing.position.set(0, 0.05, 1.2);
+    vacuumGroup.add(suctionRing);
+
+    // Vacuum Body / Neck Extension
+    const vacNeck = new THREE.Mesh(new THREE.CylinderGeometry(0.6, 0.9, 4.0, 12), vacChromeMat);
+    vacNeck.rotation.x = -Math.PI / 4;
+    vacNeck.position.set(0, 2.4, -1.2);
+    vacuumGroup.add(vacNeck);
+
+    // Giant Red Canister Body in back
+    const vacBody = new THREE.Mesh(new THREE.CylinderGeometry(2.2, 2.2, 5.0, 16), vacNozzleMat);
+    vacBody.rotation.x = -Math.PI / 3;
+    vacBody.position.set(0, 5.2, -4.5);
+    vacuumGroup.add(vacBody);
+
+    // Giant Headlight (Illuminates you when in range!)
+    const vacSpot = new THREE.SpotLight(0xff5722, 5.0, 25, Math.PI / 4, 0.6);
+    vacSpot.position.set(0, 1.5, 0.8);
+    vacSpot.target.position.set(0, 0, 8);
+    vacuumGroup.add(vacSpot);
+    vacuumGroup.add(vacSpot.target);
+
+    // Vacuum AI Tracker State
+    const vacuum = {
+      pos: new THREE.Vector3(0, 0, -32),
+      speed: 3.2,
+      baseSpeed: 3.2,
+      maxSpeed: 6.8,
+      suctionRadius: 3.2
+    };
+    vacuumGroup.position.copy(vacuum.pos);
+
+    // Dust particles sucked into the vacuum
+    const dustCount = 40;
+    const dustGeo = new THREE.BufferGeometry();
+    const dustPos = new Float32Array(dustCount * 3);
+    for (let i = 0; i < dustCount * 3; i++) dustPos[i] = 0;
+    dustGeo.setAttribute('position', new THREE.BufferAttribute(dustPos, 3));
+    const dustMat = new THREE.PointsMaterial({ color: 0xffab91, size: 0.18, transparent: true, opacity: 0.8 });
+    const dustParticles = new THREE.Points(dustGeo, dustMat);
+    vacuumGroup.add(dustParticles);
+
+    // -------------------------------------------------------------
+    // CONTROLS & JOYSTICK
+    // -------------------------------------------------------------
+    let moveInput = { x: 0, y: 0 };
+    const joystickZone = document.getElementById('joystick-zone');
+    const joystickKnob = document.getElementById('joystick-knob');
+    let joystickActive = false;
+    let joystickOrigin = { x: 0, y: 0 };
+
+    function handleJoyStart(touchX, touchY) {
+      joystickActive = true;
+      const rect = joystickZone.getBoundingClientRect();
+      joystickOrigin = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+      handleJoyMove(touchX, touchY);
     }
 
-    function createHitPopup(text, screenX, screenY) {
-      const pop = document.createElement('div');
-      pop.className = 'hit-popup';
-      pop.innerText = text;
-      pop.style.left = screenX + 'px';
-      pop.style.top = screenY + 'px';
-      document.body.appendChild(pop);
-      setTimeout(() => pop.remove(), 750);
+    function handleJoyMove(touchX, touchY) {
+      if (!joystickActive) return;
+      const dx = touchX - joystickOrigin.x;
+      const dy = touchY - joystickOrigin.y;
+      const maxDist = 45;
+      const dist = Math.min(Math.sqrt(dx * dx + dy * dy), maxDist);
+      const angle = Math.atan2(dy, dx);
+
+      const kx = Math.cos(angle) * dist;
+      const ky = Math.sin(angle) * dist;
+      joystickKnob.style.transform = `translate(${kx}px, ${ky}px)`;
+
+      moveInput.x = kx / maxDist;
+      moveInput.y = ky / maxDist;
     }
 
-    function handleLimbImpact(pos, velocity) {
-      const pts = Math.round(velocity * 85);
-      currentScore += pts;
-      totalHits++;
-
-      scoreEl.innerText = currentScore.toLocaleString();
-      scoreEl.classList.remove('score-bounce');
-      void scoreEl.offsetWidth;
-      scoreEl.classList.add('score-bounce');
-      hitCountEl.innerText = totalHits;
-
-      // Haptic & Sound
-      if (velocity > 12) {
-        nativeVibrate('heavy');
-        playSound('punch');
-        addTrauma(0.5);
-      } else {
-        nativeVibrate('light');
-        playSound('hit');
-        addTrauma(0.18);
-      }
-
-      spawnSparks(pos.x, pos.y, pos.z, Math.min(30, Math.floor(velocity * 2)));
-
-      // 3D to 2D screen coordinate for hit popup
-      const v = new THREE.Vector3(pos.x, pos.y, pos.z).project(camera);
-      const sx = (v.x * 0.5 + 0.5) * window.innerWidth;
-      const sy = (-v.y * 0.5 + 0.5) * window.innerHeight;
-      createHitPopup('+' + pts + ' PTS!', sx, sy);
+    function handleJoyEnd() {
+      joystickActive = false;
+      joystickKnob.style.transform = 'translate(0px, 0px)';
+      moveInput.x = 0;
+      moveInput.y = 0;
     }
 
-    // Interactive Drag Physics Mouse/Touch
-    const raycaster = new THREE.Raycaster();
-    const mouse = new THREE.Vector2();
-    let draggedBody = null;
-    let mouseConstraint = null;
-    const planeMesh = new THREE.Mesh(
-      new THREE.PlaneGeometry(100, 100),
-      new THREE.MeshBasicMaterial({ visible: false })
-    );
-    scene.add(planeMesh);
+    joystickZone.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      handleJoyStart(e.touches[0].clientX, e.touches[0].clientY);
+    }, { passive: false });
 
-    // Mouse dummy joint marker
-    const jointMarker = new THREE.Mesh(
-      new THREE.SphereGeometry(0.15, 16, 16),
-      new THREE.MeshBasicMaterial({ color: 0x00e5ff, wireframe: true })
-    );
-    jointMarker.visible = false;
-    scene.add(jointMarker);
-
-    function getIntersectedPoint(e) {
-      const rect = renderer.domElement.getBoundingClientRect();
-      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-      mouse.x = ((clientX - rect.left) / rect.width) * 2 - 1;
-      mouse.y = -((clientY - rect.top) / rect.height) * 2 + 1;
-
-      raycaster.setFromCamera(mouse, camera);
-      planeMesh.position.set(0, 0, 0);
-      planeMesh.quaternion.copy(camera.quaternion);
-      const intersects = raycaster.intersectObject(planeMesh);
-      return intersects.length > 0 ? intersects[0].point : null;
-    }
-
-    // Dynamic Weapons
-    function applyToolAction(e) {
-      const pt = getIntersectedPoint(e);
-      if (!pt) return;
-
-      if (activeTool === 'bomb') {
-        spawnExplosion(pt.x, pt.y, pt.z);
-      } else if (activeTool === 'bat') {
-        swingBat(pt);
-      } else if (activeTool === 'cannon') {
-        fireRocket(pt);
-      } else if (activeTool === 'glove') {
-        punchStrike(pt);
-      } else if (activeTool === 'laser') {
-        fireLaser(pt);
-      }
-    }
-
-    function spawnExplosion(x, y, z) {
-      flashScreen();
-      playSound('explosion');
-      nativeVibrate('explosion');
-      addTrauma(0.8);
-      spawnSparks(x, y, z, 70, true);
-
-      // Radial impulse to all limbs
-      dummyBodies.forEach(b => {
-        const dx = b.position.x - x;
-        const dy = b.position.y - y;
-        const dz = b.position.z - z;
-        const dist = Math.max(0.5, Math.sqrt(dx*dx + dy*dy + dz*dz));
-        const force = 900 / (dist * dist);
-        b.applyImpulse(
-          new CANNON.Vec3((dx / dist) * force, (dy / dist) * force + 200, (dz / dist) * force),
-          b.position
-        );
-      });
-      handleLimbImpact(new CANNON.Vec3(x, y, z), 25);
-    }
-
-    function swingBat(targetPt) {
-      playSound('punch');
-      nativeVibrate('heavy');
-      addTrauma(0.4);
-      dummyBodies.forEach(b => {
-        const dist = b.position.distanceTo(new CANNON.Vec3(targetPt.x, targetPt.y, targetPt.z));
-        if (dist < 2.5) {
-          const power = 350;
-          b.applyImpulse(new CANNON.Vec3((Math.random() - 0.5) * power, power * 1.2, -power * 0.8), b.position);
-          spawnSparks(b.position.x, b.position.y, b.position.z, 25);
-        }
-      });
-    }
-
-    function punchStrike(targetPt) {
-      playSound('punch');
-      nativeVibrate('medium');
-      addTrauma(0.3);
-      dummyBodies.forEach(b => {
-        const dist = b.position.distanceTo(new CANNON.Vec3(targetPt.x, targetPt.y, targetPt.z));
-        if (dist < 1.8) {
-          b.applyImpulse(new CANNON.Vec3((b.position.x - targetPt.x) * 400, 300, -250), b.position);
-          spawnSparks(b.position.x, b.position.y, b.position.z, 15);
-        }
-      });
-    }
-
-    function fireLaser(targetPt) {
-      playSound('laser');
-      nativeVibrate('light');
-
-      // Visual laser line
-      const lineMat = new THREE.LineBasicMaterial({ color: 0x00ffff, linewidth: 4 });
-      const points = [
-        new THREE.Vector3(camera.position.x, camera.position.y - 1, camera.position.z),
-        targetPt
-      ];
-      const lineGeo = new THREE.BufferGeometry().setFromPoints(points);
-      const line = new THREE.Line(lineGeo, lineMat);
-      scene.add(line);
-      setTimeout(() => scene.remove(line), 90);
-
-      dummyBodies.forEach(b => {
-        const dist = b.position.distanceTo(new CANNON.Vec3(targetPt.x, targetPt.y, targetPt.z));
-        if (dist < 1.2) {
-          b.applyImpulse(new CANNON.Vec3(0, 180, -280), b.position);
-          spawnSparks(targetPt.x, targetPt.y, targetPt.z, 20);
-        }
-      });
-    }
-
-    function fireRocket(targetPt) {
-      playSound('laser');
-      nativeVibrate('medium');
-      setTimeout(() => {
-        spawnExplosion(targetPt.x, targetPt.y, targetPt.z);
-      }, 120);
-    }
-
-    // Pointer Events for Dragging & Grabbing
-    let isInteracting = false;
-    const dummyJointBody = new CANNON.Body({ mass: 0 });
-    world.addBody(dummyJointBody);
-
-    function onPointerDown(e) {
-      if (e.target.closest('#hud-top') || e.target.closest('#weapon-bar-container')) return;
-      isInteracting = true;
-
-      const rect = renderer.domElement.getBoundingClientRect();
-      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-      mouse.x = ((clientX - rect.left) / rect.width) * 2 - 1;
-      mouse.y = -((clientY - rect.top) / rect.height) * 2 + 1;
-
-      raycaster.setFromCamera(mouse, camera);
-
-      if (activeTool === 'hand') {
-        const hits = raycaster.intersectObjects(dummyMeshes);
-        if (hits.length > 0) {
-          const hitMesh = hits[0].object;
-          const hitBody = dummyBodies.find(b => b.meshRef === hitMesh);
-          if (hitBody) {
-            draggedBody = hitBody;
-            const pt = hits[0].point;
-            dummyJointBody.position.set(pt.x, pt.y, pt.z);
-            mouseConstraint = new CANNON.PointToPointConstraint(
-              hitBody,
-              hitBody.pointToLocalFrame(new CANNON.Vec3(pt.x, pt.y, pt.z)),
-              dummyJointBody,
-              new CANNON.Vec3(0, 0, 0)
-            );
-            world.addConstraint(mouseConstraint);
-            jointMarker.position.copy(pt);
-            jointMarker.visible = true;
-            nativeVibrate('light');
+    window.addEventListener('touchmove', (e) => {
+      if (joystickActive) {
+        for (let i = 0; i < e.touches.length; i++) {
+          if (e.touches[i].target === joystickZone || e.touches[i].identifier === 0) {
+            handleJoyMove(e.touches[i].clientX, e.touches[i].clientY);
+            break;
           }
         }
-      } else {
-        applyToolAction(e);
       }
-    }
+    });
 
-    function onPointerMove(e) {
-      if (!isInteracting) return;
-      const pt = getIntersectedPoint(e);
-      if (pt && mouseConstraint) {
-        dummyJointBody.position.set(pt.x, pt.y, pt.z);
-        jointMarker.position.copy(pt);
-      }
-    }
+    window.addEventListener('touchend', (e) => {
+      if (e.touches.length === 0) handleJoyEnd();
+    });
 
-    function onPointerUp() {
-      isInteracting = false;
-      if (mouseConstraint) {
-        world.removeConstraint(mouseConstraint);
-        mouseConstraint = null;
-      }
-      draggedBody = null;
-      jointMarker.visible = false;
-    }
+    // Keyboard support for desktop testing
+    const keys = {};
+    window.addEventListener('keydown', (e) => { keys[e.code] = true; });
+    window.addEventListener('keyup', (e) => { keys[e.code] = false; });
 
-    const dom = renderer.domElement;
-    dom.addEventListener('mousedown', onPointerDown);
-    window.addEventListener('mousemove', onPointerMove);
-    window.addEventListener('mouseup', onPointerUp);
-
-    dom.addEventListener('touchstart', onPointerDown, { passive: false });
-    window.addEventListener('touchmove', onPointerMove, { passive: false });
-    window.addEventListener('touchend', onPointerUp);
-    window.addEventListener('touchcancel', onPointerUp);
-
-    // UI Buttons
-    document.querySelectorAll('.tool-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        activeTool = btn.getAttribute('data-tool');
+    // Buttons
+    const btnJump = document.getElementById('btn-jump');
+    btnJump.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      if (player.isGrounded) {
+        player.vel.y = player.jumpForce;
+        player.isGrounded = false;
+        playSound('jump');
         nativeVibrate('light');
-        playSound('hit');
-      });
+      }
     });
 
-    document.getElementById('btn-reset').addEventListener('click', () => {
-      nativeVibrate('medium');
-      playSound('punch');
-      buildRagdoll(0, 4.0, 0);
+    const btnBoost = document.getElementById('btn-boost');
+    btnBoost.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      player.isSprinting = true;
+      btnBoost.style.background = '#ff5722';
+      nativeVibrate('light');
+    });
+    btnBoost.addEventListener('touchend', (e) => {
+      e.preventDefault();
+      player.isSprinting = false;
+      btnBoost.style.background = '#00897b';
     });
 
-    // Update Handler
-    const updateModal = document.getElementById('update-modal');
-    const updateTitle = document.getElementById('update-title');
-    const updateDesc = document.getElementById('update-desc');
-    const updateConfirmBtn = document.getElementById('update-confirm-btn');
-    const updateCancelBtn = document.getElementById('update-cancel-btn');
-    let pendingDownloadUrl = null;
-
+    // Check updates button
     document.getElementById('btn-update').addEventListener('click', () => {
       nativeVibrate('light');
       if (window.AndroidNative && window.AndroidNative.checkForUpdates) {
         window.AndroidNative.checkForUpdates();
       } else {
-        alert('Check for updates is active when running inside the Android APK.');
+        alert('Check for updates is available inside the Android APK.');
       }
-    });
-
-    window.onUpdateResult = function(event, version, downloadUrl) {
-      if (event === 'updateAvailable') {
-        pendingDownloadUrl = downloadUrl;
-        updateTitle.innerText = 'New Update (v' + version + ')';
-        updateDesc.innerText = 'A newer version of Crash Dummy 3D is available on GitHub. Would you like to install it now?';
-        updateModal.style.display = 'flex';
-      }
-    };
-
-    updateCancelBtn.addEventListener('click', () => {
-      updateModal.style.display = 'none';
-    });
-
-    updateConfirmBtn.addEventListener('click', () => {
-      updateModal.style.display = 'none';
-      if (pendingDownloadUrl && window.AndroidNative && window.AndroidNative.downloadAndInstallUpdate) {
-        window.AndroidNative.downloadAndInstallUpdate(pendingDownloadUrl);
-      }
-    });
-
-    const gravBtn = document.getElementById('btn-gravity');
-    gravBtn.addEventListener('click', () => {
-      isZeroG = !isZeroG;
-      world.gravity.set(0, isZeroG ? -0.5 : -18, 0);
-      gravBtn.innerHTML = isZeroG ? '<span>🛸</span> Normal G' : '<span>🌍</span> Zero G';
-      nativeVibrate('medium');
-    });
-
-    const slowBtn = document.getElementById('btn-slowmo');
-    slowBtn.addEventListener('click', () => {
-      isSlowMo = !isSlowMo;
-      slowBtn.innerHTML = isSlowMo ? '<span>⚡</span> Normal' : '<span>⏱️</span> Slow-Mo';
-      slowBtn.style.color = isSlowMo ? '#00e5ff' : '#cfd8dc';
-      nativeVibrate('medium');
     });
 
     // -------------------------------------------------------------
-    // MAIN GAME LOOP (Optimized for 60fps mobile)
+    // GAME LOOP & PHYSICS
     // -------------------------------------------------------------
-    let lastUiUpdate = 0;
-    const fixedTimeStep = 1 / 60;
+    let gameStartTime = performance.now();
+    let isGameOver = false;
+    let scoreCoins = 0;
+    let runTime = 0;
+
+    const timerEl = document.getElementById('survival-timer');
+    const coinEl = document.getElementById('coin-counter');
+    const threatDistEl = document.getElementById('threat-dist');
+    const dangerFill = document.getElementById('danger-fill');
+    const vignette = document.getElementById('vignette');
+    const gameOverModal = document.getElementById('game-over-modal');
+    const finalTimeEl = document.getElementById('final-time');
+    const finalCoinsEl = document.getElementById('final-coins');
+
+    function resetGame() {
+      player.pos.set(0, 0, 10);
+      player.vel.set(0, 0, 0);
+      player.isGrounded = true;
+      dummyGroup.position.copy(player.pos);
+
+      vacuum.pos.set(0, 0, -32);
+      vacuum.speed = vacuum.baseSpeed;
+      vacuumGroup.position.copy(vacuum.pos);
+
+      gameStartTime = performance.now();
+      isGameOver = false;
+      scoreCoins = 0;
+      coinEl.innerText = '0';
+      gameOverModal.style.display = 'none';
+      vignette.style.boxShadow = 'inset 0 0 100px rgba(255, 0, 0, 0)';
+    }
+
+    document.getElementById('btn-restart').addEventListener('click', () => {
+      nativeVibrate('medium');
+      resetGame();
+    });
+
+    const clock = new THREE.Clock();
 
     function animate() {
       requestAnimationFrame(animate);
 
-      // Fixed physics step (prevents physics spiral lag)
-      world.step(fixedTimeStep);
-
-      // Sync Dummy Bodies to Meshes
-      let maxSpeed = 0;
-      const len = dummyBodies.length;
-      for (let i = 0; i < len; i++) {
-        const body = dummyBodies[i];
-        const mesh = dummyMeshes[i];
-        mesh.position.copy(body.position);
-        mesh.quaternion.copy(body.quaternion);
-        const speed = body.velocity.length();
-        if (speed > maxSpeed) maxSpeed = speed;
+      const dt = Math.min(clock.getDelta(), 0.1);
+      if (isGameOver) {
+        renderer.render(scene, camera);
+        return;
       }
 
-      // Throttle DOM text updates to 10 FPS (saves CPU layout reflows)
-      const now = performance.now();
-      if (now - lastUiUpdate > 100) {
-        lastUiUpdate = now;
-        speedValEl.innerText = maxSpeed.toFixed(1) + ' m/s';
+      runTime = ((performance.now() - gameStartTime) / 1000);
+      timerEl.innerText = runTime.toFixed(1) + 's';
+
+      // 1. Process Input
+      let moveX = moveInput.x;
+      let moveZ = moveInput.y;
+
+      if (keys['KeyW'] || keys['ArrowUp']) moveZ -= 1;
+      if (keys['KeyS'] || keys['ArrowDown']) moveZ += 1;
+      if (keys['KeyA'] || keys['ArrowLeft']) moveX -= 1;
+      if (keys['KeyD'] || keys['ArrowRight']) moveX += 1;
+      if (keys['Space'] && player.isGrounded) {
+        player.vel.y = player.jumpForce;
+        player.isGrounded = false;
+        playSound('jump');
       }
 
-      updateParticles();
-      updateCameraShake();
+      const inputLen = Math.sqrt(moveX * moveX + moveZ * moveZ);
+      const isMoving = inputLen > 0.08;
+      const speed = (player.isSprinting || keys['ShiftLeft']) ? player.boostSpeed : player.baseSpeed;
+
+      if (isMoving) {
+        const normX = moveX / Math.max(1, inputLen);
+        const normZ = moveZ / Math.max(1, inputLen);
+        player.pos.x += normX * speed * dt;
+        player.pos.z += normZ * speed * dt;
+        player.rotY = Math.atan2(normX, normZ);
+        dummyGroup.rotation.y = player.rotY;
+
+        // Running limb swing animation
+        const runCycle = performance.now() * 0.015;
+        leftArm.rotation.x = Math.sin(runCycle) * 0.8;
+        rightArm.rotation.x = -Math.sin(runCycle) * 0.8;
+        leftLeg.rotation.x = -Math.sin(runCycle) * 0.9;
+        rightLeg.rotation.x = Math.sin(runCycle) * 0.9;
+      } else {
+        leftArm.rotation.x = 0;
+        rightArm.rotation.x = 0;
+        leftLeg.rotation.x = 0;
+        rightLeg.rotation.x = 0;
+      }
+
+      // Gravity & Jumping
+      player.vel.y -= 18.0 * dt;
+      player.pos.y += player.vel.y * dt;
+
+      // Floor & Obstacle Collision
+      let groundY = 0;
+      for (let i = 0; i < obstacles.length; i++) {
+        const obs = obstacles[i];
+        if (
+          player.pos.x >= obs.box3.min.x - player.radius &&
+          player.pos.x <= obs.box3.max.x + player.radius &&
+          player.pos.z >= obs.box3.min.z - player.radius &&
+          player.pos.z <= obs.box3.max.z + player.radius
+        ) {
+          // If falling from top onto obstacle
+          if (player.pos.y >= obs.box3.max.y - 0.25 && player.vel.y <= 0) {
+            groundY = Math.max(groundY, obs.box3.max.y);
+          } else {
+            // Push back horizontal collision
+            const pushX = (player.pos.x < (obs.box3.min.x + obs.box3.max.x)/2) ? (obs.box3.min.x - player.radius) : (obs.box3.max.x + player.radius);
+            const pushZ = (player.pos.z < (obs.box3.min.z + obs.box3.max.z)/2) ? (obs.box3.min.z - player.radius) : (obs.box3.max.z + player.radius);
+            const distFromX = Math.abs(player.pos.x - (obs.box3.min.x + obs.box3.max.x)/2);
+            const distFromZ = Math.abs(player.pos.z - (obs.box3.min.z + obs.box3.max.z)/2);
+            if (distFromX > distFromZ) player.pos.x = pushX;
+            else player.pos.z = pushZ;
+          }
+        }
+      }
+
+      if (player.pos.y <= groundY) {
+        player.pos.y = groundY;
+        player.vel.y = 0;
+        player.isGrounded = true;
+      }
+
+      // Boundary clamp
+      player.pos.x = Math.max(-ROOM_SIZE + 1.5, Math.min(ROOM_SIZE - 1.5, player.pos.x));
+      player.pos.z = Math.max(-ROOM_SIZE + 1.5, Math.min(ROOM_SIZE - 1.5, player.pos.z));
+      dummyGroup.position.copy(player.pos);
+
+      // 2. Giant Vacuum AI Chaser
+      // Vacuum slowly accelerates over time!
+      vacuum.speed = Math.min(vacuum.maxSpeed, vacuum.baseSpeed + runTime * 0.05);
+
+      const toPlayer = new THREE.Vector3().subVectors(player.pos, vacuum.pos);
+      const distToPlayer = toPlayer.length();
+      toPlayer.y = 0;
+      toPlayer.normalize();
+
+      vacuum.pos.addScaledVector(toPlayer, vacuum.speed * dt);
+      vacuumGroup.position.copy(vacuum.pos);
+      vacuumGroup.rotation.y = Math.atan2(toPlayer.x, toPlayer.z);
+
+      // Vacuum dust intake animation
+      const dAttr = dustGeo.attributes.position;
+      for (let i = 0; i < dustCount; i++) {
+        const idx = i * 3;
+        let px = dAttr.getX(i);
+        let py = dAttr.getY(i);
+        let pz = dAttr.getZ(i);
+        pz -= 0.35;
+        if (pz < 1.0) {
+          px = (Math.random() - 0.5) * 6;
+          py = Math.random() * 1.5 + 0.1;
+          pz = Math.random() * 8 + 4;
+        }
+        dAttr.setXYZ(i, px, py, pz);
+      }
+      dAttr.needsUpdate = true;
+
+      // 3. Suction Pull on Player when near!
+      if (distToPlayer < 9.0) {
+        // Gravitational suction pull toward vacuum nozzle
+        const pullStrength = (9.0 - distToPlayer) * 1.8;
+        const pullDir = new THREE.Vector3().subVectors(vacuum.pos, player.pos).normalize();
+        player.pos.addScaledVector(pullDir, pullStrength * dt);
+      }
+
+      // Threat HUD & Warning Vignette
+      threatDistEl.innerText = distToPlayer.toFixed(1) + ' m';
+      const dangerPct = Math.max(0, Math.min(100, ((18.0 - distToPlayer) / 16.0) * 100));
+      dangerFill.style.width = dangerPct + '%';
+      if (dangerPct > 65) {
+        dangerFill.style.background = '#ff3b30';
+        vignette.style.boxShadow = `inset 0 0 ${Math.floor(dangerPct * 1.4)}px rgba(255, 0, 0, 0.65)`;
+      } else {
+        dangerFill.style.background = '#00e5ff';
+        vignette.style.boxShadow = 'inset 0 0 0px rgba(0,0,0,0)';
+      }
+
+      // 4. Catch / Game Over Check
+      if (distToPlayer <= vacuum.suctionRadius) {
+        isGameOver = true;
+        playSound('caught');
+        nativeVibrate('explosion');
+        finalTimeEl.innerText = runTime.toFixed(1) + 's';
+        finalCoinsEl.innerText = scoreCoins;
+        gameOverModal.style.display = 'flex';
+      }
+
+      // 5. Collect Batteries
+      for (let i = coins.length - 1; i >= 0; i--) {
+        const c = coins[i];
+        c.rotation.y += 2.5 * dt;
+        if (player.pos.distanceTo(c.position) < 1.2) {
+          playSound('coin');
+          nativeVibrate('light');
+          scoreCoins++;
+          coinEl.innerText = scoreCoins;
+          scene.remove(c);
+          coins.splice(i, 1);
+        }
+      }
+
+      // 6. Camera Follow (Dynamic 3rd Person Over-The-Shoulder / Arena View)
+      const targetCamPos = new THREE.Vector3(
+        player.pos.x,
+        player.pos.y + 4.5,
+        player.pos.z + 7.5
+      );
+      camera.position.lerp(targetCamPos, 0.12);
+      camera.lookAt(player.pos.x, player.pos.y + 1.0, player.pos.z);
 
       renderer.render(scene, camera);
     }
     requestAnimationFrame(animate);
 
-    // Responsive resize
     window.addEventListener('resize', () => {
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
