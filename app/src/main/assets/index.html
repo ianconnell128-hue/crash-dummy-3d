@@ -42,14 +42,11 @@
       z-index: 10;
     }
     .hud-card {
-      background: rgba(18, 24, 38, 0.85);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
+      background: #121826;
+      border: 1px solid rgba(255, 255, 255, 0.15);
       border-radius: 16px;
       padding: 10px 16px;
       color: #fff;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
     }
     .score-label {
       font-size: 11px;
@@ -104,7 +101,7 @@
     /* Quick Action Controls on Left/Right */
     .side-btn {
       pointer-events: auto;
-      background: rgba(22, 27, 34, 0.85);
+      background: #161b22;
       border: 1px solid rgba(255, 255, 255, 0.15);
       border-radius: 12px;
       padding: 10px 14px;
@@ -115,8 +112,6 @@
       align-items: center;
       gap: 6px;
       cursor: pointer;
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
       transition: background 0.15s, transform 0.1s;
     }
     .side-btn:active {
@@ -140,13 +135,10 @@
     #weapon-bar {
       display: flex;
       gap: 8px;
-      background: rgba(13, 17, 23, 0.88);
+      background: #0d1117;
       border: 1px solid rgba(255, 255, 255, 0.15);
       padding: 8px 12px;
       border-radius: 20px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.6);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
       pointer-events: auto;
       max-width: 100%;
       overflow-x: auto;
@@ -304,24 +296,32 @@
       gain.connect(audioCtx.destination);
 
       if (type === 'hit') {
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(160 + Math.random() * 80, now);
-        osc.frequency.exponentialRampToValueAtTime(30, now + 0.15);
-        gain.gain.setValueAtTime(0.7, now);
-        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+        // Soft, subtle low-frequency acoustic thud
+        osc.type = 'sine';
+        const startFreq = 85 + Math.random() * 25;
+        osc.frequency.setValueAtTime(startFreq, now);
+        osc.frequency.exponentialRampToValueAtTime(25, now + 0.08);
+
+        // Gentle volume curve (much quieter, non-harsh)
+        gain.gain.setValueAtTime(0.18, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+
         osc.start(now);
-        osc.stop(now + 0.15);
+        osc.stop(now + 0.08);
       } else if (type === 'punch') {
-        osc.type = 'square';
-        osc.frequency.setValueAtTime(280, now);
-        osc.frequency.exponentialRampToValueAtTime(40, now + 0.22);
-        gain.gain.setValueAtTime(0.9, now);
-        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.22);
+        // Deep soft bass punch (warm sine wave, quiet)
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(110, now);
+        osc.frequency.exponentialRampToValueAtTime(32, now + 0.12);
+
+        gain.gain.setValueAtTime(0.28, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+
         osc.start(now);
-        osc.stop(now + 0.22);
+        osc.stop(now + 0.12);
       } else if (type === 'explosion') {
-        // White noise burst
-        const bufferSize = audioCtx.sampleRate * 0.4;
+        // Low muffled rumble instead of loud harsh noise
+        const bufferSize = audioCtx.sampleRate * 0.25;
         const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
         const data = buffer.getChannelData(0);
         for (let i = 0; i < bufferSize; i++) {
@@ -331,25 +331,25 @@
         noise.buffer = buffer;
         const filter = audioCtx.createBiquadFilter();
         filter.type = 'lowpass';
-        filter.frequency.setValueAtTime(900, now);
-        filter.frequency.exponentialRampToValueAtTime(80, now + 0.35);
+        filter.frequency.setValueAtTime(250, now);
+        filter.frequency.exponentialRampToValueAtTime(40, now + 0.25);
 
         const expGain = audioCtx.createGain();
-        expGain.gain.setValueAtTime(1.0, now);
-        expGain.gain.exponentialRampToValueAtTime(0.01, now + 0.38);
+        expGain.gain.setValueAtTime(0.35, now);
+        expGain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
 
         noise.connect(filter);
         filter.connect(expGain);
         expGain.connect(audioCtx.destination);
         noise.start(now);
       } else if (type === 'laser') {
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(1200, now);
-        osc.frequency.exponentialRampToValueAtTime(150, now + 0.18);
-        gain.gain.setValueAtTime(0.5, now);
-        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.18);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(480, now);
+        osc.frequency.exponentialRampToValueAtTime(180, now + 0.1);
+        gain.gain.setValueAtTime(0.12, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
         osc.start(now);
-        osc.stop(now + 0.18);
+        osc.stop(now + 0.1);
       }
     }
 
@@ -376,48 +376,50 @@
     camera.position.set(0, 4.2, 11);
     camera.lookAt(0, 2.5, 0);
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+    const renderer = new THREE.WebGLRenderer({
+      antialias: false,
+      powerPreference: 'high-performance',
+      precision: 'mediump'
+    });
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
     renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.1;
+    renderer.shadowMap.type = THREE.BasicShadowMap;
+    renderer.toneMapping = THREE.NoToneMapping;
     container.appendChild(renderer.domElement);
 
     // Lights
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.85);
     scene.add(ambientLight);
 
-    const dirLight = new THREE.DirectionalLight(0xfff3e0, 1.8);
+    const dirLight = new THREE.DirectionalLight(0xfff3e0, 1.5);
     dirLight.position.set(5, 12, 8);
     dirLight.castShadow = true;
-    dirLight.shadow.mapSize.width = 1024;
-    dirLight.shadow.mapSize.height = 1024;
+    dirLight.shadow.mapSize.width = 512;
+    dirLight.shadow.mapSize.height = 512;
     dirLight.shadow.camera.near = 0.5;
-    dirLight.shadow.camera.far = 30;
+    dirLight.shadow.camera.far = 25;
     dirLight.shadow.camera.left = -6;
     dirLight.shadow.camera.right = 6;
     dirLight.shadow.camera.top = 8;
     dirLight.shadow.camera.bottom = -4;
-    dirLight.shadow.bias = -0.0005;
     scene.add(dirLight);
 
-    // Neon Rim Lights
-    const rimLightBlue = new THREE.PointLight(0x00d9ff, 3.5, 15);
-    rimLightBlue.position.set(-6, 3, 2);
+    // Simple Point Lights
+    const rimLightBlue = new THREE.PointLight(0x00d9ff, 2.0, 12);
+    rimLightBlue.position.set(-5, 3, 2);
     scene.add(rimLightBlue);
 
-    const rimLightOrange = new THREE.PointLight(0xff5722, 3.5, 15);
-    rimLightOrange.position.set(6, 4, -2);
+    const rimLightOrange = new THREE.PointLight(0xff5722, 2.0, 12);
+    rimLightOrange.position.set(5, 4, -2);
     scene.add(rimLightOrange);
 
     // Physics World
     const world = new CANNON.World();
     world.gravity.set(0, -18, 0);
-    world.solver.iterations = 10;
+    world.solver.iterations = 6;
     world.defaultContactMaterial.friction = 0.4;
-    world.defaultContactMaterial.restitution = 0.35;
+    world.defaultContactMaterial.restitution = 0.3;
 
     // Room Enclosure (Ground & Walls)
     function createGroundAndWalls() {
@@ -564,10 +566,14 @@
       dummyBodies.push(body);
       dummyMeshes.push(mesh);
 
-      // Collision sound & score tracking
+      // Collision sound & score tracking (filtered so light grazing doesn't make noise)
+      let lastHitTime = 0;
       body.addEventListener('collide', function(e) {
+        const now = performance.now();
+        if (now - lastHitTime < 120) return; // Debounce rapid micro-collisions
         const relVel = e.contact.getImpactVelocityAlongNormal();
-        if (relVel > 3.5) {
+        if (relVel > 7.0) {
+          lastHitTime = now;
           handleLimbImpact(body.position, relVel);
         }
       });
@@ -1094,22 +1100,21 @@
     });
 
     // -------------------------------------------------------------
-    // MAIN GAME LOOP
+    // MAIN GAME LOOP (Optimized for 60fps mobile)
     // -------------------------------------------------------------
-    let lastTime = performance.now();
-    function animate(time) {
+    let lastUiUpdate = 0;
+    const fixedTimeStep = 1 / 60;
+
+    function animate() {
       requestAnimationFrame(animate);
 
-      const dt = Math.min((time - lastTime) / 1000, 0.1);
-      lastTime = time;
-
-      // Physics step
-      const stepDt = isSlowMo ? dt * 0.3 : dt;
-      world.step(1 / 60, stepDt, 4);
+      // Fixed physics step (prevents physics spiral lag)
+      world.step(fixedTimeStep);
 
       // Sync Dummy Bodies to Meshes
       let maxSpeed = 0;
-      for (let i = 0; i < dummyBodies.length; i++) {
+      const len = dummyBodies.length;
+      for (let i = 0; i < len; i++) {
         const body = dummyBodies[i];
         const mesh = dummyMeshes[i];
         mesh.position.copy(body.position);
@@ -1117,7 +1122,13 @@
         const speed = body.velocity.length();
         if (speed > maxSpeed) maxSpeed = speed;
       }
-      speedValEl.innerText = maxSpeed.toFixed(1) + ' m/s';
+
+      // Throttle DOM text updates to 10 FPS (saves CPU layout reflows)
+      const now = performance.now();
+      if (now - lastUiUpdate > 100) {
+        lastUiUpdate = now;
+        speedValEl.innerText = maxSpeed.toFixed(1) + ' m/s';
+      }
 
       updateParticles();
       updateCameraShake();
