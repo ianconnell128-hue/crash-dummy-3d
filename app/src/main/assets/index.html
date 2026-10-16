@@ -569,62 +569,223 @@
     spawnBatteries(14);
 
     // -------------------------------------------------------------
-    // THE TINY CRASH DUMMY PLAYER
+    // THE TINY CRASH DUMMY PLAYER (Smooth Fully Attached Human Body)
     // -------------------------------------------------------------
     const dummyGroup = new THREE.Group();
     scene.add(dummyGroup);
 
-    // Create Dummy Model (Iconic yellow with crash target)
-    const dummyMatYellow = new THREE.MeshLambertMaterial({ color: 0xffb703 });
-    const dummyMatBlack = new THREE.MeshLambertMaterial({ color: 0x212121 });
+    // High quality smooth materials with physical standard shading
+    const dummyMatYellow = new THREE.MeshStandardMaterial({
+      color: 0xffb703,
+      roughness: 0.35,
+      metalness: 0.12
+    });
+    const dummyMatDark = new THREE.MeshStandardMaterial({
+      color: 0x1e232a,
+      roughness: 0.45,
+      metalness: 0.2
+    });
+    const dummyMatWhite = new THREE.MeshStandardMaterial({
+      color: 0xf1f5f9,
+      roughness: 0.35,
+      metalness: 0.08
+    });
 
-    // Target Head texture
-    const hc = document.createElement('canvas');
-    hc.width = 128; hc.height = 128;
-    const hctx = hc.getContext('2d');
-    hctx.fillStyle = '#ffb703'; hctx.fillRect(0,0,128,128);
-    hctx.fillStyle = '#111';
-    hctx.beginPath(); hctx.moveTo(64,64); hctx.arc(64,64,50,0,Math.PI/2); hctx.fill();
-    hctx.beginPath(); hctx.moveTo(64,64); hctx.arc(64,64,50,Math.PI,Math.PI*1.5); hctx.fill();
-    const headMat = new THREE.MeshLambertMaterial({ map: new THREE.CanvasTexture(hc) });
+    // Crash target decal texture for head & chest
+    function createTargetCanvas() {
+      const c = document.createElement('canvas');
+      c.width = 128; c.height = 128;
+      const ctx = c.getContext('2d');
+      ctx.fillStyle = '#ffb703'; ctx.fillRect(0, 0, 128, 128);
+      ctx.fillStyle = '#1e232a';
+      ctx.beginPath(); ctx.moveTo(64, 64); ctx.arc(64, 64, 52, 0, Math.PI / 2); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(64, 64); ctx.arc(64, 64, 52, Math.PI, Math.PI * 1.5); ctx.fill();
+      ctx.strokeStyle = '#fff'; ctx.lineWidth = 3;
+      ctx.beginPath(); ctx.arc(64, 64, 52, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(12, 64); ctx.lineTo(116, 64); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(64, 12); ctx.lineTo(64, 116); ctx.stroke();
+      return new THREE.CanvasTexture(c);
+    }
+    const targetTex = createTargetCanvas();
+    const headMat = new THREE.MeshStandardMaterial({
+      map: targetTex,
+      roughness: 0.35,
+      metalness: 0.15
+    });
 
-    // Torso
-    const torsoMesh = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.5, 0.28), dummyMatYellow);
-    torsoMesh.position.y = 0.55;
-    torsoMesh.castShadow = true;
-    dummyGroup.add(torsoMesh);
+    // 1. Pelvis / Hips (Smooth anatomical pelvis capsule)
+    const pelvisGeo = new THREE.CapsuleGeometry(0.12, 0.08, 14, 16);
+    pelvisGeo.rotateZ(Math.PI / 2);
+    const pelvis = new THREE.Mesh(pelvisGeo, dummyMatDark);
+    pelvis.position.y = 0.47;
+    pelvis.castShadow = true;
+    dummyGroup.add(pelvis);
 
-    // Pelvis
-    const pelvisMesh = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.22, 0.26), dummyMatBlack);
-    pelvisMesh.position.y = 0.28;
-    pelvisMesh.castShadow = true;
-    dummyGroup.add(pelvisMesh);
+    // 2. Waist / Abdomen (Smooth transition connecting hips to chest)
+    const waistGeo = new THREE.CylinderGeometry(0.115, 0.122, 0.09, 18);
+    const waist = new THREE.Mesh(waistGeo, dummyMatYellow);
+    waist.position.y = 0.54;
+    waist.castShadow = true;
+    dummyGroup.add(waist);
 
-    // Head
-    const headMesh = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 16), headMat);
-    headMesh.position.y = 0.95;
-    headMesh.castShadow = true;
-    dummyGroup.add(headMesh);
+    // 3. Ribcage & Chest (Tapered athletic torso)
+    const chestGeo = new THREE.CylinderGeometry(0.155, 0.115, 0.20, 18);
+    const chest = new THREE.Mesh(chestGeo, dummyMatYellow);
+    chest.position.y = 0.67;
+    chest.castShadow = true;
+    dummyGroup.add(chest);
 
-    // Animated Limbs for Running
-    const dummyArmGeo = new THREE.CylinderGeometry(0.06, 0.06, 0.35, 8);
-    const dummyLegGeo = new THREE.CylinderGeometry(0.08, 0.07, 0.42, 8);
+    // Upper Chest / Pectorals & Shoulders blend
+    const upperChestGeo = new THREE.SphereGeometry(0.16, 18, 14);
+    upperChestGeo.scale(1.02, 0.72, 0.82);
+    const upperChest = new THREE.Mesh(upperChestGeo, dummyMatYellow);
+    upperChest.position.set(0, 0.74, 0.01);
+    upperChest.castShadow = true;
+    dummyGroup.add(upperChest);
 
-    const leftArm = new THREE.Mesh(dummyArmGeo, dummyMatYellow);
-    leftArm.position.set(-0.26, 0.55, 0);
-    dummyGroup.add(leftArm);
+    // Target badge on front of chest
+    const chestDecalGeo = new THREE.CircleGeometry(0.055, 16);
+    const chestDecalMat = new THREE.MeshStandardMaterial({
+      map: targetTex,
+      roughness: 0.4,
+      transparent: true
+    });
+    const chestBadge = new THREE.Mesh(chestDecalGeo, chestDecalMat);
+    chestBadge.position.set(0, 0.71, 0.14);
+    chestBadge.castShadow = true;
+    dummyGroup.add(chestBadge);
 
-    const rightArm = new THREE.Mesh(dummyArmGeo, dummyMatYellow);
-    rightArm.position.set(0.26, 0.55, 0);
-    dummyGroup.add(rightArm);
+    // 4. Neck (Tapered cervical cylinder connecting torso to head)
+    const neckGeo = new THREE.CylinderGeometry(0.062, 0.072, 0.07, 16);
+    const neck = new THREE.Mesh(neckGeo, dummyMatYellow);
+    neck.position.y = 0.84;
+    neck.castShadow = true;
+    dummyGroup.add(neck);
 
-    const leftLeg = new THREE.Mesh(dummyLegGeo, dummyMatBlack);
-    leftLeg.position.set(-0.12, 0.2, 0);
-    dummyGroup.add(leftLeg);
+    // 5. Head Group (Organic cranium with jawline contour)
+    const headGroup = new THREE.Group();
+    headGroup.position.y = 0.96;
 
-    const rightLeg = new THREE.Mesh(dummyLegGeo, dummyMatBlack);
-    rightLeg.position.set(0.12, 0.2, 0);
-    dummyGroup.add(rightLeg);
+    const craniumGeo = new THREE.SphereGeometry(0.108, 20, 18);
+    craniumGeo.scale(0.92, 1.05, 0.98);
+    const cranium = new THREE.Mesh(craniumGeo, headMat);
+    cranium.castShadow = true;
+    headGroup.add(cranium);
+
+    const jawGeo = new THREE.CylinderGeometry(0.08, 0.05, 0.07, 16);
+    jawGeo.scale(0.9, 1.0, 0.8);
+    const jaw = new THREE.Mesh(jawGeo, dummyMatYellow);
+    jaw.position.set(0, -0.065, 0.02);
+    jaw.castShadow = true;
+    headGroup.add(jaw);
+
+    dummyGroup.add(headGroup);
+
+    // 6. Seamless Articulated Human Arms
+    function createSmoothArm(isLeft) {
+      const side = isLeft ? -1 : 1;
+      const shoulderPivot = new THREE.Group();
+      shoulderPivot.position.set(side * 0.18, 0.76, 0);
+
+      // Rounded shoulder joint (deltoid)
+      const shoulderBallGeo = new THREE.SphereGeometry(0.062, 16, 12);
+      const shoulderBall = new THREE.Mesh(shoulderBallGeo, dummyMatYellow);
+      shoulderBall.castShadow = true;
+      shoulderPivot.add(shoulderBall);
+
+      // Upper Arm (Bicep/Tricep)
+      const bicepGeo = new THREE.CylinderGeometry(0.054, 0.046, 0.18, 16);
+      bicepGeo.translate(0, -0.09, 0);
+      const bicep = new THREE.Mesh(bicepGeo, dummyMatYellow);
+      bicep.castShadow = true;
+      shoulderPivot.add(bicep);
+
+      // Elbow Joint & Pivot
+      const elbowPivot = new THREE.Group();
+      elbowPivot.position.set(0, -0.18, 0);
+      shoulderPivot.add(elbowPivot);
+
+      const elbowBallGeo = new THREE.SphereGeometry(0.046, 14, 10);
+      const elbowBall = new THREE.Mesh(elbowBallGeo, dummyMatDark);
+      elbowBall.castShadow = true;
+      elbowPivot.add(elbowBall);
+
+      // Forearm with white test marking cuff
+      const forearmGeo = new THREE.CylinderGeometry(0.044, 0.036, 0.18, 16);
+      forearmGeo.translate(0, -0.09, 0);
+      const forearm = new THREE.Mesh(forearmGeo, dummyMatWhite);
+      forearm.castShadow = true;
+      elbowPivot.add(forearm);
+
+      // Hand (Smooth curved palm/fist)
+      const handGeo = new THREE.SphereGeometry(0.038, 14, 10);
+      handGeo.scale(0.8, 1.35, 0.55);
+      handGeo.translate(0, -0.04, 0);
+      const hand = new THREE.Mesh(handGeo, dummyMatYellow);
+      hand.position.set(0, -0.18, 0);
+      hand.castShadow = true;
+      elbowPivot.add(hand);
+
+      dummyGroup.add(shoulderPivot);
+      return { shoulderPivot, elbowPivot };
+    }
+
+    // 7. Seamless Articulated Human Legs
+    function createSmoothLeg(isLeft) {
+      const side = isLeft ? -1 : 1;
+      const hipPivot = new THREE.Group();
+      hipPivot.position.set(side * 0.088, 0.45, 0);
+
+      // Hip ball joint
+      const hipBallGeo = new THREE.SphereGeometry(0.068, 16, 12);
+      const hipBall = new THREE.Mesh(hipBallGeo, dummyMatDark);
+      hipBall.castShadow = true;
+      hipPivot.add(hipBall);
+
+      // Thigh (Anatomically tapered leg)
+      const thighGeo = new THREE.CylinderGeometry(0.068, 0.054, 0.22, 16);
+      thighGeo.translate(0, -0.11, 0);
+      const thigh = new THREE.Mesh(thighGeo, dummyMatYellow);
+      thigh.castShadow = true;
+      hipPivot.add(thigh);
+
+      // Knee Pivot & Ball Joint
+      const kneePivot = new THREE.Group();
+      kneePivot.position.set(0, -0.22, 0);
+      hipPivot.add(kneePivot);
+
+      const kneeBallGeo = new THREE.SphereGeometry(0.054, 14, 10);
+      const kneeBall = new THREE.Mesh(kneeBallGeo, dummyMatDark);
+      kneeBall.castShadow = true;
+      kneePivot.add(kneeBall);
+
+      // Calf / Shin
+      const calfGeo = new THREE.CylinderGeometry(0.052, 0.040, 0.22, 16);
+      calfGeo.translate(0, -0.11, 0);
+      const calf = new THREE.Mesh(calfGeo, dummyMatDark);
+      calf.castShadow = true;
+      kneePivot.add(calf);
+
+      // Foot (Smooth curved athletic shoe)
+      const footGroup = new THREE.Group();
+      footGroup.position.set(0, -0.22, 0);
+
+      const shoeGeo = new THREE.CapsuleGeometry(0.038, 0.09, 12, 14);
+      shoeGeo.rotateX(Math.PI / 2);
+      shoeGeo.translate(0, -0.02, 0.035);
+      const shoe = new THREE.Mesh(shoeGeo, dummyMatYellow);
+      shoe.castShadow = true;
+      footGroup.add(shoe);
+      kneePivot.add(footGroup);
+
+      dummyGroup.add(hipPivot);
+      return { hipPivot, kneePivot };
+    }
+
+    const leftArmRig = createSmoothArm(true);
+    const rightArmRig = createSmoothArm(false);
+    const leftLegRig = createSmoothLeg(true);
+    const rightLegRig = createSmoothLeg(false);
 
     // Player Physics State
     const player = {
@@ -906,6 +1067,7 @@
       const inputLen = Math.sqrt(moveX * moveX + moveZ * moveZ);
       const isMoving = inputLen > 0.08;
       const speed = (player.isSprinting || keys['ShiftLeft']) ? player.boostSpeed : player.baseSpeed;
+      let runBob = 0;
 
       if (isMoving) {
         const normX = moveX / Math.max(1, inputLen);
@@ -915,17 +1077,40 @@
         player.rotY = Math.atan2(normX, normZ);
         dummyGroup.rotation.y = player.rotY;
 
-        // Running limb swing animation
+        // Running human biomechanics animation
         const runCycle = performance.now() * 0.015;
-        leftArm.rotation.x = Math.sin(runCycle) * 0.8;
-        rightArm.rotation.x = -Math.sin(runCycle) * 0.8;
-        leftLeg.rotation.x = -Math.sin(runCycle) * 0.9;
-        rightLeg.rotation.x = Math.sin(runCycle) * 0.9;
+        const sinCycle = Math.sin(runCycle);
+        const cosCycle = Math.cos(runCycle);
+
+        // Arms swing naturally at shoulders and flex at elbows
+        leftArmRig.shoulderPivot.rotation.x = sinCycle * 0.75;
+        leftArmRig.elbowPivot.rotation.x = Math.max(0, -sinCycle * 0.6) + 0.3;
+
+        rightArmRig.shoulderPivot.rotation.x = -sinCycle * 0.75;
+        rightArmRig.elbowPivot.rotation.x = Math.max(0, sinCycle * 0.6) + 0.3;
+
+        // Legs swing at hips and bend at knees (human stride)
+        leftLegRig.hipPivot.rotation.x = -sinCycle * 0.85;
+        leftLegRig.kneePivot.rotation.x = Math.max(0, sinCycle * 0.95);
+
+        rightLegRig.hipPivot.rotation.x = sinCycle * 0.85;
+        rightLegRig.kneePivot.rotation.x = Math.max(0, -sinCycle * 0.95);
+
+        // Subtle torso bounce during running stride
+        const torsoBob = Math.abs(sinCycle) * 0.035;
+        runBob = torsoBob;
       } else {
-        leftArm.rotation.x = 0;
-        rightArm.rotation.x = 0;
-        leftLeg.rotation.x = 0;
-        rightLeg.rotation.x = 0;
+        runBob = 0;
+        // Natural relaxed idle pose
+        leftArmRig.shoulderPivot.rotation.x = 0;
+        leftArmRig.elbowPivot.rotation.x = 0.15;
+        rightArmRig.shoulderPivot.rotation.x = 0;
+        rightArmRig.elbowPivot.rotation.x = 0.15;
+
+        leftLegRig.hipPivot.rotation.x = 0;
+        leftLegRig.kneePivot.rotation.x = 0;
+        rightLegRig.hipPivot.rotation.x = 0;
+        rightLegRig.kneePivot.rotation.x = 0;
       }
 
       // Gravity & Jumping
@@ -967,6 +1152,7 @@
       player.pos.x = Math.max(-ROOM_SIZE + 1.5, Math.min(ROOM_SIZE - 1.5, player.pos.x));
       player.pos.z = Math.max(-ROOM_SIZE + 1.5, Math.min(ROOM_SIZE - 1.5, player.pos.z));
       dummyGroup.position.copy(player.pos);
+      dummyGroup.position.y += runBob;
 
       // 2. Giant Vacuum AI Chaser
       // Vacuum slowly accelerates over time!
