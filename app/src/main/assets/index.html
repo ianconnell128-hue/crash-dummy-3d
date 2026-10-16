@@ -295,6 +295,28 @@
     </div>
   </div>
 
+  <!-- Update Modal -->
+  <div id="update-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:200; justify-content:center; align-items:center;">
+    <div style="background:#161b22; border:1px solid #30363d; border-radius:18px; padding:24px; max-width:320px; width:85%; color:#fff; text-align:center; box-shadow:0 12px 40px rgba(0,0,0,0.8);">
+      <div style="font-size:36px; margin-bottom:10px;">🚀</div>
+      <div style="font-size:18px; font-weight:800; margin-bottom:8px;" id="update-title">Update Available!</div>
+      <div style="font-size:13px; color:#8b949e; margin-bottom:20px;" id="update-desc">A newer version of Tiny Dummy: Vacuum Escape is available. Install now?</div>
+      <div style="display:flex; gap:10px; justify-content:center;">
+        <button id="update-cancel-btn" style="background:#21262d; border:1px solid #30363d; color:#c9d1d9; padding:10px 16px; border-radius:10px; font-weight:700; cursor:pointer;">Later</button>
+        <button id="update-confirm-btn" style="background:linear-gradient(135deg, #238636, #2ea043); border:none; color:#fff; padding:10px 18px; border-radius:10px; font-weight:700; cursor:pointer;">Install Now</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Error Diagnostics Modal (Shows if WebGL or script throws) -->
+  <div id="error-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,0,0,0.92); z-index:300; justify-content:center; align-items:center; padding:20px; box-sizing:border-box;">
+    <div style="background:#220d0d; border:2px solid #ff4444; border-radius:16px; padding:20px; max-width:90%; color:#fff; font-family:monospace; font-size:12px; word-break:break-word;">
+      <div style="font-size:16px; font-weight:bold; color:#ff6666; margin-bottom:8px;">⚠️ Game Engine Warning</div>
+      <div id="error-text" style="color:#ffcccc; margin-bottom:14px; white-space:pre-wrap;"></div>
+      <button onclick="document.getElementById('error-modal').style.display='none'" style="background:#ff4444; border:none; color:#fff; padding:8px 16px; border-radius:8px; font-weight:bold; cursor:pointer;">Dismiss</button>
+    </div>
+  </div>
+
   <script>
     // Audio synthesizer
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -341,6 +363,17 @@
       }
     }
 
+    // Global Error Boundary & Diagnostic Reporter
+    window.onerror = function(msg, url, lineNo, columnNo, error) {
+      const errBox = document.getElementById('error-modal');
+      const errText = document.getElementById('error-text');
+      if (errBox && errText) {
+        errText.innerText = msg + '\nLine: ' + lineNo + (url ? ' (' + url.split('/').pop() + ')' : '');
+        errBox.style.display = 'flex';
+      }
+      return false;
+    };
+
     // -------------------------------------------------------------
     // THREE.JS SETUP: GIANT HOUSE ENVIRONMENT
     // -------------------------------------------------------------
@@ -351,11 +384,21 @@
 
     const camera = new THREE.PerspectiveCamera(55, window.innerWidth / window.innerHeight, 0.1, 120);
 
-    const renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance', precision: 'mediump' });
+    let renderer;
+    try {
+      renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance' });
+    } catch (e) {
+      console.warn('Fallback standard WebGLRenderer:', e);
+      renderer = new THREE.WebGLRenderer();
+    }
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.BasicShadowMap;
+    try {
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.BasicShadowMap;
+    } catch (e) {
+      console.warn('Shadow map setup skipped:', e);
+    }
     container.appendChild(renderer.domElement);
 
     // Warm Ambient Living Room Lighting
@@ -755,13 +798,40 @@
       btnBoost.style.background = '#00897b';
     });
 
-    // Check updates button
+    // Check updates button & modal wiring
+    const updateModal = document.getElementById('update-modal');
+    const updateTitle = document.getElementById('update-title');
+    const updateDesc = document.getElementById('update-desc');
+    const updateConfirmBtn = document.getElementById('update-confirm-btn');
+    const updateCancelBtn = document.getElementById('update-cancel-btn');
+    let pendingDownloadUrl = null;
+
     document.getElementById('btn-update').addEventListener('click', () => {
       nativeVibrate('light');
       if (window.AndroidNative && window.AndroidNative.checkForUpdates) {
         window.AndroidNative.checkForUpdates();
       } else {
         alert('Check for updates is available inside the Android APK.');
+      }
+    });
+
+    window.onUpdateResult = function(event, version, downloadUrl) {
+      if (event === 'updateAvailable') {
+        pendingDownloadUrl = downloadUrl;
+        updateTitle.innerText = 'New Update (v' + version + ')';
+        updateDesc.innerText = 'A newer version of Tiny Dummy: Vacuum Escape is ready to install. Update now?';
+        updateModal.style.display = 'flex';
+      }
+    };
+
+    updateCancelBtn.addEventListener('click', () => {
+      updateModal.style.display = 'none';
+    });
+
+    updateConfirmBtn.addEventListener('click', () => {
+      updateModal.style.display = 'none';
+      if (pendingDownloadUrl && window.AndroidNative && window.AndroidNative.downloadAndInstallUpdate) {
+        window.AndroidNative.downloadAndInstallUpdate(pendingDownloadUrl);
       }
     });
 

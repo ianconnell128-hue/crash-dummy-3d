@@ -53,7 +53,17 @@ class MainActivity : ComponentActivity() {
 
             addJavascriptInterface(GameInterface(this@MainActivity), "AndroidNative")
 
-            webChromeClient = WebChromeClient()
+            webChromeClient = object : WebChromeClient() {
+                override fun onConsoleMessage(consoleMessage: android.webkit.ConsoleMessage?): Boolean {
+                    android.util.Log.d("GameWebView", "${consoleMessage?.message()} -- From line ${consoleMessage?.lineNumber()} of ${consoleMessage?.sourceId()}")
+                    return true
+                }
+                override fun onJsAlert(view: WebView?, url: String?, message: String?, result: android.webkit.JsResult?): Boolean {
+                    android.widget.Toast.makeText(this@MainActivity, message, android.widget.Toast.LENGTH_LONG).show()
+                    result?.confirm()
+                    return true
+                }
+            }
             webViewClient = object : WebViewClient() {}
         }
 
