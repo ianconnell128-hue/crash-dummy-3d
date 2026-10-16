@@ -253,36 +253,38 @@
     }
     #joystick-zone {
       position: absolute;
-      bottom: 20px;
-      left: 20px;
-      width: 150px;
-      height: 150px;
+      top: 0;
+      left: 0;
+      width: 50vw;
+      height: 100vh;
       pointer-events: auto;
       touch-action: none;
+      user-select: none;
     }
     #joystick-base {
       position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 110px;
-      height: 110px;
+      width: 120px;
+      height: 120px;
       border-radius: 50%;
-      background: rgba(255, 255, 255, 0.1);
-      border: 2px solid rgba(255, 255, 255, 0.25);
-      backdrop-filter: blur(4px);
+      background: radial-gradient(circle, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.05) 70%, rgba(255, 255, 255, 0.2) 100%);
+      border: 2px solid rgba(255, 255, 255, 0.4);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+      pointer-events: none;
+      display: none;
+      transform: translate(-50%, -50%);
     }
     #joystick-thumb {
       position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 48px;
-      height: 48px;
+      width: 54px;
+      height: 54px;
       border-radius: 50%;
-      background: #f0883e;
-      box-shadow: 0 2px 10px rgba(240, 136, 62, 0.6);
-      transition: transform 0.05s ease-out;
+      background: radial-gradient(circle, #ffffff 0%, #cbd5e1 60%, #94a3b8 100%);
+      border: 2px solid rgba(255, 255, 255, 0.8);
+      box-shadow: 0 3px 12px rgba(0, 0, 0, 0.6);
+      pointer-events: none;
+      display: none;
+      transform: translate(-50%, -50%);
+      transition: none;
     }
 
     /* Action buttons cluster */
@@ -1295,91 +1297,108 @@
     }
 
     /* ============================================================
-       7. PLAYER SURVIVOR MODEL & BIOMECHANICS
+       7. PLAYER ROBLOX R6 AVATAR MODEL & BIOMECHANICS
        ============================================================ */
     const playerGroup = new THREE.Group();
     scene.add(playerGroup);
 
-    // Anatomical Stylized Survivor Model
-    const dummyMat = new THREE.MeshLambertMaterial({ color: 0xf5b041 }); // Warm hazardous yellow
-    const jointMat = new THREE.MeshLambertMaterial({ color: 0x222222 });
-    const clothMat = new THREE.MeshLambertMaterial({ color: 0x2e4053 }); // Survivor navy shirt
+    // Roblox Classic Colors
+    const rbxYellow = new THREE.MeshLambertMaterial({ color: 0xe5c158 }); // Classic Noob/Roblox yellow skin
+    const rbxBlue = new THREE.MeshLambertMaterial({ color: 0x0d69ac });   // Classic Blue torso
+    const rbxGreen = new THREE.MeshLambertMaterial({ color: 0x27823b });  // Classic Green pants
 
-    // Pelvis
-    const pelvis = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.28, 0.35, 12), jointMat);
-    pelvis.position.y = 0.95;
-    playerGroup.add(pelvis);
+    // Canvas texture for classic iconic Roblox Smile Face
+    const faceCanvas = document.createElement('canvas');
+    faceCanvas.width = 128;
+    faceCanvas.height = 128;
+    const fctx = faceCanvas.getContext('2d');
+    fctx.fillStyle = '#e5c158';
+    fctx.fillRect(0, 0, 128, 128);
+    // Eyes
+    fctx.fillStyle = '#111111';
+    fctx.beginPath();
+    fctx.arc(42, 45, 9, 0, Math.PI * 2);
+    fctx.arc(86, 45, 9, 0, Math.PI * 2);
+    fctx.fill();
+    // Catchlight in eyes
+    fctx.fillStyle = '#ffffff';
+    fctx.beginPath();
+    fctx.arc(40, 42, 3, 0, Math.PI * 2);
+    fctx.arc(84, 42, 3, 0, Math.PI * 2);
+    fctx.fill();
+    // Classic Smile curve
+    fctx.strokeStyle = '#111111';
+    fctx.lineWidth = 5.5;
+    fctx.lineCap = 'round';
+    fctx.beginPath();
+    fctx.arc(64, 60, 32, 0.2 * Math.PI, 0.8 * Math.PI);
+    fctx.stroke();
 
-    // Torso / Chest
-    const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.28, 0.75, 12), clothMat);
-    torso.position.y = 1.45;
-    playerGroup.add(torso);
+    const faceTexture = new THREE.CanvasTexture(faceCanvas);
+    const rbxFaceMat = new THREE.MeshLambertMaterial({ map: faceTexture });
 
-    // Neck & Head
-    const head = new THREE.Mesh(new THREE.SphereGeometry(0.3, 16, 16), dummyMat);
-    head.position.y = 2.08;
-    playerGroup.add(head);
+    // Head (Roblox R6: 0.7 x 0.7 x 0.7 box with top stud)
+    const headGroup = new THREE.Group();
+    headGroup.position.y = 2.05;
+    playerGroup.add(headGroup);
 
-    // Hazard Face Markings
-    const faceMark = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 0.05, 8), jointMat);
-    faceMark.rotation.x = Math.PI / 2;
-    faceMark.position.set(0, 2.08, 0.28);
-    playerGroup.add(faceMark);
+    // Head materials array [right, left, top, bottom, front, back]
+    const headMaterials = [
+      rbxYellow,
+      rbxYellow,
+      rbxYellow,
+      rbxYellow,
+      rbxFaceMat, // Front face
+      rbxYellow
+    ];
+    const headMesh = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.7, 0.7), headMaterials);
+    headGroup.add(headMesh);
 
-    // Arms & Carrying Rig
-    function createArm(isLeft) {
+    // Iconic Roblox Head Stud
+    const studMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.14, 16), rbxYellow);
+    studMesh.position.y = 0.42;
+    headGroup.add(studMesh);
+
+    // Torso (Roblox R6: 1.1 x 1.1 x 0.55 box)
+    const torsoMesh = new THREE.Mesh(new THREE.BoxGeometry(1.05, 1.05, 0.55), rbxBlue);
+    torsoMesh.position.y = 1.35;
+    playerGroup.add(torsoMesh);
+
+    // Arms (Roblox R6: 0.52 x 1.05 x 0.52 blocks pivoting from shoulder)
+    function createR6Arm(isLeft) {
       const shoulderPivot = new THREE.Group();
-      shoulderPivot.position.set(isLeft ? -0.45 : 0.45, 1.72, 0);
+      // Shoulder pivot at top corner of torso
+      shoulderPivot.position.set(isLeft ? -0.78 : 0.78, 1.85, 0);
 
-      const bicep = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.09, 0.45, 8), clothMat);
-      bicep.position.y = -0.22;
-      shoulderPivot.add(bicep);
-
-      const elbowPivot = new THREE.Group();
-      elbowPivot.position.y = -0.45;
-      shoulderPivot.add(elbowPivot);
-
-      const forearm = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.08, 0.45, 8), dummyMat);
-      forearm.position.y = -0.22;
-      elbowPivot.add(forearm);
+      const armMesh = new THREE.Mesh(new THREE.BoxGeometry(0.5, 1.05, 0.5), rbxYellow);
+      armMesh.position.y = -0.52; // hang down from shoulder
+      shoulderPivot.add(armMesh);
 
       playerGroup.add(shoulderPivot);
-      return { shoulderPivot, elbowPivot };
+      return { shoulderPivot, armMesh };
     }
 
-    // Legs
-    function createLeg(isLeft) {
+    // Legs (Roblox R6: 0.5 x 1.05 x 0.5 blocks pivoting from hips)
+    function createR6Leg(isLeft) {
       const hipPivot = new THREE.Group();
-      hipPivot.position.set(isLeft ? -0.2 : 0.2, 0.85, 0);
+      hipPivot.position.set(isLeft ? -0.27 : 0.27, 0.85, 0);
 
-      const thigh = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.1, 0.48, 8), jointMat);
-      thigh.position.y = -0.24;
-      hipPivot.add(thigh);
-
-      const kneePivot = new THREE.Group();
-      kneePivot.position.y = -0.48;
-      hipPivot.add(kneePivot);
-
-      const calf = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.09, 0.48, 8), jointMat);
-      calf.position.y = -0.24;
-      kneePivot.add(calf);
-
-      const foot = new THREE.Mesh(new THREE.BoxGeometry(0.18, 0.12, 0.32), dummyMat);
-      foot.position.set(0, -0.48, 0.08);
-      kneePivot.add(foot);
+      const legMesh = new THREE.Mesh(new THREE.BoxGeometry(0.5, 1.05, 0.5), rbxGreen);
+      legMesh.position.y = -0.52; // hang down from hip
+      hipPivot.add(legMesh);
 
       playerGroup.add(hipPivot);
-      return { hipPivot, kneePivot };
+      return { hipPivot, legMesh };
     }
 
-    const leftArm = createArm(true);
-    const rightArm = createArm(false);
-    const leftLeg = createLeg(true);
-    const rightLeg = createLeg(false);
+    const leftArm = createR6Arm(true);
+    const rightArm = createR6Arm(false);
+    const leftLeg = createR6Leg(true);
+    const rightLeg = createR6Leg(false);
 
-    // Carried Item Anchor Node (attached directly to player's front hands)
+    // Carried Item Anchor Node (attached in front of Roblox torso)
     const carryAnchor = new THREE.Group();
-    carryAnchor.position.set(0, 1.2, 1.4);
+    carryAnchor.position.set(0, 1.3, 1.3);
     playerGroup.add(carryAnchor);
 
     // Placement Ghost Hologram (Shows on floor when carrying)
@@ -1898,52 +1917,85 @@
        14. CONTROLS, JOYSTICK & TOUCH ORBIT
        ============================================================ */
     const joyZone = document.getElementById('joystick-zone');
+    const joyBase = document.getElementById('joystick-base');
     const joyThumb = document.getElementById('joystick-thumb');
     let joyTouchId = null;
     let joyMove = { x: 0, y: 0 };
-    const joyCenter = { x: 75, y: 75 };
+    let joyCenter = { x: 0, y: 0 };
+    const maxR = 50;
 
+    // Roblox-style dynamic floating joystick: touches anywhere on left half activate it right at touch point
     joyZone.addEventListener('touchstart', e => {
       initAudio();
       e.preventDefault();
+      if (joyTouchId !== null) return; // Already active
+
       const t = e.changedTouches[0];
       joyTouchId = t.identifier;
-      handleJoyTouch(t);
+      joyCenter.x = t.clientX;
+      joyCenter.y = t.clientY;
+
+      joyBase.style.left = `${joyCenter.x}px`;
+      joyBase.style.top = `${joyCenter.y}px`;
+      joyBase.style.display = 'block';
+
+      joyThumb.style.left = `${joyCenter.x}px`;
+      joyThumb.style.top = `${joyCenter.y}px`;
+      joyThumb.style.display = 'block';
+
+      joyMove.x = 0;
+      joyMove.y = 0;
     }, { passive: false });
 
     joyZone.addEventListener('touchmove', e => {
       e.preventDefault();
       for (let i = 0; i < e.changedTouches.length; i++) {
-        if (e.changedTouches[i].identifier === joyTouchId) {
-          handleJoyTouch(e.changedTouches[i]);
+        const t = e.changedTouches[i];
+        if (t.identifier === joyTouchId) {
+          const dx = t.clientX - joyCenter.x;
+          const dy = t.clientY - joyCenter.y;
+          const dist = Math.hypot(dx, dy);
+          const clampedDist = Math.min(maxR, dist);
+          const angle = Math.atan2(dy, dx);
+
+          const moveX = (Math.cos(angle) * clampedDist) / maxR;
+          const moveY = (Math.sin(angle) * clampedDist) / maxR;
+
+          joyMove.x = moveX;
+          joyMove.y = moveY;
+
+          const thumbX = joyCenter.x + Math.cos(angle) * clampedDist;
+          const thumbY = joyCenter.y + Math.sin(angle) * clampedDist;
+          joyThumb.style.left = `${thumbX}px`;
+          joyThumb.style.top = `${thumbY}px`;
           break;
         }
       }
     }, { passive: false });
 
-    function resetJoystick() {
-      joyTouchId = null;
-      joyMove = { x: 0, y: 0 };
-      joyThumb.style.transform = `translate(-50%, -50%)`;
+    function resetJoystick(e) {
+      if (e) {
+        for (let i = 0; i < e.changedTouches.length; i++) {
+          if (e.changedTouches[i].identifier === joyTouchId) {
+            joyTouchId = null;
+            joyMove.x = 0;
+            joyMove.y = 0;
+            joyBase.style.display = 'none';
+            joyThumb.style.display = 'none';
+            break;
+          }
+        }
+      } else {
+        joyTouchId = null;
+        joyMove.x = 0;
+        joyMove.y = 0;
+        joyBase.style.display = 'none';
+        joyThumb.style.display = 'none';
+      }
     }
 
-    joyZone.addEventListener('touchend', resetJoystick);
-    joyZone.addEventListener('touchcancel', resetJoystick);
-
-    function handleJoyTouch(touch) {
-      const rect = joyZone.getBoundingClientRect();
-      const dx = touch.clientX - (rect.left + rect.width / 2);
-      const dy = touch.clientY - (rect.top + rect.height / 2);
-      const maxR = 45;
-      const dist = Math.hypot(dx, dy);
-      const clampedDist = Math.min(maxR, dist);
-      const angle = Math.atan2(dy, dx);
-
-      joyMove.x = (Math.cos(angle) * clampedDist) / maxR;
-      joyMove.y = (Math.sin(angle) * clampedDist) / maxR;
-
-      joyThumb.style.transform = `translate(calc(-50% + ${Math.cos(angle) * clampedDist}px), calc(-50% + ${Math.sin(angle) * clampedDist}px))`;
-    }
+    joyZone.addEventListener('touchend', resetJoystick, { passive: false });
+    joyZone.addEventListener('touchcancel', resetJoystick, { passive: false });
 
     // Sprint Button
     const btnSprint = document.getElementById('btn-sprint');
@@ -2076,7 +2128,10 @@
         const normZ = moveZ / Math.max(1, moveMag);
 
         // Movement relative to player's view rotation
-        const forward = new THREE.Vector3(0, 0, -1).applyAxisAngle(new THREE.Vector3(0, 1, 0), player.rotY);
+        // In third-person, player looks in +Z relative to cam offset at -Z
+        // Pushing joystick UP (dy < 0, moveZ < 0) moves player FORWARD (+Z relative to rotY)
+        // Pushing joystick RIGHT (dx > 0, moveX > 0) moves player RIGHT (+X relative to rotY)
+        const forward = new THREE.Vector3(0, 0, 1).applyAxisAngle(new THREE.Vector3(0, 1, 0), player.rotY);
         const right = new THREE.Vector3(1, 0, 0).applyAxisAngle(new THREE.Vector3(0, 1, 0), player.rotY);
 
         const worldDir = new THREE.Vector3()
@@ -2115,24 +2170,20 @@
         player.pos.x = newX;
         player.pos.z = newZ;
 
-        // Limb walk animation
-        walkAnimTime += dt * currentSpeed * 2.4;
-        const legSwing = Math.sin(walkAnimTime) * 0.6;
-        leftLeg.hipPivot.rotation.x = legSwing;
-        leftLeg.kneePivot.rotation.x = Math.max(0, -legSwing * 0.8);
-        rightLeg.hipPivot.rotation.x = -legSwing;
-        rightLeg.kneePivot.rotation.x = Math.max(0, legSwing * 0.8);
+        // Classic Roblox R6 stiff pendulum limb walk animation
+        walkAnimTime += dt * currentSpeed * 2.8;
+        const r6Swing = Math.sin(walkAnimTime) * 0.75;
+        leftLeg.hipPivot.rotation.x = r6Swing;
+        rightLeg.hipPivot.rotation.x = -r6Swing;
 
         if (!player.carriedItem) {
-          leftArm.shoulderPivot.rotation.x = -legSwing * 0.6;
-          rightArm.shoulderPivot.rotation.x = legSwing * 0.6;
+          leftArm.shoulderPivot.rotation.x = -r6Swing * 0.75;
+          rightArm.shoulderPivot.rotation.x = r6Swing * 0.75;
         }
       } else {
-        // Idle pose
+        // Idle pose (classic stiff Roblox stand)
         leftLeg.hipPivot.rotation.x = 0;
-        leftLeg.kneePivot.rotation.x = 0;
         rightLeg.hipPivot.rotation.x = 0;
-        rightLeg.kneePivot.rotation.x = 0;
         if (!player.carriedItem) {
           leftArm.shoulderPivot.rotation.x = 0;
           rightArm.shoulderPivot.rotation.x = 0;
