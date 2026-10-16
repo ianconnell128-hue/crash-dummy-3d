@@ -564,22 +564,22 @@
     dummyGroup.add(headMesh);
 
     // Animated Limbs for Running
-    const armGeo = new THREE.CylinderGeometry(0.06, 0.06, 0.35, 8);
-    const legGeo = new THREE.CylinderGeometry(0.08, 0.07, 0.42, 8);
+    const dummyArmGeo = new THREE.CylinderGeometry(0.06, 0.06, 0.35, 8);
+    const dummyLegGeo = new THREE.CylinderGeometry(0.08, 0.07, 0.42, 8);
 
-    const leftArm = new THREE.Mesh(armGeo, dummyMatYellow);
+    const leftArm = new THREE.Mesh(dummyArmGeo, dummyMatYellow);
     leftArm.position.set(-0.26, 0.55, 0);
     dummyGroup.add(leftArm);
 
-    const rightArm = new THREE.Mesh(armGeo, dummyMatYellow);
+    const rightArm = new THREE.Mesh(dummyArmGeo, dummyMatYellow);
     rightArm.position.set(0.26, 0.55, 0);
     dummyGroup.add(rightArm);
 
-    const leftLeg = new THREE.Mesh(legGeo, dummyMatBlack);
+    const leftLeg = new THREE.Mesh(dummyLegGeo, dummyMatBlack);
     leftLeg.position.set(-0.12, 0.2, 0);
     dummyGroup.add(leftLeg);
 
-    const rightLeg = new THREE.Mesh(legGeo, dummyMatBlack);
+    const rightLeg = new THREE.Mesh(dummyLegGeo, dummyMatBlack);
     rightLeg.position.set(0.12, 0.2, 0);
     dummyGroup.add(rightLeg);
 
