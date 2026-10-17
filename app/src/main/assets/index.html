@@ -65,7 +65,7 @@
       justify-content: space-between;
       align-items: flex-start;
       pointer-events: none;
-      z-index: 20;
+      z-index: 50;
     }
     .hud-card {
       background: rgba(18, 24, 38, 0.88);
@@ -169,7 +169,7 @@
       bottom: 12px;
       left: 10px;
       right: 10px;
-      z-index: 20;
+      z-index: 50;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -381,7 +381,7 @@
     </div>
 
     <div class="action-col">
-      <button class="side-btn" id="btn-update" onclick="checkAppUpdate()">
+      <button class="side-btn" id="btn-update" onclick="checkAppUpdate()" ontouchstart="checkAppUpdate()">
         <span>🔄</span> Check Update
       </button>
       <button class="side-btn" id="btn-reset">
@@ -1964,30 +1964,37 @@
     window.addEventListener('touchcancel', onPointerUp);
 
     // Side Action Buttons
-    document.getElementById('btn-reset').addEventListener('click', () => {
+    function resetBuddyAction() {
       initAudio();
       nativeVibrate('medium');
       playSound('heal');
       buildBuddyRagdoll(0, 4.0, 0);
-    });
+    }
+    const btnReset = document.getElementById('btn-reset');
+    btnReset.addEventListener('click', resetBuddyAction);
+    btnReset.addEventListener('touchstart', (e) => { e.stopPropagation(); resetBuddyAction(); }, { passive: true });
 
     const gravBtn = document.getElementById('btn-gravity');
-    gravBtn.addEventListener('click', () => {
+    function toggleGravityAction() {
       initAudio();
       isZeroG = !isZeroG;
       world.gravity.set(0, isZeroG ? -0.5 : -18, 0);
       gravBtn.innerHTML = isZeroG ? '<span>🛸</span> Normal G' : '<span>🌍</span> Zero G';
       nativeVibrate('medium');
-    });
+    }
+    gravBtn.addEventListener('click', toggleGravityAction);
+    gravBtn.addEventListener('touchstart', (e) => { e.stopPropagation(); toggleGravityAction(); }, { passive: true });
 
     const slowBtn = document.getElementById('btn-slowmo');
-    slowBtn.addEventListener('click', () => {
+    function toggleSlowMoAction() {
       initAudio();
       isSlowMo = !isSlowMo;
       slowBtn.innerHTML = isSlowMo ? '<span>⚡</span> Normal' : '<span>⏱️</span> Slow-Mo';
       slowBtn.style.color = isSlowMo ? '#00e5ff' : '#cfd8dc';
       nativeVibrate('medium');
-    });
+    }
+    slowBtn.addEventListener('click', toggleSlowMoAction);
+    slowBtn.addEventListener('touchstart', (e) => { e.stopPropagation(); toggleSlowMoAction(); }, { passive: true });
 
     /* ============================================================
        15. IN-APP UPDATE SYSTEM
