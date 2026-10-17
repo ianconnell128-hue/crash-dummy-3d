@@ -31,7 +31,7 @@ class GameInterface(private val context: Context) {
         context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
     }
 
-    private val currentVersion = "3.2"
+    private val currentVersion = "3.3"
     private val repoOwner = "ianconnell128-hue"
     private val repoName = "crash-dummy-3d"
 

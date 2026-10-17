@@ -309,6 +309,54 @@
       justify-content: center;
       align-items: center;
     }
+
+    /* Modal System */
+    .modal-backdrop {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 200;
+    }
+    .modal-card {
+      background: #161b22;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 20px;
+      padding: 24px;
+      width: 88%;
+      max-width: 380px;
+      color: #fff;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8);
+      text-align: center;
+    }
+    .btn-modal {
+      display: block;
+      width: 100%;
+      padding: 12px;
+      border-radius: 12px;
+      border: none;
+      background: #238636;
+      color: #fff;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-bottom: 10px;
+      transition: transform 0.1s ease;
+    }
+    .btn-modal:active { transform: scale(0.97); }
+    .btn-modal.secondary {
+      background: #21262d;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #c9d1d9;
+    }
+
   </style>
   <script src="libs/engine.bundle.js"></script>
 </head>
@@ -333,7 +381,7 @@
     </div>
 
     <div class="action-col">
-      <button class="side-btn" id="btn-update">
+      <button class="side-btn" id="btn-update" onclick="checkAppUpdate()">
         <span>🔄</span> Check Update
       </button>
       <button class="side-btn" id="btn-reset">
@@ -357,16 +405,13 @@
     </div>
   </div>
 
-  <!-- Update Modal -->
-  <div id="update-modal">
-    <div style="background:#161b22; border:1px solid #30363d; border-radius:18px; padding:24px; max-width:320px; width:85%; color:#fff; text-align:center; box-shadow:0 12px 40px rgba(0,0,0,0.8);">
-      <div style="font-size:36px; margin-bottom:10px;">🚀</div>
-      <div style="font-size:18px; font-weight:800; margin-bottom:8px;" id="update-title">Update Available!</div>
-      <div style="font-size:13px; color:#8b949e; margin-bottom:20px;" id="update-desc">A new version of Kick Buddy 3D is available on GitHub.</div>
-      <div style="display:flex; gap:10px; justify-content:center;">
-        <button id="update-cancel-btn" style="background:#21262d; border:1px solid #30363d; color:#c9d1d9; padding:10px 16px; border-radius:10px; font-weight:700; cursor:pointer;">Later</button>
-        <button id="update-confirm-btn" style="background:linear-gradient(135deg, #238636, #2ea043); border:none; color:#fff; padding:10px 18px; border-radius:10px; font-weight:700; cursor:pointer;">Install Now</button>
-      </div>
+  <!-- Update Available Modal -->
+  <div id="update-modal" class="modal-backdrop">
+    <div class="modal-card">
+      <h2 style="color: #3fb950; font-size: 22px; margin-bottom: 12px;" id="update-title">🎉 Update Ready!</h2>
+      <p id="update-desc" style="font-size: 14px; color: #8b949e; margin-bottom: 20px;">A new version of Kick Buddy 3D is available on GitHub.</p>
+      <button class="btn-modal" id="btn-download-update">Install Update</button>
+      <button class="btn-modal secondary" onclick="document.getElementById('update-modal').style.display='none'">Later</button>
     </div>
   </div>
 
@@ -638,7 +683,7 @@
       floorTex.wrapT = THREE.RepeatWrapping;
       floorTex.repeat.set(2, 2);
 
-      const floorMat = new THREE.MeshStandardMaterial({
+      const floorMat = new THREE.MeshLambertMaterial({
         map: floorTex,
         roughness: 0.6,
         metalness: 0.15
@@ -653,7 +698,7 @@
       world.addBody(floorBody);
 
       // Hazard Back Wall
-      const wallMat = new THREE.MeshStandardMaterial({ color: 0x161c28, roughness: 0.75 });
+      const wallMat = new THREE.MeshLambertMaterial({ color: 0x161c28, roughness: 0.75 });
       const backWall = new THREE.Mesh(new THREE.PlaneGeometry(24, 16), wallMat);
       backWall.position.set(0, 8, -6);
       backWall.receiveShadow = true;
@@ -695,7 +740,7 @@
 
       // Outer Rim Border
       const rimGeo = new THREE.BoxGeometry(4.4, 0.35, 4.4);
-      const rimMat = new THREE.MeshStandardMaterial({ color: 0x2e384d, roughness: 0.8 });
+      const rimMat = new THREE.MeshLambertMaterial({ color: 0x2e384d, roughness: 0.8 });
       const rim = new THREE.Mesh(rimGeo, rimMat);
       rim.position.y = 0.15;
       rim.castShadow = true;
@@ -704,7 +749,7 @@
 
       // Inner Liquid Surface
       const liqGeo = new THREE.PlaneGeometry(3.9, 3.9, 16, 16);
-      const liqMat = new THREE.MeshStandardMaterial({
+      const liqMat = new THREE.MeshLambertMaterial({
         color: 0x00e5ff,
         transparent: true,
         opacity: 0.88,
@@ -840,22 +885,22 @@
       return new THREE.CanvasTexture(c);
     }
 
-    const buddyHeadMat = new THREE.MeshStandardMaterial({
+    const buddyHeadMat = new THREE.MeshLambertMaterial({
       map: createBuddyFaceTexture(),
       roughness: 0.75,
       metalness: 0.05
     });
-    const buddyTorsoMat = new THREE.MeshStandardMaterial({
+    const buddyTorsoMat = new THREE.MeshLambertMaterial({
       map: createBuddyBodyTexture(),
       roughness: 0.8,
       metalness: 0.05
     });
-    const buddyLimbMat = new THREE.MeshStandardMaterial({
+    const buddyLimbMat = new THREE.MeshLambertMaterial({
       color: 0xddbea9,
       roughness: 0.8,
       metalness: 0.05
     });
-    const buddyHandFootMat = new THREE.MeshStandardMaterial({
+    const buddyHandFootMat = new THREE.MeshLambertMaterial({
       color: 0xb7094c, // Red boxing gloves / boots
       roughness: 0.5,
       metalness: 0.1
@@ -1035,7 +1080,7 @@
 
       // Clear Glass Barrel
       const barrelGeo = new THREE.CylinderGeometry(0.12, 0.12, 0.7, 16);
-      const barrelMat = new THREE.MeshStandardMaterial({
+      const barrelMat = new THREE.MeshLambertMaterial({
         color: 0xffffff,
         transparent: true,
         opacity: 0.5,
@@ -1048,7 +1093,7 @@
 
       // Colored Fluid Inside
       const fluidGeo = new THREE.CylinderGeometry(0.105, 0.105, 0.55, 16);
-      const fluidMat = new THREE.MeshStandardMaterial({
+      const fluidMat = new THREE.MeshLambertMaterial({
         color: liquidColorHex,
         emissive: liquidColorHex,
         emissiveIntensity: 0.6,
@@ -1060,7 +1105,7 @@
 
       // Plunger & Thumb Ring
       const plungerGeo = new THREE.CylinderGeometry(0.04, 0.04, 0.5, 8);
-      const plungerMat = new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 0.8 });
+      const plungerMat = new THREE.MeshLambertMaterial({ color: 0xcccccc, metalness: 0.8 });
       const plunger = new THREE.Mesh(plungerGeo, plungerMat);
       plunger.position.y = 0.85;
       syringeGroup.add(plunger);
@@ -1073,7 +1118,7 @@
 
       // Metal Needle Point
       const needleGeo = new THREE.CylinderGeometry(0.02, 0.005, 0.35, 8);
-      const needleMat = new THREE.MeshStandardMaterial({ color: 0xeeeeee, metalness: 0.95, roughness: 0.1 });
+      const needleMat = new THREE.MeshLambertMaterial({ color: 0xeeeeee, metalness: 0.95, roughness: 0.1 });
       const needle = new THREE.Mesh(needleGeo, needleMat);
       needle.position.y = -0.17;
       syringeGroup.add(needle);
@@ -1940,42 +1985,30 @@
     /* ============================================================
        15. IN-APP UPDATE SYSTEM
        ============================================================ */
-    const updateModal = document.getElementById('update-modal');
-    const updateTitle = document.getElementById('update-title');
-    const updateDesc = document.getElementById('update-desc');
-    const updateConfirmBtn = document.getElementById('update-confirm-btn');
-    const updateCancelBtn = document.getElementById('update-cancel-btn');
-    let pendingDownloadUrl = null;
-
-    document.getElementById('btn-update').addEventListener('click', () => {
+    function checkAppUpdate() {
       initAudio();
+      playSound('hit');
       nativeVibrate('light');
       if (window.AndroidNative && window.AndroidNative.checkForUpdates) {
         window.AndroidNative.checkForUpdates();
       } else {
-        alert('Check for updates is active when running inside the Android APK.');
+        alert("Running in browser mode. In the Android APK, this triggers GitHub updates.");
       }
-    });
+    }
 
     window.onUpdateResult = function(event, version, downloadUrl) {
       if (event === 'updateAvailable') {
-        pendingDownloadUrl = downloadUrl;
-        updateTitle.innerText = 'New Update (v' + version + ')';
-        updateDesc.innerText = 'A newer version of Kick Buddy 3D is available on GitHub. Would you like to install it now?';
-        updateModal.style.display = 'flex';
+        const modal = document.getElementById('update-modal');
+        document.getElementById('update-desc').innerText = 'Version v' + version + ' of Kick Buddy 3D is ready!';
+        const btn = document.getElementById('btn-download-update');
+        btn.onclick = function() {
+          if (window.AndroidNative && window.AndroidNative.downloadAndInstallUpdate) {
+            window.AndroidNative.downloadAndInstallUpdate(downloadUrl);
+          }
+        };
+        modal.style.display = 'flex';
       }
     };
-
-    updateCancelBtn.addEventListener('click', () => {
-      updateModal.style.display = 'none';
-    });
-
-    updateConfirmBtn.addEventListener('click', () => {
-      updateModal.style.display = 'none';
-      if (pendingDownloadUrl && window.AndroidNative && window.AndroidNative.downloadAndInstallUpdate) {
-        window.AndroidNative.downloadAndInstallUpdate(pendingDownloadUrl);
-      }
-    });
 
     /* ============================================================
        16. MAIN ANIMATION & PHYSICS GAME LOOP
