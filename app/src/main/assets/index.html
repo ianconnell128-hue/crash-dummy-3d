@@ -582,6 +582,30 @@
       }
     }
 
+    // Global HUD Elements & State (Available to all setup functions)
+    let currentScore = 0;
+    let isZeroG = false;
+    let isSlowMo = false;
+    let activeTool = 'grab';
+
+    const scoreEl = document.getElementById('score');
+    const speedValEl = document.getElementById('speed-val');
+    const flashEl = document.getElementById('flash-overlay');
+    const statusTextEl = document.getElementById('buddy-status-text');
+
+    function flashScreen() {
+      if (flashEl) {
+        flashEl.style.opacity = '0.35';
+        setTimeout(() => flashEl.style.opacity = '0', 70);
+      }
+    }
+
+    function updateStatusBadge(text) {
+      if (statusTextEl) {
+        statusTextEl.innerText = text;
+      }
+    }
+
     // Global Error Boundary & Diagnostic Reporter
     window.onerror = function(msg, url, lineNo, columnNo, error) {
       console.error('Game error:', msg, 'Line:', lineNo, error);
@@ -1472,24 +1496,7 @@
     /* ============================================================
        9. GAMEPLAY STATE & SCORE
        ============================================================ */
-    let currentScore = 0;
-    let isZeroG = false;
-    let isSlowMo = false;
-    let activeTool = 'grab'; // Default tool
-
-    const scoreEl = document.getElementById('score');
-    const speedValEl = document.getElementById('speed-val');
-    const flashEl = document.getElementById('flash-overlay');
-    const statusTextEl = document.getElementById('buddy-status-text');
-
-    function flashScreen() {
-      flashEl.style.opacity = '0.35';
-      setTimeout(() => flashEl.style.opacity = '0', 70);
-    }
-
-    function updateStatusBadge(text) {
-      statusTextEl.innerText = text;
-    }
+// (HUD state and updateStatusBadge moved to script top)
 
     function addImpactScore(pts) {
       currentScore += pts;
