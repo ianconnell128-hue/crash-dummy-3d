@@ -348,6 +348,15 @@
     </div>
   </div>
 
+  <!-- Error Diagnostics Modal (Shows if WebGL or script throws) -->
+  <div id="error-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,0,0,0.92); z-index:300; justify-content:center; align-items:center; padding:20px; box-sizing:border-box;">
+    <div style="background:#220d0d; border:2px solid #ff4444; border-radius:16px; padding:20px; max-width:90%; color:#fff; font-family:monospace; font-size:12px; word-break:break-word;">
+      <div style="font-size:16px; font-weight:bold; color:#ff6666; margin-bottom:8px;">⚠️ Game Engine Warning</div>
+      <div id="error-text" style="color:#ffcccc; margin-bottom:14px; white-space:pre-wrap;"></div>
+      <button onclick="document.getElementById('error-modal').style.display='none'" style="background:#ff4444; border:none; color:#fff; padding:8px 16px; border-radius:8px; font-weight:bold; cursor:pointer;">Dismiss</button>
+    </div>
+  </div>
+
   <!-- Update Modal -->
   <div id="update-modal">
     <div style="background:#161b22; border:1px solid #30363d; border-radius:18px; padding:24px; max-width:320px; width:85%; color:#fff; text-align:center; box-shadow:0 12px 40px rgba(0,0,0,0.8);">
@@ -528,6 +537,18 @@
       }
     }
 
+    // Global Error Boundary & Diagnostic Reporter
+    window.onerror = function(msg, url, lineNo, columnNo, error) {
+      console.error('Game error:', msg, 'Line:', lineNo, error);
+      const errBox = document.getElementById('error-modal');
+      const errText = document.getElementById('error-text');
+      if (errBox && errText) {
+        errText.innerText = msg + '\nLine: ' + lineNo + (url ? ' (' + url.split('/').pop() + ')' : '');
+        errBox.style.display = 'flex';
+      }
+      return false;
+    };
+
     /* ============================================================
        2. THREE.JS SCENE, CAMERA, & LIGHTING
        ============================================================ */
@@ -540,13 +561,16 @@
     camera.position.set(0, 4.4, 10.8);
     camera.lookAt(0, 2.6, 0);
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+    let renderer;
+    try {
+      renderer = new THREE.WebGLRenderer({ antialias: false, powerPreference: 'high-performance' });
+    } catch (e) {
+      console.warn('Standard WebGLRenderer fallback', e);
+      renderer = new THREE.WebGLRenderer();
+    }
     renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.15;
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+    renderer.shadowMap.enabled = false; // Fast, reliable mobile WebGL rendering
     container.appendChild(renderer.domElement);
 
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.85);
@@ -1390,11 +1414,14 @@
         const shake = trauma * trauma;
         camera.position.x = (Math.random() - 0.5) * 0.35 * shake;
         camera.position.y = 4.4 + (Math.random() - 0.5) * 0.35 * shake;
+        camera.position.z = 10.8;
         trauma = Math.max(0, trauma - 0.035);
       } else {
         camera.position.x = 0;
         camera.position.y = 4.4;
+        camera.position.z = 10.8;
       }
+      camera.lookAt(0, 2.6, 0);
     }
 
     /* ============================================================
