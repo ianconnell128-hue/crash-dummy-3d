@@ -359,6 +359,7 @@
 
   </style>
   <script src="libs/engine.bundle.js"></script>
+  <script src="libs/gloopi_mesh.js"></script>
 </head>
 <body>
   <div id="flash-overlay"></div>
@@ -368,7 +369,7 @@
   <!-- Top HUD -->
   <div id="hud-top">
     <div class="hud-card">
-      <div class="score-label">KICK BUDDY 3D</div>
+      <div id="dummy-name-label" class="score-label">GLOOPI 3D</div>
       <div id="score" class="score-value">0</div>
       <div class="stat-row">
         <span>STATUS: <span id="buddy-status-text" class="stat-val">Normal</span></span>
@@ -381,11 +382,14 @@
     </div>
 
     <div class="action-col">
+      <button class="side-btn" id="btn-char">
+        <span>🧪</span> Gloopi
+      </button>
       <button class="side-btn" id="btn-update" onclick="checkAppUpdate()" ontouchstart="checkAppUpdate()">
         <span>🔄</span> Check Update
       </button>
       <button class="side-btn" id="btn-reset">
-        <span>🔄</span> Revive Buddy
+        <span>🔄</span> Revive
       </button>
       <button class="side-btn" id="btn-gravity">
         <span>🌍</span> Zero G
@@ -417,7 +421,7 @@
 
   <!-- Bottom Weapon & Interaction Dock -->
   <div id="dock-container">
-    <div id="tip-banner">Tap & drag Buddy's limbs | Inject 3D syringes, summon pits, or unleash weather</div>
+    <div id="tip-banner">Squish & fling Gloopi | Inject 3D syringes, drop into pits, or unleash weather</div>
 
     <!-- Category Tabs -->
     <div id="category-bar">
@@ -930,6 +934,29 @@
       metalness: 0.1
     });
 
+    // Gloopi Translucent Jelly Material with vertex colors
+    const gloopiMaterial = new THREE.MeshLambertMaterial({
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.94,
+      roughness: 0.15,
+      metalness: 0.1
+    });
+
+    let activeCharacter = 'gloopi'; // 'gloopi' or 'buddy'
+
+    function createPartGeometry(partData) {
+      const geo = new THREE.BufferGeometry();
+      const pos = partData.getPositions();
+      const ind = partData.getIndices();
+      const col = partData.getColors();
+      geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+      geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
+      geo.setIndex(new THREE.BufferAttribute(ind, 1));
+      geo.computeVertexNormals();
+      return geo;
+    }
+
     let dummyBodies = [];
     let dummyMeshes = [];
     let dummyConstraints = [];
@@ -1002,6 +1029,67 @@
       buddyState.zapTimer = 0;
       buddyState.scale = 1.0;
       updateStatusBadge('Normal');
+
+      if (activeCharacter === 'gloopi' && window.GLOOPI_ASSETS && window.GLOOPI_ASSETS.parts) {
+        // === 3D GLOOPI SQUISHY SLIME RAGDOLL ===
+        const parts = window.GLOOPI_ASSETS.parts;
+
+        // 1. Lower Slime Base
+        const lowerGeo = createPartGeometry(parts.lower);
+        const lowerMesh = new THREE.Mesh(lowerGeo, gloopiMaterial);
+        const lowerBody = createDummyLimb(
+          lowerMesh,
+          new CANNON.Sphere(0.55),
+          14.0,
+          new THREE.Vector3(startX, startY - 0.55, startZ)
+        );
+        chestBodyRef = lowerBody; // Used for explosions / zero-G targeting
+
+        // 2. Middle Body & Face
+        const headGeo = createPartGeometry(parts.head);
+        const headMesh = new THREE.Mesh(headGeo, gloopiMaterial);
+        headBodyRef = createDummyLimb(
+          headMesh,
+          new CANNON.Sphere(0.44),
+          8.0,
+          new THREE.Vector3(startX, startY + 0.15, startZ)
+        );
+
+        // Squishy Slime Joint between Lower and Head
+        const slimeWaistJoint = new CANNON.ConeTwistConstraint(headBodyRef, lowerBody, {
+          pivotA: new CANNON.Vec3(0, -0.35, 0),
+          pivotB: new CANNON.Vec3(0, 0.35, 0),
+          axisA: CANNON.Vec3.UNIT_Y,
+          axisB: CANNON.Vec3.UNIT_Y,
+          angle: Math.PI / 4,
+          twistAngle: Math.PI / 6
+        });
+        world.addConstraint(slimeWaistJoint);
+        dummyConstraints.push(slimeWaistJoint);
+
+        // 3. Top Magenta Berry & Antennas
+        const antennaGeo = createPartGeometry(parts.antenna);
+        const antennaMesh = new THREE.Mesh(antennaGeo, gloopiMaterial);
+        const antennaBody = createDummyLimb(
+          antennaMesh,
+          new CANNON.Sphere(0.22),
+          2.0,
+          new THREE.Vector3(startX, startY + 0.72, startZ)
+        );
+
+        // Springy / Bouncy Joint for Antenna
+        const antennaJoint = new CANNON.ConeTwistConstraint(antennaBody, headBodyRef, {
+          pivotA: new CANNON.Vec3(0, -0.20, 0),
+          pivotB: new CANNON.Vec3(0, 0.38, 0),
+          axisA: CANNON.Vec3.UNIT_Y,
+          axisB: CANNON.Vec3.UNIT_Y,
+          angle: Math.PI / 3,
+          twistAngle: Math.PI / 4
+        });
+        world.addConstraint(antennaJoint);
+        dummyConstraints.push(antennaJoint);
+        return;
+      }
 
       // 1. Torso (Chest & Pelvis)
       const chestMesh = new THREE.Mesh(new THREE.BoxGeometry(0.88, 1.0, 0.52), buddyTorsoMat);
@@ -1995,6 +2083,30 @@
     }
     slowBtn.addEventListener('click', toggleSlowMoAction);
     slowBtn.addEventListener('touchstart', (e) => { e.stopPropagation(); toggleSlowMoAction(); }, { passive: true });
+
+    // Character Switcher
+    const charBtn = document.getElementById('btn-char');
+    const dummyNameLabel = document.getElementById('dummy-name-label');
+    const tipBanner = document.getElementById('tip-banner');
+    function toggleCharacterAction() {
+      initAudio();
+      nativeVibrate('medium');
+      playSound('pop');
+      if (activeCharacter === 'gloopi') {
+        activeCharacter = 'buddy';
+        charBtn.innerHTML = '<span>🧸</span> Buddy';
+        if (dummyNameLabel) dummyNameLabel.innerText = 'KICK BUDDY 3D';
+        if (tipBanner) tipBanner.innerText = "Tap & drag Buddy's limbs | Inject 3D syringes, summon pits, or unleash weather";
+      } else {
+        activeCharacter = 'gloopi';
+        charBtn.innerHTML = '<span>🧪</span> Gloopi';
+        if (dummyNameLabel) dummyNameLabel.innerText = 'GLOOPI 3D';
+        if (tipBanner) tipBanner.innerText = "Squish & fling Gloopi | Inject 3D syringes, drop into pits, or unleash weather";
+      }
+      buildBuddyRagdoll(0, 4.0, 0);
+    }
+    charBtn.addEventListener('click', toggleCharacterAction);
+    charBtn.addEventListener('touchstart', (e) => { e.stopPropagation(); toggleCharacterAction(); }, { passive: true });
 
     /* ============================================================
        15. IN-APP UPDATE SYSTEM
