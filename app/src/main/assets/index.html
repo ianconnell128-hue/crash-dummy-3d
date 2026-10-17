@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <title>Decorate The Backrooms</title>
+  <title>Kick Buddy 3D: Syringes & Elements</title>
   <style>
     * {
       box-sizing: border-box;
@@ -17,8 +17,8 @@
       width: 100%;
       height: 100%;
       overflow: hidden;
-      background: #050508;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #10141d;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
     }
     #canvas-container {
       position: absolute;
@@ -29,28 +29,30 @@
       touch-action: none;
     }
 
-    /* Vignette & Horror Atmosphere Overlays */
-    #vignette {
+    /* Screen FX Overlays */
+    #flash-overlay {
       position: absolute;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
       pointer-events: none;
-      box-shadow: inset 0 0 70px rgba(0, 0, 0, 0.7);
-      transition: box-shadow 0.3s ease;
-      z-index: 5;
+      background: white;
+      opacity: 0;
+      z-index: 100;
+      transition: opacity 0.08s ease-out;
     }
-    #flicker-overlay {
+    #acid-overlay {
       position: absolute;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
       pointer-events: none;
-      background: rgba(0, 0, 0, 0);
-      z-index: 6;
-      transition: background 0.05s linear;
+      background: radial-gradient(circle, rgba(76, 255, 0, 0.08) 0%, rgba(20, 180, 20, 0.28) 100%);
+      opacity: 0;
+      z-index: 90;
+      transition: opacity 0.4s ease;
     }
 
     /* Top HUD */
@@ -66,624 +68,452 @@
       z-index: 20;
     }
     .hud-card {
-      background: rgba(18, 22, 28, 0.88);
-      border: 1px solid rgba(255, 255, 255, 0.18);
+      background: rgba(18, 24, 38, 0.88);
+      border: 1px solid rgba(255, 255, 255, 0.15);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
-      border-radius: 14px;
-      padding: 8px 14px;
+      border-radius: 16px;
+      padding: 10px 16px;
       color: #fff;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.5);
     }
-    .hud-phase {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .phase-badge {
+    .score-label {
       font-size: 11px;
       font-weight: 800;
+      letter-spacing: 1.2px;
       text-transform: uppercase;
-      letter-spacing: 1px;
-      padding: 4px 8px;
-      border-radius: 8px;
-      background: #238636;
-      color: #fff;
+      color: #ff9800;
     }
-    .phase-badge.warning {
-      background: #d29922;
-      animation: pulse-warn 0.6s infinite alternate;
+    .score-value {
+      font-size: 26px;
+      font-weight: 900;
+      letter-spacing: -0.5px;
+      color: #ffffff;
+      text-shadow: 0 0 12px rgba(255, 152, 0, 0.6);
+      transition: transform 0.1s ease;
     }
-    .phase-badge.night {
-      background: #da3633;
-      animation: pulse-danger 0.8s infinite alternate;
+    .score-bounce {
+      transform: scale(1.22);
+      color: #ffeb3b;
     }
-    @keyframes pulse-warn {
-      from { transform: scale(1); opacity: 1; }
-      to { transform: scale(1.05); opacity: 0.8; }
-    }
-    @keyframes pulse-danger {
-      from { transform: scale(1); box-shadow: 0 0 10px #da3633; }
-      to { transform: scale(1.06); box-shadow: 0 0 20px #ff3b30; }
-    }
-    .timer-text {
-      font-size: 15px;
+    .stat-row {
+      display: flex;
+      gap: 12px;
+      font-size: 11px;
       font-weight: 700;
-      font-variant-numeric: tabular-nums;
-      color: #e6edf3;
+      color: #90a4ae;
+      margin-top: 2px;
     }
-    .safe-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 12px;
-      font-weight: 600;
-      margin-top: 4px;
-      color: #58a6ff;
-    }
-    .safe-badge.in-light {
-      color: #3fb950;
-    }
-    .safe-badge.in-dark {
-      color: #f85149;
+    .stat-val {
+      color: #00e5ff;
       font-weight: 800;
     }
-
-    .top-actions {
-      display: flex;
-      gap: 8px;
-      pointer-events: auto;
-    }
-    .btn-top {
-      background: rgba(30, 36, 45, 0.9);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 12px;
-      padding: 8px 12px;
-      color: #fff;
-      font-size: 12px;
+    .buddy-status {
+      font-size: 11px;
       font-weight: 700;
-      cursor: pointer;
+      margin-top: 4px;
       display: flex;
       align-items: center;
       gap: 6px;
+    }
+
+    /* Top Action Buttons */
+    .action-col {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .side-btn {
+      pointer-events: auto;
+      background: rgba(22, 27, 34, 0.88);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 12px;
+      padding: 9px 13px;
+      color: #cfd8dc;
+      font-size: 11px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      transition: background 0.15s, transform 0.1s;
+    }
+    .side-btn:active {
+      transform: scale(0.94);
+      background: rgba(255, 152, 0, 0.3);
+    }
+
+    /* Floating Hit Text */
+    .hit-popup {
+      position: absolute;
+      pointer-events: none;
+      font-weight: 900;
+      font-size: 20px;
+      transform: translate(-50%, -50%);
+      color: #ffeb3b;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9), 0 0 10px rgba(255, 87, 34, 0.8);
+      animation: popFade 0.75s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
+      z-index: 50;
+    }
+    @keyframes popFade {
+      0% { opacity: 0; transform: translate(-50%, 0) scale(0.4); }
+      20% { opacity: 1; transform: translate(-50%, -18px) scale(1.2); }
+      100% { opacity: 0; transform: translate(-50%, -55px) scale(0.9); }
+    }
+
+    /* Bottom Control Docks */
+    #dock-container {
+      position: absolute;
+      bottom: 12px;
+      left: 10px;
+      right: 10px;
+      z-index: 20;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      pointer-events: none;
+    }
+
+    /* Category bar */
+    #category-bar {
+      display: flex;
+      gap: 6px;
+      pointer-events: auto;
+      background: rgba(15, 20, 28, 0.85);
+      padding: 4px 8px;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(10px);
+    }
+    .cat-tab {
+      background: transparent;
+      border: none;
+      color: #94a3b8;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 6px 12px;
+      border-radius: 10px;
+      cursor: pointer;
       transition: all 0.15s ease;
     }
-    .btn-top:active {
-      transform: scale(0.94);
-      background: #30363d;
+    .cat-tab.active {
+      background: rgba(255, 152, 0, 0.25);
+      color: #ffb703;
+      border: 1px solid rgba(255, 183, 3, 0.4);
     }
 
-    /* Banner notification */
-    #banner-alert {
-      position: absolute;
-      top: 75px;
-      left: 50%;
-      transform: translateX(-50%) translateY(-20px);
-      background: rgba(13, 17, 23, 0.95);
-      border: 1px solid #58a6ff;
-      border-radius: 20px;
-      padding: 8px 20px;
-      color: #58a6ff;
-      font-size: 13px;
-      font-weight: 700;
+    /* Weapon / Tool Dock */
+    #weapon-bar {
       display: flex;
-      align-items: center;
       gap: 8px;
-      pointer-events: none;
-      opacity: 0;
-      transition: all 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
-      z-index: 25;
-      box-shadow: 0 4px 20px rgba(88, 166, 255, 0.3);
-    }
-    #banner-alert.show {
-      transform: translateX(-50%) translateY(0);
-      opacity: 1;
-    }
-
-    /* Prompt indicator */
-    #interact-prompt {
-      position: absolute;
-      bottom: 220px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: rgba(13, 17, 23, 0.9);
-      border: 1px solid #3fb950;
-      border-radius: 12px;
-      padding: 6px 14px;
-      color: #fff;
-      font-size: 13px;
-      font-weight: 700;
-      display: none;
-      align-items: center;
-      gap: 6px;
-      pointer-events: none;
-      z-index: 20;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-    }
-
-    /* Carrying floating HUD */
-    #carry-hud {
-      position: absolute;
-      bottom: 165px;
-      left: 50%;
-      transform: translateX(-50%);
-      display: none;
-      gap: 12px;
-      z-index: 30;
+      background: rgba(13, 17, 23, 0.92);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      padding: 8px 10px;
+      border-radius: 20px;
+      box-shadow: 0 10px 32px rgba(0,0,0,0.65);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
       pointer-events: auto;
+      max-width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
     }
-    .carry-btn {
-      padding: 10px 18px;
+    #weapon-bar::-webkit-scrollbar {
+      display: none;
+    }
+    .tool-btn {
+      flex: 0 0 auto;
+      min-width: 62px;
+      height: 60px;
       border-radius: 14px;
-      font-size: 13px;
-      font-weight: 800;
-      border: none;
-      color: #fff;
-      cursor: pointer;
+      background: rgba(30, 41, 59, 0.7);
+      border: 2px solid transparent;
       display: flex;
+      flex-direction: column;
       align-items: center;
-      gap: 6px;
-      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.6);
+      justify-content: center;
+      color: #e2e8f0;
+      font-size: 10px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      touch-action: manipulation;
     }
-    .carry-btn.place {
-      background: linear-gradient(135deg, #2ea043, #238636);
-      border: 1px solid #3fb950;
+    .tool-btn .icon {
+      font-size: 22px;
+      margin-bottom: 2px;
+      filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
     }
-    .carry-btn.rotate {
-      background: linear-gradient(135deg, #1f6feb, #1158c7);
-      border: 1px solid #58a6ff;
+    .tool-btn.active {
+      background: linear-gradient(135deg, #ff6b35, #ff3b00);
+      border-color: #ffeb3b;
+      color: #ffffff;
+      transform: translateY(-3px) scale(1.05);
+      box-shadow: 0 6px 16px rgba(255, 87, 34, 0.5);
     }
-    .carry-btn.drop {
-      background: linear-gradient(135deg, #da3633, #b62324);
-      border: 1px solid #f85149;
-    }
-    .carry-btn:active {
+    .tool-btn:active {
       transform: scale(0.92);
     }
 
-    /* Touch controls */
-    #controls-container {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
-      z-index: 15;
-    }
-    #joystick-zone {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 50vw;
-      height: 100vh;
-      pointer-events: auto;
-      touch-action: none;
-      user-select: none;
-    }
-    #joystick-base {
-      position: absolute;
-      width: 120px;
-      height: 120px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.05) 70%, rgba(255, 255, 255, 0.2) 100%);
-      border: 2px solid rgba(255, 255, 255, 0.4);
-      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
-      pointer-events: none;
-      display: none;
-      transform: translate(-50%, -50%);
-    }
-    #joystick-thumb {
-      position: absolute;
-      width: 54px;
-      height: 54px;
-      border-radius: 50%;
-      background: radial-gradient(circle, #ffffff 0%, #cbd5e1 60%, #94a3b8 100%);
-      border: 2px solid rgba(255, 255, 255, 0.8);
-      box-shadow: 0 3px 12px rgba(0, 0, 0, 0.6);
-      pointer-events: none;
-      display: none;
-      transform: translate(-50%, -50%);
-      transition: none;
-    }
-
-    /* Action buttons cluster */
-    #action-zone {
-      position: absolute;
-      bottom: 24px;
-      right: 20px;
-      display: flex;
-      flex-direction: column;
-      align-items: flex-end;
-      gap: 12px;
-      pointer-events: auto;
-    }
-    .action-row {
-      display: flex;
-      gap: 12px;
-      align-items: center;
-    }
-    .action-btn {
-      width: 58px;
-      height: 58px;
-      border-radius: 50%;
-      background: rgba(25, 30, 38, 0.88);
-      border: 2px solid rgba(255, 255, 255, 0.22);
-      backdrop-filter: blur(8px);
-      color: #fff;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
+    #tip-banner {
+      color: rgba(255, 255, 255, 0.85);
       font-size: 11px;
-      font-weight: 800;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
-      touch-action: none;
-      cursor: pointer;
-      transition: all 0.12s ease;
-    }
-    .action-btn span.icon {
-      font-size: 20px;
-      margin-bottom: 2px;
-    }
-    .action-btn.active {
-      border-color: #f0883e;
-      background: rgba(240, 136, 62, 0.3);
-      box-shadow: 0 0 14px rgba(240, 136, 62, 0.6);
-    }
-    .action-btn.primary {
-      width: 72px;
-      height: 72px;
-      background: linear-gradient(135deg, #238636, #2ea043);
-      border-color: #3fb950;
-      box-shadow: 0 4px 20px rgba(46, 160, 67, 0.5);
-    }
-    .action-btn.primary span.icon {
-      font-size: 26px;
-    }
-    .action-btn:active {
-      transform: scale(0.9);
-    }
-
-    /* Stamina bar */
-    #stamina-container {
-      position: absolute;
-      bottom: 12px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 140px;
-      height: 6px;
-      background: rgba(255, 255, 255, 0.15);
-      border-radius: 4px;
-      overflow: hidden;
-      pointer-events: none;
-      z-index: 20;
-    }
-    #stamina-fill {
-      width: 100%;
-      height: 100%;
-      background: #3fb950;
-      transition: width 0.1s linear, background 0.2s ease;
-    }
-
-    /* Modals */
-    .modal-backdrop {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.85);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      display: none;
-      justify-content: center;
-      align-items: center;
-      z-index: 100;
-    }
-    .modal-card {
-      background: #161b22;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 20px;
-      padding: 24px;
-      width: 90%;
-      max-width: 420px;
-      color: #fff;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8);
+      font-weight: 600;
+      background: rgba(0,0,0,0.55);
+      padding: 5px 14px;
+      border-radius: 14px;
+      letter-spacing: 0.3px;
       text-align: center;
     }
-    .modal-card h2 {
-      font-size: 22px;
-      margin-bottom: 12px;
-      color: #f0883e;
-    }
-    .modal-card p {
-      font-size: 14px;
-      color: #8b949e;
-      line-height: 1.5;
-      margin-bottom: 20px;
-    }
-    .btn-modal {
-      display: block;
-      width: 100%;
-      padding: 12px;
+
+    /* Pit / Pool Selector Pill */
+    #pit-selector {
+      display: flex;
+      gap: 6px;
+      pointer-events: auto;
+      background: rgba(20, 25, 36, 0.9);
+      padding: 4px 6px;
       border-radius: 12px;
-      border: none;
-      background: #238636;
-      color: #fff;
-      font-size: 15px;
-      font-weight: 700;
-      cursor: pointer;
-      margin-bottom: 10px;
-      transition: transform 0.1s ease;
-    }
-    .btn-modal:active {
-      transform: scale(0.97);
-    }
-    .btn-modal.secondary {
-      background: #21262d;
       border: 1px solid rgba(255, 255, 255, 0.15);
-      color: #c9d1d9;
+      margin-top: 2px;
     }
-    .btn-modal.danger {
-      background: #da3633;
+    .pit-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      color: #cbd5e1;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 4px 9px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .pit-btn.active {
+      background: rgba(0, 229, 255, 0.2);
+      border-color: #00e5ff;
+      color: #00e5ff;
     }
 
-    /* Jumpscare caught screen */
-    #caught-modal h2 {
-      color: #ff3b30;
-      font-size: 26px;
-      text-transform: uppercase;
-      letter-spacing: 2px;
+    /* Update Modal */
+    #update-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.75);
+      z-index: 200;
+      justify-content: center;
+      align-items: center;
     }
   </style>
   <script src="libs/engine.bundle.js"></script>
 </head>
 <body>
-  <div id="vignette"></div>
-  <div id="flicker-overlay"></div>
+  <div id="flash-overlay"></div>
+  <div id="acid-overlay"></div>
   <div id="canvas-container"></div>
 
-  <!-- HUD TOP -->
+  <!-- Top HUD -->
   <div id="hud-top">
     <div class="hud-card">
-      <div class="hud-phase">
-        <div id="phase-badge" class="phase-badge">☀️ STORE OPEN</div>
-        <div id="phase-timer" class="timer-text">01:15</div>
+      <div class="score-label">KICK BUDDY 3D</div>
+      <div id="score" class="score-value">0</div>
+      <div class="stat-row">
+        <span>STATUS: <span id="buddy-status-text" class="stat-val">Normal</span></span>
+        <span>VEL: <span id="speed-val" class="stat-val">0.0 m/s</span></span>
       </div>
-      <div id="safe-status" class="safe-badge in-light">🛡️ SAFE HAVEN</div>
+      <div class="stat-row">
+        <span>WEATHER: <span id="weather-text" class="stat-val">Clear</span></span>
+        <span>PIT: <span id="pit-text" class="stat-val">None</span></span>
+      </div>
     </div>
 
-    <div class="top-actions">
-      <button class="btn-top" id="btn-update" onclick="checkAppUpdate()">
-        <span>🔄</span> <span id="ver-text">v2.0</span>
+    <div class="action-col">
+      <button class="side-btn" id="btn-update">
+        <span>🔄</span> Check Update
       </button>
-      <button class="btn-top" onclick="toggleMenu()">
-        <span>⚙️</span>
+      <button class="side-btn" id="btn-reset">
+        <span>🔄</span> Revive Buddy
+      </button>
+      <button class="side-btn" id="btn-gravity">
+        <span>🌍</span> Zero G
+      </button>
+      <button class="side-btn" id="btn-slowmo">
+        <span>⏱️</span> Slow-Mo
       </button>
     </div>
   </div>
 
-  <!-- Banner Notification -->
-  <div id="banner-alert">
-    <span id="banner-icon">🚛</span>
-    <span id="banner-msg">Cap'n Clarks restocked new furniture!</span>
-  </div>
-
-  <!-- Interaction Prompt -->
-  <div id="interact-prompt">
-    <span>🖐</span> <span id="prompt-label">Tap [GRAB] to pick up</span>
-  </div>
-
-  <!-- Carrying Controls -->
-  <div id="carry-hud">
-    <button class="carry-btn rotate" onclick="rotateCarriedItem()">
-      <span>🔄</span> Rotate
-    </button>
-    <button class="carry-btn place" onclick="placeCarriedItem()">
-      <span>📍</span> Place Base
-    </button>
-    <button class="carry-btn drop" onclick="dropCarriedItem()">
-      <span>✖</span> Drop
-    </button>
-  </div>
-
-  <!-- Stamina Bar -->
-  <div id="stamina-container">
-    <div id="stamina-fill"></div>
-  </div>
-
-  <!-- Touch Controls -->
-  <div id="controls-container">
-    <!-- Joystick -->
-    <div id="joystick-zone">
-      <div id="joystick-base"></div>
-      <div id="joystick-thumb"></div>
-    </div>
-
-    <!-- Actions -->
-    <div id="action-zone">
-      <div class="action-row">
-        <button class="action-btn" id="btn-pov" onclick="togglePOV()">
-          <span class="icon">🎥</span>
-          <span>POV</span>
-        </button>
-        <button class="action-btn" id="btn-light" onclick="toggleFlashlight()">
-          <span class="icon">🔦</span>
-          <span>LIGHT</span>
-        </button>
-      </div>
-      <div class="action-row">
-        <button class="action-btn" id="btn-sprint">
-          <span class="icon">🏃</span>
-          <span>RUN</span>
-        </button>
-        <button class="action-btn primary" id="btn-grab" onclick="handlePrimaryAction()">
-          <span class="icon">🖐</span>
-          <span id="grab-btn-label">GRAB</span>
-        </button>
+  <!-- Update Modal -->
+  <div id="update-modal">
+    <div style="background:#161b22; border:1px solid #30363d; border-radius:18px; padding:24px; max-width:320px; width:85%; color:#fff; text-align:center; box-shadow:0 12px 40px rgba(0,0,0,0.8);">
+      <div style="font-size:36px; margin-bottom:10px;">🚀</div>
+      <div style="font-size:18px; font-weight:800; margin-bottom:8px;" id="update-title">Update Available!</div>
+      <div style="font-size:13px; color:#8b949e; margin-bottom:20px;" id="update-desc">A new version of Kick Buddy 3D is available on GitHub.</div>
+      <div style="display:flex; gap:10px; justify-content:center;">
+        <button id="update-cancel-btn" style="background:#21262d; border:1px solid #30363d; color:#c9d1d9; padding:10px 16px; border-radius:10px; font-weight:700; cursor:pointer;">Later</button>
+        <button id="update-confirm-btn" style="background:linear-gradient(135deg, #238636, #2ea043); border:none; color:#fff; padding:10px 18px; border-radius:10px; font-weight:700; cursor:pointer;">Install Now</button>
       </div>
     </div>
   </div>
 
-  <!-- Caught Modal -->
-  <div id="caught-modal" class="modal-backdrop">
-    <div class="modal-card">
-      <h2>💀 CAUGHT IN THE DARK</h2>
-      <p>The entity hunts in darkness. Place floor lamps and stay inside their golden glow to survive!</p>
-      <button class="btn-modal" onclick="respawnPlayer()">Respawn at Base</button>
-    </div>
-  </div>
+  <!-- Bottom Weapon & Interaction Dock -->
+  <div id="dock-container">
+    <div id="tip-banner">Tap & drag Buddy's limbs | Inject 3D syringes, summon pits, or unleash weather</div>
 
-  <!-- Settings / Info Modal -->
-  <div id="menu-modal" class="modal-backdrop">
-    <div class="modal-card">
-      <h2>Decorate The Backrooms</h2>
-      <p>
-        <strong>How to play:</strong><br>
-        1. Explore <strong>Cap'n Clarks</strong> furniture store & grab furniture.<br>
-        2. Haul it into the endless yellow hallways & place your cozy base.<br>
-        3. <strong>CRITICAL:</strong> Placed lamps cast light safe zones. Stay inside them during <strong>LIGHTS OUT</strong> when creatures roam!
-      </p>
-      <p id="decor-stats" style="color: #58a6ff; font-weight: 700;"></p>
-      <button class="btn-modal secondary" onclick="toggleMenu()">Close</button>
-      <button class="btn-modal danger" onclick="resetBaseStorage()">Reset Base Furniture</button>
+    <!-- Category Tabs -->
+    <div id="category-bar">
+      <button class="cat-tab active" data-cat="syringes">💉 Syringes</button>
+      <button class="cat-tab" data-cat="pits">🕳️ Pits & Pools</button>
+      <button class="cat-tab" data-cat="weather">⛈️ Weather</button>
+      <button class="cat-tab" data-cat="elements">⚡ Elements</button>
     </div>
-  </div>
 
-  <!-- Update Available Modal -->
-  <div id="update-modal" class="modal-backdrop">
-    <div class="modal-card">
-      <h2 style="color: #3fb950;">🎉 Update Ready!</h2>
-      <p id="update-desc">A new version of Decorate The Backrooms is available on GitHub.</p>
-      <button class="btn-modal" id="btn-download-update">Install Update</button>
-      <button class="btn-modal secondary" onclick="document.getElementById('update-modal').style.display='none'">Later</button>
+    <!-- Subcategory: Pit Selector Bar (shown when pits cat active) -->
+    <div id="pit-selector" style="display:none;">
+      <button class="pit-btn active" data-pit="none">None</button>
+      <button class="pit-btn" data-pit="fire">🔥 Fire Pit</button>
+      <button class="pit-btn" data-pit="acid">🧪 Acid Pit</button>
+      <button class="pit-btn" data-pit="pool">🌊 Water Pool</button>
+    </div>
+
+    <!-- Weapon / Tool items row -->
+    <div id="weapon-bar">
+      <!-- Injected dynamically by category -->
     </div>
   </div>
 
   <script>
     /* ============================================================
-       1. AUDIO SYNTHESIZER (Pure Web Audio API - 100% Offline)
+       1. AUDIO SYNTHESIS ENGINE (Procedural Web Audio API)
        ============================================================ */
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    let ambientHumGain = null;
-    let monsterGrowlOsc = null;
-
     function initAudio() {
-      if (audioCtx.state === 'suspended') {
-        audioCtx.resume();
-      }
-      if (!ambientHumGain) {
-        // Continuous 60Hz Backrooms fluorescent light hum
-        const osc = audioCtx.createOscillator();
-        const humGain = audioCtx.createGain();
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(60, audioCtx.currentTime);
-
-        const filter = audioCtx.createBiquadFilter();
-        filter.type = 'lowpass';
-        filter.frequency.setValueAtTime(140, audioCtx.currentTime);
-
-        humGain.gain.setValueAtTime(0.04, audioCtx.currentTime);
-        osc.connect(filter);
-        filter.connect(humGain);
-        humGain.connect(audioCtx.destination);
-        osc.start();
-        ambientHumGain = humGain;
-      }
+      if (audioCtx.state === 'suspended') audioCtx.resume();
     }
 
     function playSound(type) {
-      if (audioCtx.state === 'suspended') audioCtx.resume();
-      const t = audioCtx.currentTime;
+      initAudio();
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
 
-      if (type === 'grab') {
-        const osc = audioCtx.createOscillator();
-        const g = audioCtx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(160, t);
-        osc.frequency.exponentialRampToValueAtTime(320, t + 0.12);
-        g.gain.setValueAtTime(0.25, t);
-        g.gain.linearRampToValueAtTime(0.01, t + 0.15);
-        osc.connect(g);
-        g.connect(audioCtx.destination);
-        osc.start(t);
-        osc.stop(t + 0.16);
-      } else if (type === 'place') {
-        const osc = audioCtx.createOscillator();
-        const g = audioCtx.createGain();
+      if (type === 'hit') {
         osc.type = 'triangle';
-        osc.frequency.setValueAtTime(120, t);
-        osc.frequency.exponentialRampToValueAtTime(40, t + 0.18);
-        g.gain.setValueAtTime(0.35, t);
-        g.gain.linearRampToValueAtTime(0.01, t + 0.2);
-        osc.connect(g);
-        g.connect(audioCtx.destination);
-        osc.start(t);
-        osc.stop(t + 0.2);
-      } else if (type === 'flicker') {
-        const count = 4;
-        for (let i = 0; i < count; i++) {
-          const osc = audioCtx.createOscillator();
-          const g = audioCtx.createGain();
-          osc.type = 'square';
-          osc.frequency.setValueAtTime(450 + Math.random() * 200, t + i * 0.08);
-          g.gain.setValueAtTime(0.12, t + i * 0.08);
-          g.gain.exponentialRampToValueAtTime(0.01, t + i * 0.08 + 0.04);
-          osc.connect(g);
-          g.connect(audioCtx.destination);
-          osc.start(t + i * 0.08);
-          osc.stop(t + i * 0.08 + 0.05);
-        }
-      } else if (type === 'powerdown') {
-        const osc = audioCtx.createOscillator();
-        const g = audioCtx.createGain();
+        osc.frequency.setValueAtTime(180 + Math.random() * 80, now);
+        osc.frequency.exponentialRampToValueAtTime(30, now + 0.14);
+        gain.gain.setValueAtTime(0.65, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.14);
+        osc.start(now);
+        osc.stop(now + 0.14);
+      } else if (type === 'inject') {
+        // High-pitched needle puncture & fluid squirt
         osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(220, t);
-        osc.frequency.exponentialRampToValueAtTime(25, t + 0.6);
-        g.gain.setValueAtTime(0.4, t);
-        g.gain.linearRampToValueAtTime(0.01, t + 0.65);
-        osc.connect(g);
-        g.connect(audioCtx.destination);
-        osc.start(t);
-        osc.stop(t + 0.7);
-      } else if (type === 'dawn') {
-        const notes = [261.63, 329.63, 392.00, 523.25];
-        notes.forEach((f, idx) => {
-          const osc = audioCtx.createOscillator();
-          const g = audioCtx.createGain();
-          osc.type = 'sine';
-          osc.frequency.setValueAtTime(f, t + idx * 0.12);
-          g.gain.setValueAtTime(0.2, t + idx * 0.12);
-          g.gain.exponentialRampToValueAtTime(0.005, t + idx * 0.12 + 0.5);
-          osc.connect(g);
-          g.connect(audioCtx.destination);
-          osc.start(t + idx * 0.12);
-          osc.stop(t + idx * 0.12 + 0.52);
-        });
-      } else if (type === 'screech') {
-        const osc = audioCtx.createOscillator();
-        const g = audioCtx.createGain();
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(700, t);
-        osc.frequency.linearRampToValueAtTime(140, t + 0.45);
-        g.gain.setValueAtTime(0.5, t);
-        g.gain.exponentialRampToValueAtTime(0.01, t + 0.5);
-        osc.connect(g);
-        g.connect(audioCtx.destination);
-        osc.start(t);
-        osc.stop(t + 0.52);
-      } else if (type === 'click') {
-        const osc = audioCtx.createOscillator();
-        const g = audioCtx.createGain();
+        osc.frequency.setValueAtTime(800, now);
+        osc.frequency.exponentialRampToValueAtTime(2200, now + 0.08);
+        osc.frequency.exponentialRampToValueAtTime(400, now + 0.22);
+        gain.gain.setValueAtTime(0.5, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.22);
+        osc.start(now);
+        osc.stop(now + 0.22);
+      } else if (type === 'sizzle' || type === 'acid') {
+        // Noise hiss
+        const bufferSize = audioCtx.sampleRate * 0.35;
+        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+        const noise = audioCtx.createBufferSource();
+        noise.buffer = buffer;
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(2500, now);
+        filter.Q.setValueAtTime(3.0, now);
+        const sizzleGain = audioCtx.createGain();
+        sizzleGain.gain.setValueAtTime(0.6, now);
+        sizzleGain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+        noise.connect(filter);
+        filter.connect(sizzleGain);
+        sizzleGain.connect(audioCtx.destination);
+        noise.start(now);
+      } else if (type === 'fire') {
+        // Crackle/rumble
+        const bufferSize = audioCtx.sampleRate * 0.25;
+        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) data[i] = (Math.random() - 0.5) * 1.5;
+        const noise = audioCtx.createBufferSource();
+        noise.buffer = buffer;
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(450, now);
+        const fGain = audioCtx.createGain();
+        fGain.gain.setValueAtTime(0.8, now);
+        fGain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+        noise.connect(filter);
+        filter.connect(fGain);
+        fGain.connect(audioCtx.destination);
+        noise.start(now);
+      } else if (type === 'freeze') {
+        // Crystalline high bell chime
         osc.type = 'sine';
-        osc.frequency.setValueAtTime(800, t);
-        g.gain.setValueAtTime(0.15, t);
-        g.gain.exponentialRampToValueAtTime(0.01, t + 0.05);
-        osc.connect(g);
-        g.connect(audioCtx.destination);
-        osc.start(t);
-        osc.stop(t + 0.06);
+        osc.frequency.setValueAtTime(1400, now);
+        osc.frequency.exponentialRampToValueAtTime(2800, now + 0.1);
+        osc.frequency.exponentialRampToValueAtTime(800, now + 0.3);
+        gain.gain.setValueAtTime(0.6, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+        osc.start(now);
+        osc.stop(now + 0.3);
+      } else if (type === 'zap') {
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(160, now);
+        osc.frequency.linearRampToValueAtTime(880, now + 0.05);
+        osc.frequency.linearRampToValueAtTime(120, now + 0.15);
+        gain.gain.setValueAtTime(0.7, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+        osc.start(now);
+        osc.stop(now + 0.15);
+      } else if (type === 'splash') {
+        // Water splash thump + hiss
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(180, now);
+        osc.frequency.exponentialRampToValueAtTime(40, now + 0.25);
+        gain.gain.setValueAtTime(0.8, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+        osc.start(now);
+        osc.stop(now + 0.25);
+      } else if (type === 'thunder') {
+        // Heavy rolling thunder
+        const bufferSize = audioCtx.sampleRate * 0.9;
+        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+        const noise = audioCtx.createBufferSource();
+        noise.buffer = buffer;
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(250, now);
+        filter.frequency.exponentialRampToValueAtTime(40, now + 0.85);
+        const tGain = audioCtx.createGain();
+        tGain.gain.setValueAtTime(1.0, now);
+        tGain.gain.exponentialRampToValueAtTime(0.01, now + 0.85);
+        noise.connect(filter);
+        filter.connect(tGain);
+        tGain.connect(audioCtx.destination);
+        noise.start(now);
+      } else if (type === 'heal') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(440, now);
+        osc.frequency.linearRampToValueAtTime(880, now + 0.25);
+        gain.gain.setValueAtTime(0.5, now);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+        osc.start(now);
+        osc.stop(now + 0.25);
       }
     }
 
@@ -692,1582 +522,1476 @@
         window.AndroidNative.vibrate(type);
       } else if (navigator.vibrate) {
         if (type === 'light') navigator.vibrate(15);
-        else if (type === 'medium') navigator.vibrate(35);
-        else if (type === 'heavy') navigator.vibrate(70);
-        else if (type === 'explosion') navigator.vibrate([80, 50, 100]);
+        else if (type === 'heavy') navigator.vibrate(60);
+        else if (type === 'explosion') navigator.vibrate([40, 30, 80]);
+        else navigator.vibrate(25);
       }
     }
 
     /* ============================================================
-       2. THREE.JS SCENE SETUP & PROCEDURAL TEXTURES
+       2. THREE.JS SCENE, CAMERA, & LIGHTING
        ============================================================ */
     const container = document.getElementById('canvas-container');
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0xd6c278);
-    scene.fog = new THREE.FogExp2(0xd6c278, 0.022);
+    scene.background = new THREE.Color(0x131924);
+    scene.fog = new THREE.FogExp2(0x131924, 0.032);
 
-    const camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 150);
+    const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.set(0, 4.4, 10.8);
+    camera.lookAt(0, 2.6, 0);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.shadowMap.enabled = false; // Fast mobile rendering
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.15;
     container.appendChild(renderer.domElement);
 
-    // Procedural Backrooms Yellow Wallpaper Texture
-    function generateWallpaperTexture() {
-      const cv = document.createElement('canvas');
-      cv.width = 256;
-      cv.height = 256;
-      const ctx = cv.getContext('2d');
-      ctx.fillStyle = '#cfb972';
-      ctx.fillRect(0, 0, 256, 256);
-
-      // Vertical micro-stripes
-      ctx.fillStyle = 'rgba(168, 148, 86, 0.35)';
-      for (let x = 0; x < 256; x += 16) {
-        ctx.fillRect(x, 0, 8, 256);
-      }
-
-      // Subtle vintage wallpaper damask floral/diamond stamp
-      ctx.strokeStyle = 'rgba(145, 126, 72, 0.28)';
-      ctx.lineWidth = 2;
-      for (let y = 16; y < 256; y += 32) {
-        for (let x = 16; x < 256; x += 32) {
-          ctx.beginPath();
-          ctx.moveTo(x, y - 8);
-          ctx.lineTo(x + 8, y);
-          ctx.lineTo(x, y + 8);
-          ctx.lineTo(x - 8, y);
-          ctx.closePath();
-          ctx.stroke();
-        }
-      }
-      const tex = new THREE.CanvasTexture(cv);
-      tex.wrapS = THREE.RepeatWrapping;
-      tex.wrapT = THREE.RepeatWrapping;
-      tex.repeat.set(4, 2);
-      return tex;
-    }
-
-    // Procedural Carpet Texture
-    function generateCarpetTexture() {
-      const cv = document.createElement('canvas');
-      cv.width = 256;
-      cv.height = 256;
-      const ctx = cv.getContext('2d');
-      ctx.fillStyle = '#9e8a52';
-      ctx.fillRect(0, 0, 256, 256);
-
-      // Noise & moisture blotches
-      for (let i = 0; i < 600; i++) {
-        const x = Math.random() * 256;
-        const y = Math.random() * 256;
-        const rad = Math.random() * 5 + 1;
-        ctx.fillStyle = Math.random() > 0.5 ? 'rgba(130, 112, 60, 0.35)' : 'rgba(180, 160, 105, 0.25)';
-        ctx.beginPath();
-        ctx.arc(x, y, rad, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      const tex = new THREE.CanvasTexture(cv);
-      tex.wrapS = THREE.RepeatWrapping;
-      tex.wrapT = THREE.RepeatWrapping;
-      tex.repeat.set(24, 24);
-      return tex;
-    }
-
-    // Procedural Cap'n Clarks White Store Tile
-    function generateStoreTileTexture() {
-      const cv = document.createElement('canvas');
-      cv.width = 128;
-      cv.height = 128;
-      const ctx = cv.getContext('2d');
-      ctx.fillStyle = '#e8ecf1';
-      ctx.fillRect(0, 0, 128, 128);
-      ctx.strokeStyle = '#c4cdd8';
-      ctx.lineWidth = 4;
-      ctx.strokeRect(0, 0, 128, 128);
-      const tex = new THREE.CanvasTexture(cv);
-      tex.wrapS = THREE.RepeatWrapping;
-      tex.wrapT = THREE.RepeatWrapping;
-      tex.repeat.set(16, 12);
-      return tex;
-    }
-
-    // Procedural Ceiling Tile Texture
-    function generateCeilingTexture() {
-      const cv = document.createElement('canvas');
-      cv.width = 128;
-      cv.height = 128;
-      const ctx = cv.getContext('2d');
-      ctx.fillStyle = '#c5bea7';
-      ctx.fillRect(0, 0, 128, 128);
-      ctx.strokeStyle = '#857e6c';
-      ctx.lineWidth = 3;
-      ctx.strokeRect(0, 0, 128, 128);
-      const tex = new THREE.CanvasTexture(cv);
-      tex.wrapS = THREE.RepeatWrapping;
-      tex.wrapT = THREE.RepeatWrapping;
-      tex.repeat.set(30, 30);
-      return tex;
-    }
-
-    const wallpaperTex = generateWallpaperTexture();
-    const carpetTex = generateCarpetTexture();
-    const storeTileTex = generateStoreTileTexture();
-    const ceilingTex = generateCeilingTexture();
-
-    const wallpaperMat = new THREE.MeshLambertMaterial({ map: wallpaperTex });
-    const carpetMat = new THREE.MeshLambertMaterial({ map: carpetTex });
-    const storeTileMat = new THREE.MeshLambertMaterial({ map: storeTileTex });
-    const ceilingMat = new THREE.MeshLambertMaterial({ map: ceilingTex });
-
-    /* ============================================================
-       3. LEVEL 0 & CAP'N CLARKS ARCHITECTURE
-       ============================================================ */
-    const LEVEL_W = 100;
-    const LEVEL_D = 100;
-    const CEILING_H = 4.2;
-
-    // Floor Mesh (Backrooms Carpet)
-    const floorGeo = new THREE.PlaneGeometry(LEVEL_W, LEVEL_D);
-    const floorMesh = new THREE.Mesh(floorGeo, carpetMat);
-    floorMesh.rotation.x = -Math.PI / 2;
-    floorMesh.position.set(0, 0, 0);
-    scene.add(floorMesh);
-
-    // Ceiling Mesh
-    const ceilingGeo = new THREE.PlaneGeometry(LEVEL_W, LEVEL_D);
-    const ceilingMesh = new THREE.Mesh(ceilingGeo, ceilingMat);
-    ceilingMesh.rotation.x = Math.PI / 2;
-    ceilingMesh.position.set(0, CEILING_H, 0);
-    scene.add(ceilingMesh);
-
-    // Cap'n Clarks Store Floor Tile (East Wing from X = 25 to 50, Z = -35 to 35)
-    const storeFloorGeo = new THREE.PlaneGeometry(25, 70);
-    const storeFloorMesh = new THREE.Mesh(storeFloorGeo, storeTileMat);
-    storeFloorMesh.rotation.x = -Math.PI / 2;
-    storeFloorMesh.position.set(37.5, 0.02, 0);
-    scene.add(storeFloorMesh);
-
-    // Store Entrance Sign & Portal
-    const portalGroup = new THREE.Group();
-    portalGroup.position.set(25, 0, 0);
-    const signGeo = new THREE.BoxGeometry(0.8, 1.2, 16);
-    const signMat = new THREE.MeshLambertMaterial({ color: 0x1f6feb, emissive: 0x0a3069, emissiveIntensity: 0.6 });
-    const signMesh = new THREE.Mesh(signGeo, signMat);
-    signMesh.position.set(0, 3.4, 0);
-    portalGroup.add(signMesh);
-
-    // Glowing Sign text banner canvas
-    const signCanvas = document.createElement('canvas');
-    signCanvas.width = 512;
-    signCanvas.height = 128;
-    const sctx = signCanvas.getContext('2d');
-    sctx.fillStyle = '#0f53b5';
-    sctx.fillRect(0, 0, 512, 128);
-    sctx.fillStyle = '#ffdf5d';
-    sctx.font = 'bold 36px sans-serif';
-    sctx.textAlign = 'center';
-    sctx.textBaseline = 'middle';
-    sctx.fillText("🛒 CAP'N CLARKS FURNITURE", 256, 64);
-    const signTex = new THREE.CanvasTexture(signCanvas);
-    const signFaceGeo = new THREE.PlaneGeometry(15, 1.1);
-    const signFaceMat = new THREE.MeshBasicMaterial({ map: signTex });
-    const signFaceMesh = new THREE.Mesh(signFaceGeo, signFaceMat);
-    signFaceMesh.rotation.y = -Math.PI / 2;
-    signFaceMesh.position.set(-0.45, 3.4, 0);
-    portalGroup.add(signFaceMesh);
-    scene.add(portalGroup);
-
-    // Walls & Collision System
-    const walls = []; // Array of THREE.Box3 bounding boxes for physics collision
-    const wallMeshes = [];
-
-    function addWall(x, z, width, depth, height = CEILING_H, isStore = false) {
-      const geo = new THREE.BoxGeometry(width, height, depth);
-      const mat = isStore
-        ? new THREE.MeshLambertMaterial({ color: 0x48586c })
-        : wallpaperMat;
-      const mesh = new THREE.Mesh(geo, mat);
-      mesh.position.set(x, height / 2, z);
-      scene.add(mesh);
-      wallMeshes.push(mesh);
-
-      const b3 = new THREE.Box3().setFromObject(mesh);
-      walls.push(b3);
-      return mesh;
-    }
-
-    // Outer Boundary Walls
-    addWall(0, -LEVEL_D / 2, LEVEL_W, 1.2);
-    addWall(0, LEVEL_D / 2, LEVEL_W, 1.2);
-    addWall(-LEVEL_W / 2, 0, 1.2, LEVEL_D);
-    addWall(LEVEL_W / 2, 0, 1.2, LEVEL_D);
-
-    // Cap'n Clarks Partition Wall with Big Opening in middle
-    addWall(25, -24, 1.0, 22, CEILING_H, true);
-    addWall(25, 24, 1.0, 22, CEILING_H, true);
-
-    // Procedural Backrooms Labyrinth Corridors & Pillars
-    const corridorLayout = [
-      // Major dividing corridors
-      { x: -28, z: 0, w: 1.0, d: 42 },
-      { x: -14, z: -18, w: 26, d: 1.0 },
-      { x: -14, z: 18, w: 26, d: 1.0 },
-      { x: 5, z: -12, w: 1.0, d: 36 },
-      { x: 5, z: 24, w: 1.0, d: 24 },
-      { x: -20, z: -32, w: 20, d: 1.0 },
-      { x: -20, z: 32, w: 20, d: 1.0 },
-
-      // Classic Yellow Corridors Pillars
-      { x: -38, z: -20, w: 2.2, d: 2.2 },
-      { x: -38, z: 0, w: 2.2, d: 2.2 },
-      { x: -38, z: 20, w: 2.2, d: 2.2 },
-      { x: -10, z: 0, w: 2.5, d: 2.5 },
-      { x: -10, z: -28, w: 2.2, d: 2.2 },
-      { x: -10, z: 28, w: 2.2, d: 2.2 },
-      { x: 15, z: -25, w: 2.2, d: 2.2 },
-      { x: 15, z: 25, w: 2.2, d: 2.2 },
-      { x: -25, z: 10, w: 2.2, d: 2.2 },
-      { x: -25, z: -10, w: 2.2, d: 2.2 },
-
-      // Store Aisle Shelving Dividers (Inside Cap'n Clarks)
-      { x: 38, z: -16, w: 14, d: 1.2 },
-      { x: 38, z: 16, w: 14, d: 1.2 }
-    ];
-
-    corridorLayout.forEach(c => addWall(c.x, c.z, c.w, c.d));
-
-    /* ============================================================
-       4. LIGHTING & DAY/NIGHT FLICKER SYSTEM
-       ============================================================ */
-    const ambientLight = new THREE.AmbientLight(0xfff1c2, 0.75);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.85);
     scene.add(ambientLight);
 
-    const mainStoreLight = new THREE.PointLight(0xffffff, 1.2, 55);
-    mainStoreLight.position.set(37, 3.8, 0);
-    scene.add(mainStoreLight);
+    const dirLight = new THREE.DirectionalLight(0xfff3e0, 2.0);
+    dirLight.position.set(5, 14, 8);
+    dirLight.castShadow = true;
+    dirLight.shadow.mapSize.width = 1024;
+    dirLight.shadow.mapSize.height = 1024;
+    dirLight.shadow.camera.near = 0.5;
+    dirLight.shadow.camera.far = 30;
+    dirLight.shadow.camera.left = -6;
+    dirLight.shadow.camera.right = 6;
+    dirLight.shadow.camera.top = 8;
+    dirLight.shadow.camera.bottom = -4;
+    dirLight.shadow.bias = -0.0005;
+    scene.add(dirLight);
 
-    // Fluorescent ceiling lights across Backrooms hallways
-    const ceilingLights = [];
-    const lightPositions = [
-      { x: -35, z: -25 }, { x: -35, z: 25 },
-      { x: -15, z: -10 }, { x: -15, z: 10 },
-      { x: 0, z: -28 },   { x: 0, z: 28 },
-      { x: 15, z: 0 },    { x: -35, z: 0 }
-    ];
+    const rimLightBlue = new THREE.PointLight(0x00d9ff, 3.2, 16);
+    rimLightBlue.position.set(-6, 3.5, 2);
+    scene.add(rimLightBlue);
 
-    lightPositions.forEach(pos => {
-      const pl = new THREE.PointLight(0xffeaad, 0.9, 24);
-      pl.position.set(pos.x, CEILING_H - 0.2, pos.z);
-      scene.add(pl);
-      ceilingLights.push(pl);
+    const rimLightOrange = new THREE.PointLight(0xff5722, 3.2, 16);
+    rimLightOrange.position.set(6, 4.5, -2);
+    scene.add(rimLightOrange);
 
-      // Glowing light panel fixture
-      const fixtureGeo = new THREE.BoxGeometry(2.2, 0.15, 1.0);
-      const fixtureMat = new THREE.MeshBasicMaterial({ color: 0xfff6cf });
-      const fixtureMesh = new THREE.Mesh(fixtureGeo, fixtureMat);
-      fixtureMesh.position.set(pos.x, CEILING_H - 0.1, pos.z);
-      scene.add(fixtureMesh);
+    /* ============================================================
+       3. CANNON-ES PHYSICS WORLD & ROOM
+       ============================================================ */
+    const world = new CANNON.World();
+    world.gravity.set(0, -18, 0);
+    world.solver.iterations = 10;
+    world.defaultContactMaterial.friction = 0.45;
+    world.defaultContactMaterial.restitution = 0.32;
+
+    let floorMesh, floorBody;
+    function createGroundAndWalls() {
+      // Procedural Kick Buddy Cardboard / Padded Room Texture
+      const canvas = document.createElement('canvas');
+      canvas.width = 512;
+      canvas.height = 512;
+      const ctx = canvas.getContext('2d');
+      // Warm burlap / padded workshop floor
+      ctx.fillStyle = '#222938';
+      ctx.fillRect(0, 0, 512, 512);
+      ctx.strokeStyle = '#323c50';
+      ctx.lineWidth = 4;
+      for (let i = 0; i <= 512; i += 64) {
+        ctx.beginPath();
+        ctx.moveTo(i, 0); ctx.lineTo(i, 512);
+        ctx.moveTo(0, i); ctx.lineTo(512, i);
+        ctx.stroke();
+      }
+      // Target bullseye circle
+      ctx.strokeStyle = '#ff9800';
+      ctx.lineWidth = 7;
+      ctx.beginPath(); ctx.arc(256, 256, 130, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.arc(256, 256, 65, 0, Math.PI * 2); ctx.stroke();
+      ctx.fillStyle = '#ff9800';
+      ctx.beginPath(); ctx.arc(256, 256, 20, 0, Math.PI * 2); ctx.fill();
+
+      const floorTex = new THREE.CanvasTexture(canvas);
+      floorTex.wrapS = THREE.RepeatWrapping;
+      floorTex.wrapT = THREE.RepeatWrapping;
+      floorTex.repeat.set(2, 2);
+
+      const floorMat = new THREE.MeshStandardMaterial({
+        map: floorTex,
+        roughness: 0.6,
+        metalness: 0.15
+      });
+      floorMesh = new THREE.Mesh(new THREE.PlaneGeometry(24, 24), floorMat);
+      floorMesh.rotation.x = -Math.PI / 2;
+      floorMesh.receiveShadow = true;
+      scene.add(floorMesh);
+
+      floorBody = new CANNON.Body({ mass: 0, shape: new CANNON.Plane() });
+      floorBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), -Math.PI / 2);
+      world.addBody(floorBody);
+
+      // Hazard Back Wall
+      const wallMat = new THREE.MeshStandardMaterial({ color: 0x161c28, roughness: 0.75 });
+      const backWall = new THREE.Mesh(new THREE.PlaneGeometry(24, 16), wallMat);
+      backWall.position.set(0, 8, -6);
+      backWall.receiveShadow = true;
+      scene.add(backWall);
+
+      const backWallBody = new CANNON.Body({ mass: 0, shape: new CANNON.Plane() });
+      backWallBody.position.set(0, 8, -6);
+      world.addBody(backWallBody);
+
+      // Invisible Side Cushions
+      const leftWallBody = new CANNON.Body({ mass: 0, shape: new CANNON.Plane() });
+      leftWallBody.position.set(-6.2, 5, 0);
+      leftWallBody.quaternion.setFromAxisAngle(new CANNON.Vec3(0, 1, 0), Math.PI / 2);
+      world.addBody(leftWallBody);
+
+      const rightWallBody = new CANNON.Body({ mass: 0, shape: new CANNON.Plane() });
+      rightWallBody.position.set(6.2, 5, 0);
+      rightWallBody.quaternion.setFromAxisAngle(new CANNON.Vec3(0, 1, 0), -Math.PI / 2);
+      world.addBody(rightWallBody);
+
+      const ceilingBody = new CANNON.Body({ mass: 0, shape: new CANNON.Plane() });
+      ceilingBody.position.set(0, 12, 0);
+      ceilingBody.quaternion.setFromAxisAngle(new CANNON.Vec3(1, 0, 0), Math.PI / 2);
+      world.addBody(ceilingBody);
+    }
+    createGroundAndWalls();
+
+    /* ============================================================
+       4. PITS & POOLS (Fire Pit, Acid Pit, Water Pool)
+       ============================================================ */
+    let currentPitType = 'none';
+    let pitMeshGroup = null;
+    let pitLiquidMesh = null;
+    let pitLight = null;
+
+    function setupPitStructure() {
+      pitMeshGroup = new THREE.Group();
+      scene.add(pitMeshGroup);
+
+      // Outer Rim Border
+      const rimGeo = new THREE.BoxGeometry(4.4, 0.35, 4.4);
+      const rimMat = new THREE.MeshStandardMaterial({ color: 0x2e384d, roughness: 0.8 });
+      const rim = new THREE.Mesh(rimGeo, rimMat);
+      rim.position.y = 0.15;
+      rim.castShadow = true;
+      rim.receiveShadow = true;
+      pitMeshGroup.add(rim);
+
+      // Inner Liquid Surface
+      const liqGeo = new THREE.PlaneGeometry(3.9, 3.9, 16, 16);
+      const liqMat = new THREE.MeshStandardMaterial({
+        color: 0x00e5ff,
+        transparent: true,
+        opacity: 0.88,
+        roughness: 0.1,
+        metalness: 0.2
+      });
+      pitLiquidMesh = new THREE.Mesh(liqGeo, liqMat);
+      pitLiquidMesh.rotation.x = -Math.PI / 2;
+      pitLiquidMesh.position.y = 0.22;
+      pitMeshGroup.add(pitLiquidMesh);
+
+      // Glow Light
+      pitLight = new THREE.PointLight(0xff5722, 0, 8);
+      pitLight.position.set(0, 1.2, 0);
+      pitMeshGroup.add(pitLight);
+
+      pitMeshGroup.position.set(0, 0, 0.5);
+      pitMeshGroup.visible = false;
+    }
+    setupPitStructure();
+
+    function setPit(type) {
+      currentPitType = type;
+      document.getElementById('pit-text').innerText = type === 'none' ? 'None' : type.toUpperCase();
+      document.querySelectorAll('.pit-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.getAttribute('data-pit') === type);
+      });
+
+      if (type === 'none') {
+        pitMeshGroup.visible = false;
+        pitLight.intensity = 0;
+      } else {
+        pitMeshGroup.visible = true;
+        if (type === 'fire') {
+          pitLiquidMesh.material.color.setHex(0xff3d00);
+          pitLiquidMesh.material.emissive = new THREE.Color(0xff4500);
+          pitLiquidMesh.material.emissiveIntensity = 0.8;
+          pitLight.color.setHex(0xff5722);
+          pitLight.intensity = 4.0;
+          playSound('fire');
+        } else if (type === 'acid') {
+          pitLiquidMesh.material.color.setHex(0x39ff14);
+          pitLiquidMesh.material.emissive = new THREE.Color(0x2ebd0b);
+          pitLiquidMesh.material.emissiveIntensity = 0.7;
+          pitLight.color.setHex(0x39ff14);
+          pitLight.intensity = 3.5;
+          playSound('acid');
+        } else if (type === 'pool') {
+          pitLiquidMesh.material.color.setHex(0x00b4d8);
+          pitLiquidMesh.material.emissive = new THREE.Color(0x0077b6);
+          pitLiquidMesh.material.emissiveIntensity = 0.3;
+          pitLight.color.setHex(0x00b4d8);
+          pitLight.intensity = 2.0;
+          playSound('splash');
+        }
+      }
+    }
+
+    /* ============================================================
+       5. BUDDY RAGDOLL GENERATION (Classic Burlap Kick Buddy)
+       ============================================================ */
+    // Classic Buddy Textures (burlap cloth, button eyes, mouth stitching)
+    function createBuddyFaceTexture() {
+      const c = document.createElement('canvas');
+      c.width = 256; c.height = 256;
+      const x = c.getContext('2d');
+      // Warm burlap cloth background
+      x.fillStyle = '#d4a373';
+      x.fillRect(0, 0, 256, 256);
+      // Fabric noise
+      for (let i = 0; i < 4000; i++) {
+        x.fillStyle = Math.random() > 0.5 ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.08)';
+        x.fillRect(Math.random() * 256, Math.random() * 256, 2, 2);
+      }
+      // Button Eyes (Left: black button, Right: cross button)
+      x.fillStyle = '#1e1e1e';
+      x.beginPath(); x.arc(88, 105, 20, 0, Math.PI * 2); x.fill();
+      x.fillStyle = '#ffffff';
+      x.beginPath(); x.arc(84, 101, 4, 0, Math.PI * 2); x.fill();
+      x.beginPath(); x.arc(92, 109, 4, 0, Math.PI * 2); x.fill();
+
+      // Right Button (Red/Black)
+      x.fillStyle = '#b7094c';
+      x.beginPath(); x.arc(168, 105, 20, 0, Math.PI * 2); x.fill();
+      x.strokeStyle = '#ffffff'; x.lineWidth = 3;
+      x.beginPath(); x.moveTo(158, 95); x.lineTo(178, 115); x.stroke();
+      x.beginPath(); x.moveTo(178, 95); x.lineTo(158, 115); x.stroke();
+
+      // Stitched smile
+      x.strokeStyle = '#331a00';
+      x.lineWidth = 5;
+      x.beginPath();
+      x.arc(128, 145, 45, 0.2 * Math.PI, 0.8 * Math.PI);
+      x.stroke();
+      // Cross stitches across smile
+      for (let s = 100; s <= 156; s += 14) {
+        x.beginPath();
+        x.moveTo(s, 168); x.lineTo(s + 2, 184);
+        x.stroke();
+      }
+      // Head patch
+      x.fillStyle = '#bc6c25';
+      x.fillRect(140, 30, 45, 35);
+      x.strokeStyle = '#fff'; x.lineWidth = 2;
+      x.strokeRect(140, 30, 45, 35);
+
+      return new THREE.CanvasTexture(c);
+    }
+
+    function createBuddyBodyTexture() {
+      const c = document.createElement('canvas');
+      c.width = 256; c.height = 256;
+      const x = c.getContext('2d');
+      x.fillStyle = '#cb997e';
+      x.fillRect(0, 0, 256, 256);
+      // Fabric noise
+      for (let i = 0; i < 3000; i++) {
+        x.fillStyle = Math.random() > 0.5 ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.06)';
+        x.fillRect(Math.random() * 256, Math.random() * 256, 2, 2);
+      }
+      // Belt and target stitch
+      x.fillStyle = '#6b705c';
+      x.fillRect(0, 200, 256, 40);
+      x.fillStyle = '#ddbea9';
+      x.fillRect(110, 195, 36, 50);
+
+      // Central target cross
+      x.strokeStyle = '#a5a58d'; x.lineWidth = 4;
+      x.beginPath(); x.arc(128, 110, 35, 0, Math.PI * 2); x.stroke();
+      x.beginPath(); x.moveTo(128, 65); x.lineTo(128, 155); x.stroke();
+      x.beginPath(); x.moveTo(83, 110); x.lineTo(173, 110); x.stroke();
+
+      return new THREE.CanvasTexture(c);
+    }
+
+    const buddyHeadMat = new THREE.MeshStandardMaterial({
+      map: createBuddyFaceTexture(),
+      roughness: 0.75,
+      metalness: 0.05
+    });
+    const buddyTorsoMat = new THREE.MeshStandardMaterial({
+      map: createBuddyBodyTexture(),
+      roughness: 0.8,
+      metalness: 0.05
+    });
+    const buddyLimbMat = new THREE.MeshStandardMaterial({
+      color: 0xddbea9,
+      roughness: 0.8,
+      metalness: 0.05
+    });
+    const buddyHandFootMat = new THREE.MeshStandardMaterial({
+      color: 0xb7094c, // Red boxing gloves / boots
+      roughness: 0.5,
+      metalness: 0.1
     });
 
-    // Flashlight (Attached to player)
-    const flashlight = new THREE.SpotLight(0xffffff, 0, 26, Math.PI / 5, 0.4, 1.2);
-    scene.add(flashlight);
-    scene.add(flashlight.target);
-    let flashlightOn = false;
+    let dummyBodies = [];
+    let dummyMeshes = [];
+    let dummyConstraints = [];
+    let headBodyRef = null;
+    let chestBodyRef = null;
 
-    /* ============================================================
-       5. FURNITURE GENERATOR & CATALOG
-       ============================================================ */
-    const FURNITURE_TYPES = {
-      // 1. FLOOR LAMP (Sanctuary Light!)
-      floor_lamp: {
-        name: "Floor Lamp",
-        isLight: true,
-        lightRadius: 8.5,
-        create() {
-          const group = new THREE.Group();
-          // Base
-          const base = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.6, 0.12, 16), new THREE.MeshLambertMaterial({ color: 0x222 }));
-          base.position.y = 0.06;
-          group.add(base);
-          // Stem
-          const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 2.8, 8), new THREE.MeshLambertMaterial({ color: 0xb59458 }));
-          stem.position.y = 1.45;
-          group.add(stem);
-          // Lamp shade
-          const shade = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.85, 0.9, 16, 1, true), new THREE.MeshLambertMaterial({ color: 0xfffaea, side: THREE.DoubleSide }));
-          shade.position.y = 2.65;
-          group.add(shade);
-          // Glowing bulb
-          const bulb = new THREE.Mesh(new THREE.SphereGeometry(0.2, 12, 12), new THREE.MeshBasicMaterial({ color: 0xffea88 }));
-          bulb.position.y = 2.55;
-          group.add(bulb);
-          return group;
-        }
-      },
-
-      // 2. RETRO DESK & COMPUTER
-      exec_desk: {
-        name: "Retro Computer Desk",
-        isLight: false,
-        create() {
-          const group = new THREE.Group();
-          // Wood desktop
-          const top = new THREE.Mesh(new THREE.BoxGeometry(2.4, 0.12, 1.4), new THREE.MeshLambertMaterial({ color: 0x4a2e18 }));
-          top.position.y = 1.1;
-          group.add(top);
-          // Side drawer pillars
-          const sideL = new THREE.Mesh(new THREE.BoxGeometry(0.6, 1.05, 1.3), new THREE.MeshLambertMaterial({ color: 0x331e0f }));
-          sideL.position.set(-0.85, 0.53, 0);
-          group.add(sideL);
-          const sideR = new THREE.Mesh(new THREE.BoxGeometry(0.6, 1.05, 1.3), new THREE.MeshLambertMaterial({ color: 0x331e0f }));
-          sideR.position.set(0.85, 0.53, 0);
-          group.add(sideR);
-          // CRT Monitor
-          const mon = new THREE.Mesh(new THREE.BoxGeometry(0.85, 0.7, 0.75), new THREE.MeshLambertMaterial({ color: 0xd4cbbf }));
-          mon.position.set(0, 1.55, 0);
-          group.add(mon);
-          // Screen
-          const screen = new THREE.Mesh(new THREE.PlaneGeometry(0.65, 0.5), new THREE.MeshBasicMaterial({ color: 0x33ff66 }));
-          screen.position.set(0, 1.55, 0.38);
-          group.add(screen);
-          return group;
-        }
-      },
-
-      // 3. COZY SOFA (Leather 2-Seater)
-      sofa: {
-        name: "Cozy Leather Sofa",
-        isLight: false,
-        create() {
-          const group = new THREE.Group();
-          const mat = new THREE.MeshLambertMaterial({ color: 0x6e2c14 });
-          // Base Seat
-          const seat = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.45, 1.3), mat);
-          seat.position.y = 0.4;
-          group.add(seat);
-          // Backrest
-          const back = new THREE.Mesh(new THREE.BoxGeometry(2.6, 0.9, 0.4), mat);
-          back.position.set(0, 0.85, -0.45);
-          group.add(back);
-          // Armrests
-          const armL = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.65, 1.3), mat);
-          armL.position.set(-1.3, 0.65, 0);
-          group.add(armL);
-          const armR = new THREE.Mesh(new THREE.BoxGeometry(0.35, 0.65, 1.3), mat);
-          armR.position.set(1.3, 0.65, 0);
-          group.add(armR);
-          return group;
-        }
-      },
-
-      // 4. PLUSH ARMCHAIR
-      armchair: {
-        name: "Red Velvet Armchair",
-        isLight: false,
-        create() {
-          const group = new THREE.Group();
-          const mat = new THREE.MeshLambertMaterial({ color: 0x8b1e28 });
-          const seat = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.4, 1.2), mat);
-          seat.position.y = 0.4;
-          group.add(seat);
-          const back = new THREE.Mesh(new THREE.BoxGeometry(1.2, 0.85, 0.3), mat);
-          back.position.set(0, 0.85, -0.45);
-          group.add(back);
-          const armL = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.55, 1.2), mat);
-          armL.position.set(-0.6, 0.6, 0);
-          group.add(armL);
-          const armR = new THREE.Mesh(new THREE.BoxGeometry(0.25, 0.55, 1.2), mat);
-          armR.position.set(0.6, 0.6, 0);
-          group.add(armR);
-          return group;
-        }
-      },
-
-      // 5. COZY BED
-      bed: {
-        name: "Comfy Bed",
-        isLight: false,
-        create() {
-          const group = new THREE.Group();
-          // Frame
-          const frame = new THREE.Mesh(new THREE.BoxGeometry(2.0, 0.35, 2.8), new THREE.MeshLambertMaterial({ color: 0x3d2716 }));
-          frame.position.y = 0.2;
-          group.add(frame);
-          // Mattress
-          const mat = new THREE.Mesh(new THREE.BoxGeometry(1.85, 0.4, 2.65), new THREE.MeshLambertMaterial({ color: 0x1f4b82 }));
-          mat.position.y = 0.5;
-          group.add(mat);
-          // Pillows
-          const pillowMat = new THREE.MeshLambertMaterial({ color: 0xf5f5f5 });
-          const p1 = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.18, 0.45), pillowMat);
-          p1.position.set(-0.45, 0.75, -1.0);
-          group.add(p1);
-          const p2 = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.18, 0.45), pillowMat);
-          p2.position.set(0.45, 0.75, -1.0);
-          group.add(p2);
-          return group;
-        }
-      },
-
-      // 6. BOOKSHELF
-      bookshelf: {
-        name: "Wooden Bookshelf",
-        isLight: false,
-        create() {
-          const group = new THREE.Group();
-          const wood = new THREE.MeshLambertMaterial({ color: 0x482b15 });
-          // Frame
-          const back = new THREE.Mesh(new THREE.BoxGeometry(1.8, 2.6, 0.1), wood);
-          back.position.set(0, 1.3, -0.3);
-          group.add(back);
-          const sideL = new THREE.Mesh(new THREE.BoxGeometry(0.1, 2.6, 0.7), wood);
-          sideL.position.set(-0.85, 1.3, 0);
-          group.add(sideL);
-          const sideR = new THREE.Mesh(new THREE.BoxGeometry(0.1, 2.6, 0.7), wood);
-          sideR.position.set(0.85, 1.3, 0);
-          group.add(sideR);
-          // Shelves with books
-          for (let y = 0.5; y <= 2.2; y += 0.55) {
-            const shelf = new THREE.Mesh(new THREE.BoxGeometry(1.65, 0.08, 0.65), wood);
-            shelf.position.set(0, y, 0);
-            group.add(shelf);
-
-            const bookColors = [0x992222, 0x225599, 0x228833, 0xddaa22];
-            const books = new THREE.Mesh(
-              new THREE.BoxGeometry(1.2, 0.38, 0.45),
-              new THREE.MeshLambertMaterial({ color: bookColors[Math.floor(Math.random() * bookColors.length)] })
-            );
-            books.position.set(0, y + 0.22, 0);
-            group.add(books);
-          }
-          return group;
-        }
-      },
-
-      // 7. RETRO ARCADE MACHINE
-      arcade: {
-        name: "Retro Arcade Cabinet",
-        isLight: true,
-        lightRadius: 5.5,
-        create() {
-          const group = new THREE.Group();
-          const body = new THREE.Mesh(new THREE.BoxGeometry(1.1, 2.4, 1.0), new THREE.MeshLambertMaterial({ color: 0x111 }));
-          body.position.y = 1.2;
-          group.add(body);
-          // Glowing screen
-          const screen = new THREE.Mesh(new THREE.PlaneGeometry(0.8, 0.6), new THREE.MeshBasicMaterial({ color: 0xff007f }));
-          screen.position.set(0, 1.5, 0.51);
-          group.add(screen);
-          // Marquee sign
-          const marquee = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.3, 0.2), new THREE.MeshBasicMaterial({ color: 0x00f0ff }));
-          marquee.position.set(0, 2.2, 0.45);
-          group.add(marquee);
-          return group;
-        }
-      },
-
-      // 8. POTTED PLANT
-      plant: {
-        name: "Potted Monstera Plant",
-        isLight: false,
-        create() {
-          const group = new THREE.Group();
-          // Pot
-          const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.35, 0.7, 12), new THREE.MeshLambertMaterial({ color: 0xf5ede4 }));
-          pot.position.y = 0.35;
-          group.add(pot);
-          // Leaves
-          const leafMat = new THREE.MeshLambertMaterial({ color: 0x228833 });
-          for (let i = 0; i < 6; i++) {
-            const leaf = new THREE.Mesh(new THREE.ConeGeometry(0.35, 1.1, 5), leafMat);
-            const ang = (i / 6) * Math.PI * 2;
-            leaf.position.set(Math.cos(ang) * 0.2, 0.85, Math.sin(ang) * 0.2);
-            leaf.rotation.z = Math.cos(ang) * 0.5;
-            leaf.rotation.x = Math.sin(ang) * 0.5;
-            group.add(leaf);
-          }
-          return group;
-        }
-      },
-
-      // 9. WALL PARTITION (Build custom bedrooms!)
-      wall_panel: {
-        name: "Wall Partition Divider",
-        isLight: false,
-        create() {
-          const group = new THREE.Group();
-          const wall = new THREE.Mesh(new THREE.BoxGeometry(3.0, 3.2, 0.25), wallpaperMat);
-          wall.position.y = 1.6;
-          group.add(wall);
-          const trim = new THREE.Mesh(new THREE.BoxGeometry(3.0, 0.2, 0.32), new THREE.MeshLambertMaterial({ color: 0xded8ce }));
-          trim.position.y = 0.1;
-          group.add(trim);
-          return group;
-        }
-      }
+    // Buddy Condition States
+    const buddyState = {
+      isBurning: false,
+      burnTimer: 0,
+      isAcidMelting: false,
+      acidTimer: 0,
+      isFrozen: false,
+      freezeTimer: 0,
+      isElectrified: false,
+      zapTimer: 0,
+      isGiant: false,
+      isRagdollTorn: false,
+      scale: 1.0
     };
 
-    /* ============================================================
-       6. FURNITURE INSTANCES & SPAWN IN STORE
-       ============================================================ */
-    const furnitureItems = []; // List of all furniture objects in world
-    let furnitureIdCounter = 1;
+    function createDummyLimb(mesh, shape, mass, position) {
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      mesh.position.copy(position);
+      scene.add(mesh);
 
-    function spawnFurniture(typeKey, x, z, rotY = 0, isSaved = false) {
-      const typeDef = FURNITURE_TYPES[typeKey];
-      if (!typeDef) return null;
+      const body = new CANNON.Body({
+        mass: mass,
+        linearDamping: 0.28,
+        angularDamping: 0.35
+      });
+      body.addShape(shape);
+      body.position.set(position.x, position.y, position.z);
+      world.addBody(body);
 
-      const group = typeDef.create();
-      group.position.set(x, 0, z);
-      group.rotation.y = rotY;
+      body.isDummyLimb = true;
+      body.meshRef = mesh;
+      dummyBodies.push(body);
+      dummyMeshes.push(mesh);
 
-      // Attach light if it's an illuminated item
-      let pLight = null;
-      let haloMesh = null;
-      if (typeDef.isLight) {
-        pLight = new THREE.PointLight(0xffdf88, 1.4, typeDef.lightRadius);
-        pLight.position.set(0, 2.5, 0);
-        group.add(pLight);
-
-        // Ground golden sanctuary safe circle
-        const haloGeo = new THREE.RingGeometry(typeDef.lightRadius * 0.3, typeDef.lightRadius * 0.8, 32);
-        const haloMat = new THREE.MeshBasicMaterial({ color: 0xffcc33, side: THREE.DoubleSide, transparent: true, opacity: 0.18 });
-        haloMesh = new THREE.Mesh(haloGeo, haloMat);
-        haloMesh.rotation.x = -Math.PI / 2;
-        haloMesh.position.y = 0.03;
-        group.add(haloMesh);
-      }
-
-      scene.add(group);
-
-      const itemData = {
-        id: 'furn_' + (furnitureIdCounter++),
-        typeKey: typeKey,
-        name: typeDef.name,
-        isLight: typeDef.isLight,
-        lightRadius: typeDef.lightRadius || 0,
-        group: group,
-        pointLight: pLight,
-        halo: haloMesh,
-        isCarried: false,
-        inStore: !isSaved && (x > 25)
-      };
-
-      furnitureItems.push(itemData);
-      return itemData;
-    }
-
-    // Populate Cap'n Clarks Initial Store Showrooms
-    function populateStore() {
-      // Clear unsaved store items
-      for (let i = furnitureItems.length - 1; i >= 0; i--) {
-        if (furnitureItems[i].inStore && !furnitureItems[i].isCarried) {
-          scene.remove(furnitureItems[i].group);
-          furnitureItems.splice(i, 1);
-        }
-      }
-
-      // Display Aisle 1: Lighting & Living Room
-      spawnFurniture('floor_lamp', 32, -10);
-      spawnFurniture('floor_lamp', 32, 10);
-      spawnFurniture('sofa', 36, -8, Math.PI / 2);
-      spawnFurniture('armchair', 36, -3, Math.PI / 2);
-      spawnFurniture('sofa', 36, 8, -Math.PI / 2);
-      spawnFurniture('plant', 32, -4);
-      spawnFurniture('plant', 32, 4);
-
-      // Display Aisle 2: Bedroom & Office
-      spawnFurniture('bed', 43, -12, Math.PI);
-      spawnFurniture('bed', 43, 12, 0);
-      spawnFurniture('exec_desk', 43, -2, -Math.PI / 2);
-      spawnFurniture('bookshelf', 43, 4, -Math.PI / 2);
-      spawnFurniture('floor_lamp', 46, 0);
-
-      // Display Aisle 3: Arcade & Walls
-      spawnFurniture('arcade', 46, -8, -Math.PI / 2);
-      spawnFurniture('arcade', 46, -14, -Math.PI / 2);
-      spawnFurniture('wall_panel', 36, -26);
-      spawnFurniture('wall_panel', 36, 26);
-      spawnFurniture('wall_panel', 42, -26);
-      spawnFurniture('wall_panel', 42, 26);
-    }
-
-    /* ============================================================
-       7. PLAYER ROBLOX R6 AVATAR MODEL & BIOMECHANICS
-       ============================================================ */
-    const playerGroup = new THREE.Group();
-    scene.add(playerGroup);
-
-    // Roblox Classic Colors
-    const rbxYellow = new THREE.MeshLambertMaterial({ color: 0xe5c158 }); // Classic Noob/Roblox yellow skin
-    const rbxBlue = new THREE.MeshLambertMaterial({ color: 0x0d69ac });   // Classic Blue torso
-    const rbxGreen = new THREE.MeshLambertMaterial({ color: 0x27823b });  // Classic Green pants
-
-    // Canvas texture for classic iconic Roblox Smile Face
-    const faceCanvas = document.createElement('canvas');
-    faceCanvas.width = 128;
-    faceCanvas.height = 128;
-    const fctx = faceCanvas.getContext('2d');
-    fctx.fillStyle = '#e5c158';
-    fctx.fillRect(0, 0, 128, 128);
-    // Eyes
-    fctx.fillStyle = '#111111';
-    fctx.beginPath();
-    fctx.arc(42, 45, 9, 0, Math.PI * 2);
-    fctx.arc(86, 45, 9, 0, Math.PI * 2);
-    fctx.fill();
-    // Catchlight in eyes
-    fctx.fillStyle = '#ffffff';
-    fctx.beginPath();
-    fctx.arc(40, 42, 3, 0, Math.PI * 2);
-    fctx.arc(84, 42, 3, 0, Math.PI * 2);
-    fctx.fill();
-    // Classic Smile curve
-    fctx.strokeStyle = '#111111';
-    fctx.lineWidth = 5.5;
-    fctx.lineCap = 'round';
-    fctx.beginPath();
-    fctx.arc(64, 60, 32, 0.2 * Math.PI, 0.8 * Math.PI);
-    fctx.stroke();
-
-    const faceTexture = new THREE.CanvasTexture(faceCanvas);
-    const rbxFaceMat = new THREE.MeshLambertMaterial({ map: faceTexture });
-
-    // Head (Roblox R6: 0.7 x 0.7 x 0.7 box with top stud)
-    const headGroup = new THREE.Group();
-    headGroup.position.y = 2.05;
-    playerGroup.add(headGroup);
-
-    // Head materials array [right, left, top, bottom, front, back]
-    const headMaterials = [
-      rbxYellow,
-      rbxYellow,
-      rbxYellow,
-      rbxYellow,
-      rbxFaceMat, // Front face
-      rbxYellow
-    ];
-    const headMesh = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.7, 0.7), headMaterials);
-    headGroup.add(headMesh);
-
-    // Iconic Roblox Head Stud
-    const studMesh = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 0.14, 16), rbxYellow);
-    studMesh.position.y = 0.42;
-    headGroup.add(studMesh);
-
-    // Torso (Roblox R6: 1.1 x 1.1 x 0.55 box)
-    const torsoMesh = new THREE.Mesh(new THREE.BoxGeometry(1.05, 1.05, 0.55), rbxBlue);
-    torsoMesh.position.y = 1.35;
-    playerGroup.add(torsoMesh);
-
-    // Arms (Roblox R6: 0.52 x 1.05 x 0.52 blocks pivoting from shoulder)
-    function createR6Arm(isLeft) {
-      const shoulderPivot = new THREE.Group();
-      // Shoulder pivot at top corner of torso
-      shoulderPivot.position.set(isLeft ? -0.78 : 0.78, 1.85, 0);
-
-      const armMesh = new THREE.Mesh(new THREE.BoxGeometry(0.5, 1.05, 0.5), rbxYellow);
-      armMesh.position.y = -0.52; // hang down from shoulder
-      shoulderPivot.add(armMesh);
-
-      playerGroup.add(shoulderPivot);
-      return { shoulderPivot, armMesh };
-    }
-
-    // Legs (Roblox R6: 0.5 x 1.05 x 0.5 blocks pivoting from hips)
-    function createR6Leg(isLeft) {
-      const hipPivot = new THREE.Group();
-      hipPivot.position.set(isLeft ? -0.27 : 0.27, 0.85, 0);
-
-      const legMesh = new THREE.Mesh(new THREE.BoxGeometry(0.5, 1.05, 0.5), rbxGreen);
-      legMesh.position.y = -0.52; // hang down from hip
-      hipPivot.add(legMesh);
-
-      playerGroup.add(hipPivot);
-      return { hipPivot, legMesh };
-    }
-
-    const leftArm = createR6Arm(true);
-    const rightArm = createR6Arm(false);
-    const leftLeg = createR6Leg(true);
-    const rightLeg = createR6Leg(false);
-
-    // Carried Item Anchor Node (attached in front of Roblox torso)
-    const carryAnchor = new THREE.Group();
-    carryAnchor.position.set(0, 1.3, 1.3);
-    playerGroup.add(carryAnchor);
-
-    // Placement Ghost Hologram (Shows on floor when carrying)
-    const ghostGroup = new THREE.Group();
-    scene.add(ghostGroup);
-    ghostGroup.visible = false;
-
-    /* ============================================================
-       8. THE SMILER & NIGHT HUNTERS AI
-       ============================================================ */
-    const smilerGroup = new THREE.Group();
-    smilerGroup.position.set(-30, 1.6, -30);
-    scene.add(smilerGroup);
-
-    // Iconic glowing razor smile & wide white eyes
-    const eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.16, 12, 12), new THREE.MeshBasicMaterial({ color: 0xffffff }));
-    eyeL.position.set(-0.35, 0.35, 0);
-    smilerGroup.add(eyeL);
-
-    const eyeR = new THREE.Mesh(new THREE.SphereGeometry(0.16, 12, 12), new THREE.MeshBasicMaterial({ color: 0xffffff }));
-    eyeR.position.set(0.35, 0.35, 0);
-    smilerGroup.add(eyeR);
-
-    // Crescent sharp teeth smile
-    const smileCanvas = document.createElement('canvas');
-    smileCanvas.width = 256;
-    smileCanvas.height = 128;
-    const smCtx = smileCanvas.getContext('2d');
-    smCtx.fillStyle = '#ffffff';
-    smCtx.beginPath();
-    smCtx.arc(128, 40, 75, 0.15 * Math.PI, 0.85 * Math.PI, false);
-    smCtx.lineWidth = 14;
-    smCtx.strokeStyle = '#ffffff';
-    smCtx.stroke();
-    // Sharp razor teeth
-    for (let x = 60; x <= 196; x += 18) {
-      smCtx.beginPath();
-      smCtx.moveTo(x - 5, 80);
-      smCtx.lineTo(x, 105);
-      smCtx.lineTo(x + 5, 80);
-      smCtx.fill();
-    }
-    const smileTex = new THREE.CanvasTexture(smileCanvas);
-    const smileMesh = new THREE.Mesh(new THREE.PlaneGeometry(1.6, 0.8), new THREE.MeshBasicMaterial({ map: smileTex, transparent: true }));
-    smileMesh.position.set(0, -0.15, 0.05);
-    smilerGroup.add(smileMesh);
-
-    // Shadow aura
-    const smilerAura = new THREE.Mesh(
-      new THREE.SphereGeometry(0.9, 12, 12),
-      new THREE.MeshBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.85 })
-    );
-    smilerGroup.add(smilerAura);
-
-    const smilerLight = new THREE.PointLight(0xffffff, 0.4, 6);
-    smilerGroup.add(smilerLight);
-    smilerGroup.visible = false;
-
-    const smilerState = {
-      pos: new THREE.Vector3(-30, 1.6, -30),
-      speed: 4.8,
-      isHunting: false,
-      isRepelled: false,
-      repelTimer: 0
-    };
-
-    /* ============================================================
-       9. GAME STATE & CYCLE ENGINE
-       ============================================================ */
-    const player = {
-      pos: new THREE.Vector3(35, 0, 0), // Start in Cap'n Clarks Safe Haven
-      vel: new THREE.Vector3(),
-      rotY: -Math.PI / 2,
-      speed: 4.8,
-      sprintMult: 1.6,
-      radius: 0.45,
-      stamina: 100,
-      isSprinting: false,
-      firstPerson: false,
-      carriedItem: null,
-      placementRot: 0
-    };
-
-    // Cycle Config
-    const DAY_DURATION = 75; // 75s of peaceful scavenging & base decorating
-    const WARN_DURATION = 8; // 8s warning flickering
-    const NIGHT_DURATION = 42; // 42s Lights Out survival horror
-
-    let cyclePhase = 'DAY'; // 'DAY' | 'WARNING' | 'NIGHT'
-    let phaseTimeRemaining = DAY_DURATION;
-    let totalScore = 0;
-    let isGameOver = false;
-
-    // Elements
-    const phaseBadgeEl = document.getElementById('phase-badge');
-    const phaseTimerEl = document.getElementById('phase-timer');
-    const safeStatusEl = document.getElementById('safe-status');
-    const flickerOverlay = document.getElementById('flicker-overlay');
-    const bannerEl = document.getElementById('banner-alert');
-    const bannerMsg = document.getElementById('banner-msg');
-    const interactPrompt = document.getElementById('interact-prompt');
-    const promptLabel = document.getElementById('prompt-label');
-    const carryHud = document.getElementById('carry-hud');
-    const staminaFill = document.getElementById('stamina-fill');
-    const grabBtnLabel = document.getElementById('grab-btn-label');
-
-    function showBanner(msg, icon = '🚛') {
-      document.getElementById('banner-icon').innerText = icon;
-      bannerMsg.innerText = msg;
-      bannerEl.classList.add('show');
-      setTimeout(() => bannerEl.classList.remove('show'), 3500);
-    }
-
-    /* ============================================================
-       10. BASE PERSISTENCE (LOCAL STORAGE)
-       ============================================================ */
-    const STORAGE_KEY = 'backrooms_decor_base_v2';
-
-    function saveBaseToStorage() {
-      const savedList = [];
-      furnitureItems.forEach(item => {
-        if (!item.inStore && !item.isCarried) {
-          savedList.push({
-            typeKey: item.typeKey,
-            x: Number(item.group.position.x.toFixed(2)),
-            z: Number(item.group.position.z.toFixed(2)),
-            rotY: Number(item.group.rotation.y.toFixed(2))
-          });
+      // Natural collision impact points & sounds
+      body.addEventListener('collide', function(e) {
+        const relVel = e.contact.getImpactVelocityAlongNormal();
+        if (relVel > 3.0) {
+          handleLimbImpact(body.position, relVel);
         }
       });
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(savedList));
-      updateDecorCounter();
+
+      return body;
     }
 
-    function loadBaseFromStorage() {
-      try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (!raw) return;
-        const savedList = JSON.parse(raw);
-        if (Array.isArray(savedList)) {
-          savedList.forEach(item => {
-            spawnFurniture(item.typeKey, item.x, item.z, item.rotY, true);
-          });
-        }
-      } catch (e) {
-        console.warn("Could not load base items", e);
+    function buildBuddyRagdoll(startX = 0, startY = 3.8, startZ = 0) {
+      // Clean previous
+      dummyConstraints.forEach(c => world.removeConstraint(c));
+      dummyConstraints = [];
+      dummyBodies.forEach(b => world.removeBody(b));
+      dummyBodies = [];
+      dummyMeshes.forEach(m => scene.remove(m));
+      dummyMeshes = [];
+
+      // Reset conditions
+      buddyState.isBurning = false;
+      buddyState.burnTimer = 0;
+      buddyState.isAcidMelting = false;
+      buddyState.acidTimer = 0;
+      buddyState.isFrozen = false;
+      buddyState.freezeTimer = 0;
+      buddyState.isElectrified = false;
+      buddyState.zapTimer = 0;
+      buddyState.scale = 1.0;
+      updateStatusBadge('Normal');
+
+      // 1. Torso (Chest & Pelvis)
+      const chestMesh = new THREE.Mesh(new THREE.BoxGeometry(0.88, 1.0, 0.52), buddyTorsoMat);
+      chestBodyRef = createDummyLimb(chestMesh, new CANNON.Box(new CANNON.Vec3(0.44, 0.5, 0.26)), 12, new THREE.Vector3(startX, startY + 0.65, startZ));
+
+      const pelvisMesh = new THREE.Mesh(new THREE.BoxGeometry(0.78, 0.55, 0.48), buddyLimbMat);
+      const pelvisBody = createDummyLimb(pelvisMesh, new CANNON.Box(new CANNON.Vec3(0.39, 0.27, 0.24)), 10, new THREE.Vector3(startX, startY, startZ));
+
+      const spineJoint = new CANNON.ConeTwistConstraint(chestBodyRef, pelvisBody, {
+        pivotA: new CANNON.Vec3(0, -0.5, 0),
+        pivotB: new CANNON.Vec3(0, 0.27, 0),
+        axisA: CANNON.Vec3.UNIT_Y,
+        axisB: CANNON.Vec3.UNIT_Y,
+        angle: Math.PI / 8,
+        twistAngle: Math.PI / 10
+      });
+      world.addConstraint(spineJoint);
+      dummyConstraints.push(spineJoint);
+
+      // 2. Head (Spherical classic Kick Buddy head)
+      const headMesh = new THREE.Mesh(new THREE.SphereGeometry(0.42, 24, 24), buddyHeadMat);
+      headMesh.rotation.y = -Math.PI / 2; // Face forward
+      headBodyRef = createDummyLimb(headMesh, new CANNON.Sphere(0.42), 5.5, new THREE.Vector3(startX, startY + 1.52, startZ));
+
+      const neckJoint = new CANNON.ConeTwistConstraint(headBodyRef, chestBodyRef, {
+        pivotA: new CANNON.Vec3(0, -0.42, 0),
+        pivotB: new CANNON.Vec3(0, 0.52, 0),
+        axisA: CANNON.Vec3.UNIT_Y,
+        axisB: CANNON.Vec3.UNIT_Y,
+        angle: Math.PI / 6,
+        twistAngle: Math.PI / 8
+      });
+      world.addConstraint(neckJoint);
+      dummyConstraints.push(neckJoint);
+
+      // 3. Arms (Upper & Forearm with Red Gloves)
+      const armGeo = new THREE.CylinderGeometry(0.14, 0.14, 0.6, 16);
+      const foreArmGeo = new THREE.CylinderGeometry(0.13, 0.13, 0.55, 16);
+
+      // Left Arm
+      const leftUpperArmMesh = new THREE.Mesh(armGeo, buddyLimbMat);
+      const leftUpperArmBody = createDummyLimb(leftUpperArmMesh, new CANNON.Cylinder(0.14, 0.14, 0.6, 12), 3, new THREE.Vector3(startX - 0.74, startY + 0.65, startZ));
+      const leftForearmMesh = new THREE.Mesh(foreArmGeo, buddyHandFootMat);
+      const leftForearmBody = createDummyLimb(leftForearmMesh, new CANNON.Cylinder(0.13, 0.13, 0.55, 12), 2.5, new THREE.Vector3(startX - 0.74, startY + 0.05, startZ));
+
+      const leftShoulder = new CANNON.PointToPointConstraint(chestBodyRef, new CANNON.Vec3(-0.52, 0.35, 0), leftUpperArmBody, new CANNON.Vec3(0, 0.3, 0));
+      const leftElbow = new CANNON.PointToPointConstraint(leftUpperArmBody, new CANNON.Vec3(0, -0.3, 0), leftForearmBody, new CANNON.Vec3(0, 0.28, 0));
+      world.addConstraint(leftShoulder);
+      world.addConstraint(leftElbow);
+      dummyConstraints.push(leftShoulder, leftElbow);
+
+      // Right Arm
+      const rightUpperArmMesh = new THREE.Mesh(armGeo, buddyLimbMat);
+      const rightUpperArmBody = createDummyLimb(rightUpperArmMesh, new CANNON.Cylinder(0.14, 0.14, 0.6, 12), 3, new THREE.Vector3(startX + 0.74, startY + 0.65, startZ));
+      const rightForearmMesh = new THREE.Mesh(foreArmGeo, buddyHandFootMat);
+      const rightForearmBody = createDummyLimb(rightForearmMesh, new CANNON.Cylinder(0.13, 0.13, 0.55, 12), 2.5, new THREE.Vector3(startX + 0.74, startY + 0.05, startZ));
+
+      const rightShoulder = new CANNON.PointToPointConstraint(chestBodyRef, new CANNON.Vec3(0.52, 0.35, 0), rightUpperArmBody, new CANNON.Vec3(0, 0.3, 0));
+      const rightElbow = new CANNON.PointToPointConstraint(rightUpperArmBody, new CANNON.Vec3(0, -0.3, 0), rightForearmBody, new CANNON.Vec3(0, 0.28, 0));
+      world.addConstraint(rightShoulder);
+      world.addConstraint(rightElbow);
+      dummyConstraints.push(rightShoulder, rightElbow);
+
+      // 4. Legs (Thigh & Shin with Red Boots)
+      const legGeo = new THREE.CylinderGeometry(0.18, 0.15, 0.75, 16);
+      const shinGeo = new THREE.CylinderGeometry(0.15, 0.13, 0.7, 16);
+
+      // Left Leg
+      const leftThighMesh = new THREE.Mesh(legGeo, buddyLimbMat);
+      const leftThighBody = createDummyLimb(leftThighMesh, new CANNON.Cylinder(0.18, 0.15, 0.75, 12), 6, new THREE.Vector3(startX - 0.28, startY - 0.65, startZ));
+      const leftShinMesh = new THREE.Mesh(shinGeo, buddyHandFootMat);
+      const leftShinBody = createDummyLimb(leftShinMesh, new CANNON.Cylinder(0.15, 0.13, 0.7, 12), 4, new THREE.Vector3(startX - 0.28, startY - 1.45, startZ));
+
+      const leftHip = new CANNON.PointToPointConstraint(pelvisBody, new CANNON.Vec3(-0.25, -0.28, 0), leftThighBody, new CANNON.Vec3(0, 0.38, 0));
+      const leftKnee = new CANNON.PointToPointConstraint(leftThighBody, new CANNON.Vec3(0, -0.38, 0), leftShinBody, new CANNON.Vec3(0, 0.35, 0));
+      world.addConstraint(leftHip);
+      world.addConstraint(leftKnee);
+      dummyConstraints.push(leftHip, leftKnee);
+
+      // Right Leg
+      const rightThighMesh = new THREE.Mesh(legGeo, buddyLimbMat);
+      const rightThighBody = createDummyLimb(rightThighMesh, new CANNON.Cylinder(0.18, 0.15, 0.75, 12), 6, new THREE.Vector3(startX + 0.28, startY - 0.65, startZ));
+      const rightShinMesh = new THREE.Mesh(shinGeo, buddyHandFootMat);
+      const rightShinBody = createDummyLimb(rightShinMesh, new CANNON.Cylinder(0.15, 0.13, 0.7, 12), 4, new THREE.Vector3(startX + 0.28, startY - 1.45, startZ));
+
+      const rightHip = new CANNON.PointToPointConstraint(pelvisBody, new CANNON.Vec3(0.25, -0.28, 0), rightThighBody, new CANNON.Vec3(0, 0.38, 0));
+      const rightKnee = new CANNON.PointToPointConstraint(rightThighBody, new CANNON.Vec3(0, -0.38, 0), rightShinBody, new CANNON.Vec3(0, 0.35, 0));
+      world.addConstraint(rightHip);
+      world.addConstraint(rightKnee);
+      dummyConstraints.push(rightHip, rightKnee);
+    }
+    buildBuddyRagdoll();
+
+    /* ============================================================
+       6. 3D SYRINGE INJECTION SYSTEM
+       ============================================================ */
+    // Create an authentic 3D Syringe model attached to needle injection point
+    function create3DSyringeModel(liquidColorHex) {
+      const syringeGroup = new THREE.Group();
+
+      // Clear Glass Barrel
+      const barrelGeo = new THREE.CylinderGeometry(0.12, 0.12, 0.7, 16);
+      const barrelMat = new THREE.MeshStandardMaterial({
+        color: 0xffffff,
+        transparent: true,
+        opacity: 0.5,
+        roughness: 0.1,
+        metalness: 0.1
+      });
+      const barrel = new THREE.Mesh(barrelGeo, barrelMat);
+      barrel.position.y = 0.35;
+      syringeGroup.add(barrel);
+
+      // Colored Fluid Inside
+      const fluidGeo = new THREE.CylinderGeometry(0.105, 0.105, 0.55, 16);
+      const fluidMat = new THREE.MeshStandardMaterial({
+        color: liquidColorHex,
+        emissive: liquidColorHex,
+        emissiveIntensity: 0.6,
+        roughness: 0.2
+      });
+      const fluid = new THREE.Mesh(fluidGeo, fluidMat);
+      fluid.position.y = 0.35;
+      syringeGroup.add(fluid);
+
+      // Plunger & Thumb Ring
+      const plungerGeo = new THREE.CylinderGeometry(0.04, 0.04, 0.5, 8);
+      const plungerMat = new THREE.MeshStandardMaterial({ color: 0xcccccc, metalness: 0.8 });
+      const plunger = new THREE.Mesh(plungerGeo, plungerMat);
+      plunger.position.y = 0.85;
+      syringeGroup.add(plunger);
+
+      const ringGeo = new THREE.TorusGeometry(0.09, 0.02, 8, 16);
+      const ring = new THREE.Mesh(ringGeo, plungerMat);
+      ring.position.y = 1.1;
+      ring.rotation.x = Math.PI / 2;
+      syringeGroup.add(ring);
+
+      // Metal Needle Point
+      const needleGeo = new THREE.CylinderGeometry(0.02, 0.005, 0.35, 8);
+      const needleMat = new THREE.MeshStandardMaterial({ color: 0xeeeeee, metalness: 0.95, roughness: 0.1 });
+      const needle = new THREE.Mesh(needleGeo, needleMat);
+      needle.position.y = -0.17;
+      syringeGroup.add(needle);
+
+      return syringeGroup;
+    }
+
+    const activeSyringes = [];
+    function injectSyringeAt(targetBody, worldPt, type) {
+      initAudio();
+      playSound('inject');
+      nativeVibrate('medium');
+      addTrauma(0.2);
+
+      let color = 0x39ff14;
+      if (type === 'acid') color = 0x39ff14;
+      else if (type === 'fire') color = 0xff3d00;
+      else if (type === 'freeze') color = 0x00e5ff;
+      else if (type === 'lightning') color = 0xffeb3b;
+      else if (type === 'growth') color = 0x9c27b0;
+      else if (type === 'death') color = 0x111111;
+      else if (type === 'regen') color = 0x00ff88;
+
+      // Create 3D Syringe mesh & pin into Buddy's limb
+      const syringeMesh = create3DSyringeModel(color);
+      syringeMesh.position.copy(worldPt);
+
+      // Point needle inwards toward limb center
+      const toLimb = new THREE.Vector3().subVectors(targetBody.position, worldPt).normalize();
+      syringeMesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, -1, 0), toLimb);
+      scene.add(syringeMesh);
+
+      // Physics pin: keep syringe attached to limb
+      const localOffset = new CANNON.Vec3();
+      targetBody.pointToLocalFrame(new CANNON.Vec3(worldPt.x, worldPt.y, worldPt.z), localOffset);
+
+      activeSyringes.push({
+        mesh: syringeMesh,
+        targetBody: targetBody,
+        localOffset: localOffset,
+        type: type,
+        life: 14.0 // lasts 14 seconds before fading
+      });
+
+      // Spawn fluid squirt particles
+      spawnSparks(worldPt.x, worldPt.y, worldPt.z, 20, [
+        (color >> 16 & 255) / 255,
+        (color >> 8 & 255) / 255,
+        (color & 255) / 255
+      ]);
+
+      // Apply Syringe Biological Effect
+      applySyringeEffect(type, targetBody, worldPt);
+    }
+
+    function applySyringeEffect(type, body, pt) {
+      if (type === 'acid') {
+        buddyState.isAcidMelting = true;
+        buddyState.acidTimer = 8.0;
+        updateStatusBadge('Melting (Acid)');
+        body.applyImpulse(new CANNON.Vec3(0, 120, -50), body.position);
+      } else if (type === 'fire') {
+        buddyState.isBurning = true;
+        buddyState.burnTimer = 8.0;
+        updateStatusBadge('On Fire!');
+        body.applyImpulse(new CANNON.Vec3(0, 150, -60), body.position);
+      } else if (type === 'freeze') {
+        buddyState.isFrozen = true;
+        buddyState.freezeTimer = 7.0;
+        playSound('freeze');
+        updateStatusBadge('Frozen Solid');
+        // Slow down velocity immediately
+        dummyBodies.forEach(b => {
+          b.velocity.scale(0.05, b.velocity);
+          b.angularVelocity.scale(0.05, b.angularVelocity);
+        });
+      } else if (type === 'lightning') {
+        buddyState.isElectrified = true;
+        buddyState.zapTimer = 6.0;
+        playSound('zap');
+        updateStatusBadge('Shocked / Spasming');
+        // Violent spasms
+        dummyBodies.forEach(b => {
+          b.applyImpulse(new CANNON.Vec3((Math.random() - 0.5) * 350, Math.random() * 300, (Math.random() - 0.5) * 350), b.position);
+        });
+      } else if (type === 'growth') {
+        buddyState.scale = Math.min(buddyState.scale * 1.35, 2.5);
+        updateStatusBadge('Giant Buddy (' + buddyState.scale.toFixed(1) + 'x)');
+        playSound('hit');
+        dummyMeshes.forEach(m => m.scale.set(buddyState.scale, buddyState.scale, buddyState.scale));
+      } else if (type === 'death') {
+        // Black Syringe: Insta-knockout ragdoll limp
+        updateStatusBadge('Knocked Out');
+        playSound('hit');
+        dummyBodies.forEach(b => {
+          b.mass = 2.0;
+          b.updateMassProperties();
+        });
+      } else if (type === 'regen') {
+        // Antidote / Healing: Restore normal state
+        buddyState.isBurning = false;
+        buddyState.burnTimer = 0;
+        buddyState.isAcidMelting = false;
+        buddyState.acidTimer = 0;
+        buddyState.isFrozen = false;
+        buddyState.freezeTimer = 0;
+        buddyState.isElectrified = false;
+        buddyState.zapTimer = 0;
+        buddyState.scale = 1.0;
+        dummyMeshes.forEach(m => m.scale.set(1, 1, 1));
+        updateStatusBadge('Healed / Normal');
+        playSound('heal');
+        spawnSparks(pt.x, pt.y, pt.z, 30, [0.1, 1.0, 0.4]);
       }
-      updateDecorCounter();
+
+      addImpactScore(350);
     }
 
-    function updateDecorCounter() {
-      const placedCount = furnitureItems.filter(i => !i.inStore && !i.isCarried).length;
-      document.getElementById('decor-stats').innerText = `Base Items Placed: ${placedCount}`;
-    }
-
-    function resetBaseStorage() {
-      if (confirm("Reset all decorated furniture in your base?")) {
-        localStorage.removeItem(STORAGE_KEY);
-        for (let i = furnitureItems.length - 1; i >= 0; i--) {
-          if (!furnitureItems[i].inStore) {
-            scene.remove(furnitureItems[i].group);
-            furnitureItems.splice(i, 1);
-          }
+    function updateSyringes(dt) {
+      for (let i = activeSyringes.length - 1; i >= 0; i--) {
+        const s = activeSyringes[i];
+        s.life -= dt;
+        if (s.life <= 0) {
+          scene.remove(s.mesh);
+          activeSyringes.splice(i, 1);
+          continue;
         }
-        toggleMenu();
-        showBanner("Base items reset to clean slate", "🧹");
+
+        // Stick to limb position & orientation
+        const targetWorldPt = new CANNON.Vec3();
+        s.targetBody.pointToWorldFrame(s.localOffset, targetWorldPt);
+        s.mesh.position.set(targetWorldPt.x, targetWorldPt.y, targetWorldPt.z);
       }
     }
 
     /* ============================================================
-       11. GRAB, CARRY, ROTATE & PLACE MECHANICS
+       7. WEATHER SYSTEM (Acid Rain, Firestorm, Thunderstorm, Blizzard, Clear)
        ============================================================ */
-    function getNearestFurniture() {
-      let nearest = null;
-      let minDist = 2.8;
-      furnitureItems.forEach(item => {
-        if (item.isCarried) return;
-        const dist = player.pos.distanceTo(item.group.position);
-        if (dist < minDist) {
-          minDist = dist;
-          nearest = item;
-        }
-      });
-      return nearest;
+    let currentWeather = 'clear';
+    const weatherParticles = [];
+    const weatherGeo = new THREE.BufferGeometry();
+    const weatherCount = 500;
+    const weatherPositions = new Float32Array(weatherCount * 3);
+    const weatherColors = new Float32Array(weatherCount * 3);
+    weatherGeo.setAttribute('position', new THREE.BufferAttribute(weatherPositions, 3));
+    weatherGeo.setAttribute('color', new THREE.BufferAttribute(weatherColors, 3));
+
+    const weatherMat = new THREE.PointsMaterial({
+      size: 0.18,
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.85
+    });
+    const weatherSystem = new THREE.Points(weatherGeo, weatherMat);
+    scene.add(weatherSystem);
+
+    for (let i = 0; i < weatherCount; i++) {
+      weatherPositions[i * 3 + 0] = (Math.random() - 0.5) * 16;
+      weatherPositions[i * 3 + 1] = Math.random() * 12;
+      weatherPositions[i * 3 + 2] = (Math.random() - 0.5) * 10;
+      weatherColors[i * 3 + 0] = 1.0;
+      weatherColors[i * 3 + 1] = 1.0;
+      weatherColors[i * 3 + 2] = 1.0;
     }
 
-    function handlePrimaryAction() {
-      initAudio();
-      if (player.carriedItem) {
-        placeCarriedItem();
-      } else {
-        const target = getNearestFurniture();
-        if (target) {
-          grabFurniture(target);
-        } else {
-          nativeVibrate('light');
-        }
-      }
-    }
-
-    function grabFurniture(item) {
-      if (player.carriedItem) return;
-      initAudio();
-      playSound('grab');
+    const acidOverlay = document.getElementById('acid-overlay');
+    function setWeather(weather) {
+      currentWeather = weather;
+      document.getElementById('weather-text').innerText = weather.toUpperCase();
       nativeVibrate('medium');
 
-      player.carriedItem = item;
-      item.isCarried = true;
-      item.inStore = false; // Claimed by player!
-      player.placementRot = item.group.rotation.y;
-
-      // Hide real group, attach to carry anchor
-      scene.remove(item.group);
-      carryAnchor.add(item.group);
-      item.group.position.set(0, 0, 0);
-      item.group.rotation.y = 0;
-
-      // Update Ghost Hologram
-      rebuildGhostMesh(item.typeKey);
-      ghostGroup.visible = true;
-
-      // Arm pose
-      leftArm.shoulderPivot.rotation.x = -Math.PI / 3;
-      rightArm.shoulderPivot.rotation.x = -Math.PI / 3;
-
-      // HUD update
-      carryHud.style.display = 'flex';
-      grabBtnLabel.innerText = 'PLACE';
-      showBanner(`Carrying: ${item.name}`, '🖐');
-    }
-
-    function rebuildGhostMesh(typeKey) {
-      while (ghostGroup.children.length > 0) {
-        ghostGroup.remove(ghostGroup.children[0]);
+      if (weather === 'clear') {
+        scene.fog.color.setHex(0x131924);
+        scene.background.setHex(0x131924);
+        acidOverlay.style.opacity = '0';
+      } else if (weather === 'acid_rain') {
+        scene.fog.color.setHex(0x112811);
+        scene.background.setHex(0x112811);
+        acidOverlay.style.opacity = '0.45';
+        playSound('acid');
+      } else if (weather === 'firestorm') {
+        scene.fog.color.setHex(0x2a1005);
+        scene.background.setHex(0x2a1005);
+        acidOverlay.style.opacity = '0';
+        playSound('fire');
+      } else if (weather === 'thunderstorm') {
+        scene.fog.color.setHex(0x0a0e17);
+        scene.background.setHex(0x0a0e17);
+        acidOverlay.style.opacity = '0';
+        playSound('thunder');
+      } else if (weather === 'blizzard') {
+        scene.fog.color.setHex(0x1c2b3d);
+        scene.background.setHex(0x1c2b3d);
+        acidOverlay.style.opacity = '0';
+        playSound('freeze');
       }
-      const typeDef = FURNITURE_TYPES[typeKey];
-      if (!typeDef) return;
+    }
 
-      const preview = typeDef.create();
-      // Apply holographic transparent material
-      preview.traverse(child => {
-        if (child.isMesh) {
-          child.material = new THREE.MeshBasicMaterial({
-            color: 0x3fb950,
-            wireframe: true,
-            transparent: true,
-            opacity: 0.6
-          });
+    function updateWeather(dt) {
+      if (currentWeather === 'clear') {
+        weatherSystem.visible = false;
+        return;
+      }
+      weatherSystem.visible = true;
+
+      const pos = weatherGeo.attributes.position;
+      const col = weatherGeo.attributes.color;
+
+      for (let i = 0; i < weatherCount; i++) {
+        let y = pos.getY(i) - (currentWeather === 'blizzard' ? 5 : 18) * dt;
+        let x = pos.getX(i);
+        let z = pos.getZ(i);
+
+        if (y < 0) {
+          y = 12;
+          x = (Math.random() - 0.5) * 16;
+          z = (Math.random() - 0.5) * 10;
+
+          // Weather impact on dummy on ground collision
+          if (Math.random() < 0.05 && dummyBodies.length > 0) {
+            const randomLimb = dummyBodies[Math.floor(Math.random() * dummyBodies.length)];
+            if (currentWeather === 'acid_rain') {
+              buddyState.isAcidMelting = true;
+              buddyState.acidTimer = Math.max(buddyState.acidTimer, 3.0);
+              spawnSparks(randomLimb.position.x, randomLimb.position.y, randomLimb.position.z, 4, [0.2, 1.0, 0.1]);
+            } else if (currentWeather === 'firestorm') {
+              buddyState.isBurning = true;
+              buddyState.burnTimer = Math.max(buddyState.burnTimer, 3.0);
+              spawnSparks(randomLimb.position.x, randomLimb.position.y, randomLimb.position.z, 4, [1.0, 0.4, 0.0]);
+            }
+          }
         }
-      });
-      ghostGroup.add(preview);
+        pos.setXYZ(i, x, y, z);
+
+        if (currentWeather === 'acid_rain') {
+          col.setXYZ(i, 0.2, 1.0, 0.2); // Green
+        } else if (currentWeather === 'firestorm') {
+          col.setXYZ(i, 1.0, 0.35 + Math.random() * 0.3, 0.05); // Fire ember
+        } else if (currentWeather === 'blizzard') {
+          col.setXYZ(i, 0.85, 0.95, 1.0); // Snowflake
+        } else if (currentWeather === 'thunderstorm') {
+          col.setXYZ(i, 0.3, 0.7, 1.0); // Heavy blue rain
+        }
+      }
+      pos.needsUpdate = true;
+      col.needsUpdate = true;
+
+      // Random lightning strike in thunderstorm
+      if (currentWeather === 'thunderstorm' && Math.random() < 0.008) {
+        triggerLightningStrike();
+      }
     }
 
-    function rotateCarriedItem() {
-      if (!player.carriedItem) return;
-      initAudio();
-      playSound('click');
-      nativeVibrate('light');
-      player.placementRot += Math.PI / 4;
-      ghostGroup.rotation.y = player.placementRot;
-    }
-
-    function placeCarriedItem() {
-      if (!player.carriedItem) return;
-      initAudio();
-      playSound('place');
+    function triggerLightningStrike() {
+      flashScreen();
+      playSound('thunder');
       nativeVibrate('heavy');
+      addTrauma(0.5);
 
-      const item = player.carriedItem;
-      carryAnchor.remove(item.group);
-      scene.add(item.group);
-
-      item.group.position.copy(ghostGroup.position);
-      item.group.rotation.y = player.placementRot;
-      item.isCarried = false;
-      player.carriedItem = null;
-
-      ghostGroup.visible = false;
-      carryHud.style.display = 'none';
-      grabBtnLabel.innerText = 'GRAB';
-
-      // Reset arm pose
-      leftArm.shoulderPivot.rotation.x = 0;
-      rightArm.shoulderPivot.rotation.x = 0;
-
-      saveBaseToStorage();
-      showBanner(`Placed ${item.name} in Base!`, '📍');
-    }
-
-    function dropCarriedItem() {
-      if (!player.carriedItem) return;
-      initAudio();
-      playSound('place');
-      nativeVibrate('light');
-
-      const item = player.carriedItem;
-      carryAnchor.remove(item.group);
-      scene.add(item.group);
-
-      const fwd = new THREE.Vector3(0, 0, 1.2).applyAxisAngle(new THREE.Vector3(0, 1, 0), player.rotY);
-      item.group.position.copy(player.pos).add(fwd);
-      item.group.position.y = 0;
-      item.group.rotation.y = player.placementRot;
-      item.isCarried = false;
-      player.carriedItem = null;
-
-      ghostGroup.visible = false;
-      carryHud.style.display = 'none';
-      grabBtnLabel.innerText = 'GRAB';
-
-      leftArm.shoulderPivot.rotation.x = 0;
-      rightArm.shoulderPivot.rotation.x = 0;
-      saveBaseToStorage();
+      if (dummyBodies.length > 0) {
+        const limb = dummyBodies[Math.floor(Math.random() * dummyBodies.length)];
+        limb.applyImpulse(new CANNON.Vec3((Math.random() - 0.5) * 400, 350, (Math.random() - 0.5) * 350), limb.position);
+        buddyState.isElectrified = true;
+        buddyState.zapTimer = 4.0;
+        updateStatusBadge('Lightning Struck!');
+        spawnSparks(limb.position.x, limb.position.y, limb.position.z, 40, [1.0, 1.0, 0.3]);
+      }
     }
 
     /* ============================================================
-       12. DAY / NIGHT & LIGHTS OUT LOGIC
+       8. PARTICLES & JUICE
        ============================================================ */
-    function updateCycle(dt) {
-      phaseTimeRemaining -= dt;
+    const particles = [];
+    const pGeo = new THREE.BufferGeometry();
+    const pCount = 250;
+    const pPositions = new Float32Array(pCount * 3);
+    const pColors = new Float32Array(pCount * 3);
+    pGeo.setAttribute('position', new THREE.BufferAttribute(pPositions, 3));
+    pGeo.setAttribute('color', new THREE.BufferAttribute(pColors, 3));
 
-      // Update timer HUD
-      const mins = Math.floor(Math.max(0, phaseTimeRemaining) / 60);
-      const secs = Math.floor(Math.max(0, phaseTimeRemaining) % 60);
-      phaseTimerEl.innerText = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    const pMat = new THREE.PointsMaterial({
+      size: 0.24,
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.95,
+      blending: THREE.AdditiveBlending
+    });
+    const particleSystem = new THREE.Points(pGeo, pMat);
+    scene.add(particleSystem);
 
-      if (cyclePhase === 'DAY') {
-        if (phaseTimeRemaining <= 0) {
-          // Switch to Warning
-          cyclePhase = 'WARNING';
-          phaseTimeRemaining = WARN_DURATION;
-          phaseBadgeEl.className = 'phase-badge warning';
-          phaseBadgeEl.innerText = '⚠️ POWER FLICKER';
-          playSound('flicker');
-          nativeVibrate('explosion');
-          showBanner('WARNING: Store closing! Lights Out in 8s!', '⚠️');
-        }
-      } else if (cyclePhase === 'WARNING') {
-        // Fast random electrical flicker
-        if (Math.random() > 0.45) {
-          flickerOverlay.style.background = 'rgba(0,0,0,0.85)';
-          ambientLight.intensity = 0.08;
-        } else {
-          flickerOverlay.style.background = 'rgba(0,0,0,0)';
-          ambientLight.intensity = 0.75;
-        }
-
-        if (phaseTimeRemaining <= 0) {
-          // BLACKOUT!
-          cyclePhase = 'NIGHT';
-          phaseTimeRemaining = NIGHT_DURATION;
-          phaseBadgeEl.className = 'phase-badge night';
-          phaseBadgeEl.innerText = '🌑 LIGHTS OUT';
-          flickerOverlay.style.background = 'rgba(0,0,0,0)';
-          playSound('powerdown');
-          nativeVibrate('explosion');
-
-          // Turn off all ceiling & store lights
-          ambientLight.intensity = 0.02;
-          ambientLight.color.setHex(0x0a0c14);
-          scene.background.setHex(0x020204);
-          scene.fog.color.setHex(0x020204);
-          scene.fog.density = 0.08;
-          mainStoreLight.intensity = 0;
-          ceilingLights.forEach(l => l.intensity = 0);
-
-          smilerGroup.visible = true;
-          smilerState.isHunting = true;
-          // Spawn Smiler in corridor far from player
-          smilerState.pos.set(-player.pos.x * 0.8, 1.6, -player.pos.z * 0.8);
-          smilerGroup.position.copy(smilerState.pos);
-
-          showBanner('LIGHTS OUT! Stay inside lamp light or die!', '💀');
-        }
-      } else if (cyclePhase === 'NIGHT') {
-        if (phaseTimeRemaining <= 0) {
-          // Morning Dawn!
-          cyclePhase = 'DAY';
-          phaseTimeRemaining = DAY_DURATION;
-          phaseBadgeEl.className = 'phase-badge';
-          phaseBadgeEl.innerText = '☀️ STORE OPEN';
-
-          // Restore lights
-          ambientLight.intensity = 0.75;
-          ambientLight.color.setHex(0xfff1c2);
-          scene.background.setHex(0xd6c278);
-          scene.fog.color.setHex(0xd6c278);
-          scene.fog.density = 0.022;
-          mainStoreLight.intensity = 1.2;
-          ceilingLights.forEach(l => l.intensity = 0.9);
-
-          smilerGroup.visible = false;
-          smilerState.isHunting = false;
-
-          playSound('dawn');
-          nativeVibrate('medium');
-          totalScore += 100;
-          populateStore(); // Fresh furniture restock!
-          showBanner("SURVIVED THE NIGHT! Cap'n Clarks restocked!", '🎉');
-        }
+    function spawnSparks(x, y, z, count = 20, colorOverride = null) {
+      for (let i = 0; i < count; i++) {
+        const vel = new THREE.Vector3(
+          (Math.random() - 0.5) * 8,
+          Math.random() * 8 + 1,
+          (Math.random() - 0.5) * 8
+        );
+        particles.push({
+          pos: new THREE.Vector3(x, y, z),
+          vel: vel,
+          life: 1.0,
+          decay: Math.random() * 0.04 + 0.02,
+          color: colorOverride || [1.0, 0.85, 0.2]
+        });
       }
-
-      // Check if Player is inside any Light Safe Zone
-      checkPlayerSafety();
     }
 
-    function checkPlayerSafety() {
-      let isSafe = false;
+    function updateParticles() {
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.pos.addScaledVector(p.vel, 0.016);
+        p.vel.y -= 0.25; // gravity
+        p.life -= p.decay;
+        if (p.life <= 0) particles.splice(i, 1);
+      }
 
-      // In DAY or inside Cap'n Clarks store during daytime, safe
-      if (cyclePhase === 'DAY') {
-        isSafe = true;
+      const posAttr = pGeo.attributes.position;
+      const colAttr = pGeo.attributes.color;
+      for (let i = 0; i < pCount; i++) {
+        if (i < particles.length) {
+          const p = particles[i];
+          posAttr.setXYZ(i, p.pos.x, p.pos.y, p.pos.z);
+          colAttr.setXYZ(i, p.color[0] * p.life, p.color[1] * p.life, p.color[2] * p.life);
+        } else {
+          posAttr.setXYZ(i, 0, -999, 0);
+        }
+      }
+      posAttr.needsUpdate = true;
+      colAttr.needsUpdate = true;
+    }
+
+    let trauma = 0;
+    function addTrauma(amount) {
+      trauma = Math.min(trauma + amount, 1.0);
+    }
+    function updateCameraShake() {
+      if (trauma > 0) {
+        const shake = trauma * trauma;
+        camera.position.x = (Math.random() - 0.5) * 0.35 * shake;
+        camera.position.y = 4.4 + (Math.random() - 0.5) * 0.35 * shake;
+        trauma = Math.max(0, trauma - 0.035);
       } else {
-        // Check proximity to any placed active lamp or glowing arcade
-        for (let i = 0; i < furnitureItems.length; i++) {
-          const item = furnitureItems[i];
-          if (item.isLight && !item.isCarried) {
-            const dist = player.pos.distanceTo(item.group.position);
-            if (dist <= item.lightRadius) {
-              isSafe = true;
-              break;
+        camera.position.x = 0;
+        camera.position.y = 4.4;
+      }
+    }
+
+    /* ============================================================
+       9. GAMEPLAY STATE & SCORE
+       ============================================================ */
+    let currentScore = 0;
+    let isZeroG = false;
+    let isSlowMo = false;
+    let activeTool = 'grab'; // Default tool
+
+    const scoreEl = document.getElementById('score');
+    const speedValEl = document.getElementById('speed-val');
+    const flashEl = document.getElementById('flash-overlay');
+    const statusTextEl = document.getElementById('buddy-status-text');
+
+    function flashScreen() {
+      flashEl.style.opacity = '0.35';
+      setTimeout(() => flashEl.style.opacity = '0', 70);
+    }
+
+    function updateStatusBadge(text) {
+      statusTextEl.innerText = text;
+    }
+
+    function addImpactScore(pts) {
+      currentScore += pts;
+      scoreEl.innerText = currentScore.toLocaleString();
+      scoreEl.classList.remove('score-bounce');
+      void scoreEl.offsetWidth;
+      scoreEl.classList.add('score-bounce');
+    }
+
+    function createHitPopup(text, screenX, screenY) {
+      const pop = document.createElement('div');
+      pop.className = 'hit-popup';
+      pop.innerText = text;
+      pop.style.left = screenX + 'px';
+      pop.style.top = screenY + 'px';
+      document.body.appendChild(pop);
+      setTimeout(() => pop.remove(), 750);
+    }
+
+    function handleLimbImpact(pos, velocity) {
+      const pts = Math.round(velocity * 75);
+      addImpactScore(pts);
+
+      if (velocity > 12) {
+        nativeVibrate('heavy');
+        playSound('hit');
+        addTrauma(0.35);
+      } else {
+        nativeVibrate('light');
+        playSound('hit');
+        addTrauma(0.12);
+      }
+
+      spawnSparks(pos.x, pos.y, pos.z, Math.min(25, Math.floor(velocity * 2)));
+
+      const v = new THREE.Vector3(pos.x, pos.y, pos.z).project(camera);
+      const sx = (v.x * 0.5 + 0.5) * window.innerWidth;
+      const sy = (-v.y * 0.5 + 0.5) * window.innerHeight;
+      createHitPopup('+' + pts, sx, sy);
+    }
+
+    /* ============================================================
+       10. PIT / POOL INTERACTION LOGIC
+       ============================================================ */
+    function checkPitInteractions(dt) {
+      if (currentPitType === 'none' || dummyBodies.length === 0) return;
+
+      const pitRadius = 2.1;
+      const pitX = 0, pitZ = 0.5;
+
+      for (let i = 0; i < dummyBodies.length; i++) {
+        const b = dummyBodies[i];
+        const dx = b.position.x - pitX;
+        const dz = b.position.z - pitZ;
+        const dist = Math.sqrt(dx * dx + dz * dz);
+
+        // If body limb is inside the pit zone and near floor
+        if (dist < pitRadius && b.position.y < 0.9) {
+          if (currentPitType === 'fire') {
+            buddyState.isBurning = true;
+            buddyState.burnTimer = 6.0;
+            updateStatusBadge('In Fire Pit!');
+            spawnSparks(b.position.x, b.position.y, b.position.z, 3, [1.0, 0.4, 0.0]);
+            b.applyForce(new CANNON.Vec3(0, 80, 0), b.position); // Thermal updraft
+            if (Math.random() < 0.1) playSound('fire');
+          } else if (currentPitType === 'acid') {
+            buddyState.isAcidMelting = true;
+            buddyState.acidTimer = 6.0;
+            updateStatusBadge('Melting in Acid!');
+            spawnSparks(b.position.x, b.position.y, b.position.z, 3, [0.3, 1.0, 0.1]);
+            // Acid dissolves velocity
+            b.velocity.scale(0.85, b.velocity);
+            if (Math.random() < 0.1) playSound('acid');
+          } else if (currentPitType === 'pool') {
+            // Water pool: buoyancy & damping
+            b.velocity.scale(0.82, b.velocity); // Water drag
+            b.applyForce(new CANNON.Vec3(0, 180, 0), b.position); // Buoyancy floating
+            spawnSparks(b.position.x, b.position.y, b.position.z, 2, [0.3, 0.7, 1.0]);
+            // Pool extinguishes fire!
+            if (buddyState.isBurning) {
+              buddyState.isBurning = false;
+              buddyState.burnTimer = 0;
+              updateStatusBadge('Fire Extinguished!');
+              playSound('splash');
             }
           }
         }
       }
-
-      if (isSafe) {
-        safeStatusEl.className = 'safe-badge in-light';
-        safeStatusEl.innerHTML = '🛡️ SAFE (IN LIGHT)';
-        document.getElementById('vignette').style.boxShadow = 'inset 0 0 60px rgba(0, 0, 0, 0.6)';
-      } else {
-        safeStatusEl.className = 'safe-badge in-dark';
-        safeStatusEl.innerHTML = '⚠️ EXPOSED IN DARKNESS';
-        document.getElementById('vignette').style.boxShadow = 'inset 0 0 100px rgba(255, 0, 0, 0.7)';
-      }
-
-      return isSafe;
     }
 
     /* ============================================================
-       13. SMILER AI & LIGHT REPULSION
+       11. CONTINUOUS CONDITIONS (Burning, Acid, Freeze, Electric)
        ============================================================ */
-    function updateSmiler(dt) {
-      if (!smilerState.isHunting || cyclePhase !== 'NIGHT') return;
-
-      const toPlayer = new THREE.Vector3().subVectors(player.pos, smilerState.pos);
-      const dist = toPlayer.length();
-      toPlayer.y = 0;
-      toPlayer.normalize();
-
-      // Check if player is protected by placed light
-      const isPlayerSafe = checkPlayerSafety();
-
-      if (smilerState.isRepelled) {
-        smilerState.repelTimer -= dt;
-        if (smilerState.repelTimer <= 0) {
-          smilerState.isRepelled = false;
+    function updateBuddyConditions(dt) {
+      if (buddyState.isBurning) {
+        buddyState.burnTimer -= dt;
+        if (dummyBodies.length > 0 && Math.random() < 0.3) {
+          const limb = dummyBodies[Math.floor(Math.random() * dummyBodies.length)];
+          spawnSparks(limb.position.x, limb.position.y, limb.position.z, 6, [1.0, 0.3 + Math.random()*0.3, 0.0]);
+          addImpactScore(15);
         }
-        // Move backward away from light
-        smilerState.pos.addScaledVector(toPlayer, -3.5 * dt);
-      } else {
-        // Stalk player
-        if (isPlayerSafe && dist < 7.5) {
-          // Entity hits the light sanctuary barrier!
-          playSound('screech');
-          nativeVibrate('heavy');
-          smilerState.isRepelled = true;
-          smilerState.repelTimer = 2.5;
-          showBanner("Creature recoiled from your lamp's light!", "⚡");
-        } else {
-          // Chasing in darkness
-          smilerState.pos.addScaledVector(toPlayer, smilerState.speed * dt);
+        if (buddyState.burnTimer <= 0) {
+          buddyState.isBurning = false;
+          updateStatusBadge('Normal');
         }
       }
 
-      smilerGroup.position.copy(smilerState.pos);
-      smilerGroup.lookAt(player.pos.x, 1.6, player.pos.z);
+      if (buddyState.isAcidMelting) {
+        buddyState.acidTimer -= dt;
+        if (dummyBodies.length > 0 && Math.random() < 0.3) {
+          const limb = dummyBodies[Math.floor(Math.random() * dummyBodies.length)];
+          spawnSparks(limb.position.x, limb.position.y, limb.position.z, 5, [0.3, 1.0, 0.2]);
+          addImpactScore(20);
+        }
+        if (buddyState.acidTimer <= 0) {
+          buddyState.isAcidMelting = false;
+          updateStatusBadge('Normal');
+        }
+      }
 
-      // Heartbeat sound frequency increases as monster approaches
-      if (dist < 12.0 && Math.random() < 0.08) {
-        playSound('click');
+      if (buddyState.isFrozen) {
+        buddyState.freezeTimer -= dt;
+        // Keep limbs stiffened while frozen
+        dummyBodies.forEach(b => {
+          b.velocity.scale(0.88, b.velocity);
+          b.angularVelocity.scale(0.88, b.angularVelocity);
+        });
+        if (buddyState.freezeTimer <= 0) {
+          buddyState.isFrozen = false;
+          playSound('freeze');
+          updateStatusBadge('Thawed Out');
+        }
+      }
+
+      if (buddyState.isElectrified) {
+        buddyState.zapTimer -= dt;
+        if (dummyBodies.length > 0 && Math.random() < 0.35) {
+          const limb = dummyBodies[Math.floor(Math.random() * dummyBodies.length)];
+          limb.applyImpulse(new CANNON.Vec3((Math.random() - 0.5) * 140, Math.random() * 120, (Math.random() - 0.5) * 140), limb.position);
+          spawnSparks(limb.position.x, limb.position.y, limb.position.z, 8, [1.0, 1.0, 0.4]);
+          addImpactScore(25);
+        }
+        if (buddyState.zapTimer <= 0) {
+          buddyState.isElectrified = false;
+          updateStatusBadge('Normal');
+        }
+      }
+    }
+
+    /* ============================================================
+       12. INTERACTIVE DRAG PHYSICS & TOOL INTERACTIONS
+       ============================================================ */
+    const raycaster = new THREE.Raycaster();
+    const mouse = new THREE.Vector2();
+    let isInteracting = false;
+    let draggedBody = null;
+    let mouseConstraint = null;
+
+    const planeMesh = new THREE.Mesh(
+      new THREE.PlaneGeometry(100, 100),
+      new THREE.MeshBasicMaterial({ visible: false })
+    );
+    scene.add(planeMesh);
+
+    const jointMarker = new THREE.Mesh(
+      new THREE.SphereGeometry(0.14, 16, 16),
+      new THREE.MeshBasicMaterial({ color: 0x00e5ff, wireframe: true })
+    );
+    jointMarker.visible = false;
+    scene.add(jointMarker);
+
+    const dummyJointBody = new CANNON.Body({ mass: 0 });
+    world.addBody(dummyJointBody);
+
+    function getIntersectedPoint(e) {
+      const rect = renderer.domElement.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      mouse.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+      mouse.y = -((clientY - rect.top) / rect.height) * 2 + 1;
+
+      raycaster.setFromCamera(mouse, camera);
+      planeMesh.position.set(0, 0, 0);
+      planeMesh.quaternion.copy(camera.quaternion);
+      const intersects = raycaster.intersectObject(planeMesh);
+      return intersects.length > 0 ? intersects[0].point : null;
+    }
+
+    function onPointerDown(e) {
+      if (e.target.closest('#hud-top') || e.target.closest('#dock-container')) return;
+      isInteracting = true;
+
+      const rect = renderer.domElement.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      mouse.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+      mouse.y = -((clientY - rect.top) / rect.height) * 2 + 1;
+
+      raycaster.setFromCamera(mouse, camera);
+      const hits = raycaster.intersectObjects(dummyMeshes);
+
+      // Check if user clicked Buddy directly
+      if (hits.length > 0) {
+        const hitMesh = hits[0].object;
+        const hitBody = dummyBodies.find(b => b.meshRef === hitMesh);
+        const hitPt = hits[0].point;
+
+        // If tool is a Syringe -> Inject into limb
+        if (activeTool.startsWith('syr_')) {
+          const syrType = activeTool.replace('syr_', '');
+          injectSyringeAt(hitBody, hitPt, syrType);
+          return;
+        }
+
+        // If tool is an element trigger (Flamethrower, Freeze beam, Lightning strike, Acid splash)
+        if (activeTool === 'elem_flame') {
+          triggerFlameBlast(hitPt);
+          return;
+        } else if (activeTool === 'elem_frost') {
+          triggerFrostBlast(hitPt);
+          return;
+        } else if (activeTool === 'elem_tesla') {
+          triggerTeslaZap(hitPt);
+          return;
+        } else if (activeTool === 'elem_acid') {
+          triggerAcidSplash(hitPt);
+          return;
+        }
+
+        // Tool is grab (or fallback grab): Pick up & throw Buddy
+        if (hitBody) {
+          draggedBody = hitBody;
+          dummyJointBody.position.set(hitPt.x, hitPt.y, hitPt.z);
+          mouseConstraint = new CANNON.PointToPointConstraint(
+            hitBody,
+            hitBody.pointToLocalFrame(new CANNON.Vec3(hitPt.x, hitPt.y, hitPt.z)),
+            dummyJointBody,
+            new CANNON.Vec3(0, 0, 0)
+          );
+          world.addConstraint(mouseConstraint);
+          jointMarker.position.copy(hitPt);
+          jointMarker.visible = true;
+          nativeVibrate('light');
+        }
+      } else {
+        // Clicked empty air: If elemental tool active, cast towards raycast intersection
+        const emptyPt = getIntersectedPoint(e);
+        if (emptyPt) {
+          if (activeTool === 'elem_flame') triggerFlameBlast(emptyPt);
+          else if (activeTool === 'elem_frost') triggerFrostBlast(emptyPt);
+          else if (activeTool === 'elem_tesla') triggerTeslaZap(emptyPt);
+          else if (activeTool === 'elem_acid') triggerAcidSplash(emptyPt);
+        }
+      }
+    }
+
+    function onPointerMove(e) {
+      if (!isInteracting) return;
+      const pt = getIntersectedPoint(e);
+      if (pt && mouseConstraint) {
+        dummyJointBody.position.set(pt.x, pt.y, pt.z);
+        jointMarker.position.copy(pt);
+      }
+    }
+
+    function onPointerUp() {
+      isInteracting = false;
+      if (mouseConstraint) {
+        world.removeConstraint(mouseConstraint);
+        mouseConstraint = null;
+      }
+      draggedBody = null;
+      jointMarker.visible = false;
+    }
+
+    /* ============================================================
+       13. ELEMENTAL ACTION FX
+       ============================================================ */
+    function triggerFlameBlast(targetPt) {
+      playSound('fire');
+      nativeVibrate('medium');
+      addTrauma(0.2);
+      spawnSparks(targetPt.x, targetPt.y, targetPt.z, 35, [1.0, 0.4, 0.05]);
+
+      dummyBodies.forEach(b => {
+        const dist = b.position.distanceTo(new CANNON.Vec3(targetPt.x, targetPt.y, targetPt.z));
+        if (dist < 2.5) {
+          buddyState.isBurning = true;
+          buddyState.burnTimer = 8.0;
+          updateStatusBadge('Torched!');
+          b.applyImpulse(new CANNON.Vec3(0, 160, -80), b.position);
+        }
+      });
+    }
+
+    function triggerFrostBlast(targetPt) {
+      playSound('freeze');
+      nativeVibrate('light');
+      addTrauma(0.15);
+      spawnSparks(targetPt.x, targetPt.y, targetPt.z, 30, [0.5, 0.9, 1.0]);
+
+      dummyBodies.forEach(b => {
+        const dist = b.position.distanceTo(new CANNON.Vec3(targetPt.x, targetPt.y, targetPt.z));
+        if (dist < 2.5) {
+          buddyState.isFrozen = true;
+          buddyState.freezeTimer = 7.0;
+          updateStatusBadge('Frozen Ice!');
+        }
+      });
+    }
+
+    function triggerTeslaZap(targetPt) {
+      playSound('zap');
+      nativeVibrate('heavy');
+      addTrauma(0.3);
+
+      // Visual lightning arc line
+      const lineMat = new THREE.LineBasicMaterial({ color: 0xffea00, linewidth: 4 });
+      const points = [
+        new THREE.Vector3(camera.position.x + 1, camera.position.y - 1, camera.position.z),
+        new THREE.Vector3(targetPt.x, targetPt.y, targetPt.z)
+      ];
+      const lineGeo = new THREE.BufferGeometry().setFromPoints(points);
+      const line = new THREE.Line(lineGeo, lineMat);
+      scene.add(line);
+      setTimeout(() => scene.remove(line), 100);
+
+      spawnSparks(targetPt.x, targetPt.y, targetPt.z, 35, [1.0, 1.0, 0.2]);
+
+      dummyBodies.forEach(b => {
+        const dist = b.position.distanceTo(new CANNON.Vec3(targetPt.x, targetPt.y, targetPt.z));
+        if (dist < 2.2) {
+          buddyState.isElectrified = true;
+          buddyState.zapTimer = 6.0;
+          updateStatusBadge('Electrocuted!');
+          b.applyImpulse(new CANNON.Vec3((Math.random() - 0.5) * 350, 280, (Math.random() - 0.5) * 300), b.position);
+        }
+      });
+    }
+
+    function triggerAcidSplash(targetPt) {
+      playSound('acid');
+      nativeVibrate('medium');
+      spawnSparks(targetPt.x, targetPt.y, targetPt.z, 30, [0.3, 1.0, 0.1]);
+
+      dummyBodies.forEach(b => {
+        const dist = b.position.distanceTo(new CANNON.Vec3(targetPt.x, targetPt.y, targetPt.z));
+        if (dist < 2.2) {
+          buddyState.isAcidMelting = true;
+          buddyState.acidTimer = 7.0;
+          updateStatusBadge('Acid Burned!');
+          b.applyImpulse(new CANNON.Vec3(0, 100, -60), b.position);
+        }
+      });
+    }
+
+    /* ============================================================
+       14. UI CATEGORY & WEAPON DOCK MANAGEMENT
+       ============================================================ */
+    const categoryTools = {
+      syringes: [
+        { id: 'grab', icon: '🖐️', label: 'Grab' },
+        { id: 'syr_acid', icon: '🧪', label: 'Acid Syr' },
+        { id: 'syr_fire', icon: '🔥', label: 'Fire Syr' },
+        { id: 'syr_freeze', icon: '❄️', label: 'Ice Syr' },
+        { id: 'syr_lightning', icon: '⚡', label: 'Shock Syr' },
+        { id: 'syr_growth', icon: '🍄', label: 'Mega Syr' },
+        { id: 'syr_death', icon: '☠️', label: 'KO Syr' },
+        { id: 'syr_regen', icon: '💉', label: 'Antidote' }
+      ],
+      pits: [
+        { id: 'grab', icon: '🖐️', label: 'Grab' },
+        { id: 'pit_fire', icon: '🔥', label: 'Fire Pit' },
+        { id: 'pit_acid', icon: '🧪', label: 'Acid Pit' },
+        { id: 'pit_pool', icon: '🌊', label: 'Water Pool' },
+        { id: 'pit_none', icon: '🚫', label: 'Clear Pit' }
+      ],
+      weather: [
+        { id: 'grab', icon: '🖐️', label: 'Grab' },
+        { id: 'wea_clear', icon: '☀️', label: 'Clear' },
+        { id: 'wea_acid', icon: '🌧️', label: 'Acid Rain' },
+        { id: 'wea_fire', icon: '☄️', label: 'Firestorm' },
+        { id: 'wea_thunder', icon: '⛈️', label: 'Thunder' },
+        { id: 'wea_blizzard', icon: '🌨️', label: 'Blizzard' }
+      ],
+      elements: [
+        { id: 'grab', icon: '🖐️', label: 'Grab' },
+        { id: 'elem_flame', icon: '🔥', label: 'Flame Gun' },
+        { id: 'elem_frost', icon: '❄️', label: 'Freeze Ray' },
+        { id: 'elem_tesla', icon: '⚡', label: 'Tesla Zap' },
+        { id: 'elem_acid', icon: '🧪', label: 'Acid Gun' }
+      ]
+    };
+
+    const weaponBar = document.getElementById('weapon-bar');
+    const pitSelector = document.getElementById('pit-selector');
+
+    function renderWeaponBar(catKey) {
+      weaponBar.innerHTML = '';
+      const list = categoryTools[catKey] || categoryTools.syringes;
+
+      pitSelector.style.display = (catKey === 'pits') ? 'flex' : 'none';
+
+      list.forEach(item => {
+        const btn = document.createElement('button');
+        btn.className = 'tool-btn' + (activeTool === item.id ? ' active' : '');
+        btn.setAttribute('data-tool', item.id);
+        btn.innerHTML = `<span class="icon">${item.icon}</span><span>${item.label}</span>`;
+
+        btn.addEventListener('click', () => {
+          initAudio();
+          nativeVibrate('light');
+
+          if (item.id === 'pit_fire') { setPit('fire'); return; }
+          if (item.id === 'pit_acid') { setPit('acid'); return; }
+          if (item.id === 'pit_pool') { setPit('pool'); return; }
+          if (item.id === 'pit_none') { setPit('none'); return; }
+
+          if (item.id === 'wea_clear') { setWeather('clear'); return; }
+          if (item.id === 'wea_acid') { setWeather('acid_rain'); return; }
+          if (item.id === 'wea_fire') { setWeather('firestorm'); return; }
+          if (item.id === 'wea_thunder') { setWeather('thunderstorm'); return; }
+          if (item.id === 'wea_blizzard') { setWeather('blizzard'); return; }
+
+          document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          activeTool = item.id;
+        });
+
+        weaponBar.appendChild(btn);
+      });
+    }
+
+    // Tab buttons
+    document.querySelectorAll('.cat-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        initAudio();
         nativeVibrate('light');
-      }
+        document.querySelectorAll('.cat-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        const cat = tab.getAttribute('data-cat');
+        renderWeaponBar(cat);
+      });
+    });
 
-      // Caught check
-      if (dist < 1.2 && !isPlayerSafe) {
-        playerCaught();
-      }
-    }
+    // Subcategory Pit Selector Buttons
+    document.querySelectorAll('.pit-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const pit = btn.getAttribute('data-pit');
+        setPit(pit);
+      });
+    });
 
-    function playerCaught() {
-      if (isGameOver) return;
-      isGameOver = true;
-      playSound('screech');
-      nativeVibrate('explosion');
-      document.getElementById('caught-modal').style.display = 'flex';
-    }
+    renderWeaponBar('syringes');
 
-    function respawnPlayer() {
-      document.getElementById('caught-modal').style.display = 'none';
-      isGameOver = false;
+    // Pointer events binding
+    const dom = renderer.domElement;
+    dom.addEventListener('mousedown', onPointerDown);
+    window.addEventListener('mousemove', onPointerMove);
+    window.addEventListener('mouseup', onPointerUp);
 
-      // Find player's placed bed, or default back to Cap'n Clarks
-      let bedPos = new THREE.Vector3(35, 0, 0);
-      const bedItem = furnitureItems.find(i => i.typeKey === 'bed' && !i.inStore);
-      if (bedItem) {
-        bedPos.copy(bedItem.group.position).add(new THREE.Vector3(0, 0, 1.5));
-      }
+    dom.addEventListener('touchstart', onPointerDown, { passive: false });
+    window.addEventListener('touchmove', onPointerMove, { passive: false });
+    window.addEventListener('touchend', onPointerUp);
+    window.addEventListener('touchcancel', onPointerUp);
 
-      player.pos.copy(bedPos);
-      player.vel.set(0, 0, 0);
-      showBanner("Respawned at shelter. Stay in the light!", "🛏️");
-    }
+    // Side Action Buttons
+    document.getElementById('btn-reset').addEventListener('click', () => {
+      initAudio();
+      nativeVibrate('medium');
+      playSound('heal');
+      buildBuddyRagdoll(0, 4.0, 0);
+    });
+
+    const gravBtn = document.getElementById('btn-gravity');
+    gravBtn.addEventListener('click', () => {
+      initAudio();
+      isZeroG = !isZeroG;
+      world.gravity.set(0, isZeroG ? -0.5 : -18, 0);
+      gravBtn.innerHTML = isZeroG ? '<span>🛸</span> Normal G' : '<span>🌍</span> Zero G';
+      nativeVibrate('medium');
+    });
+
+    const slowBtn = document.getElementById('btn-slowmo');
+    slowBtn.addEventListener('click', () => {
+      initAudio();
+      isSlowMo = !isSlowMo;
+      slowBtn.innerHTML = isSlowMo ? '<span>⚡</span> Normal' : '<span>⏱️</span> Slow-Mo';
+      slowBtn.style.color = isSlowMo ? '#00e5ff' : '#cfd8dc';
+      nativeVibrate('medium');
+    });
 
     /* ============================================================
-       14. CONTROLS, JOYSTICK & TOUCH ORBIT
+       15. IN-APP UPDATE SYSTEM
        ============================================================ */
-    const joyZone = document.getElementById('joystick-zone');
-    const joyBase = document.getElementById('joystick-base');
-    const joyThumb = document.getElementById('joystick-thumb');
-    let joyTouchId = null;
-    let joyMove = { x: 0, y: 0 };
-    let joyCenter = { x: 0, y: 0 };
-    const maxR = 50;
+    const updateModal = document.getElementById('update-modal');
+    const updateTitle = document.getElementById('update-title');
+    const updateDesc = document.getElementById('update-desc');
+    const updateConfirmBtn = document.getElementById('update-confirm-btn');
+    const updateCancelBtn = document.getElementById('update-cancel-btn');
+    let pendingDownloadUrl = null;
 
-    // Roblox-style dynamic floating joystick: touches anywhere on left half activate it right at touch point
-    joyZone.addEventListener('touchstart', e => {
+    document.getElementById('btn-update').addEventListener('click', () => {
       initAudio();
-      e.preventDefault();
-      if (joyTouchId !== null) return; // Already active
-
-      const t = e.changedTouches[0];
-      joyTouchId = t.identifier;
-      joyCenter.x = t.clientX;
-      joyCenter.y = t.clientY;
-
-      joyBase.style.left = `${joyCenter.x}px`;
-      joyBase.style.top = `${joyCenter.y}px`;
-      joyBase.style.display = 'block';
-
-      joyThumb.style.left = `${joyCenter.x}px`;
-      joyThumb.style.top = `${joyCenter.y}px`;
-      joyThumb.style.display = 'block';
-
-      joyMove.x = 0;
-      joyMove.y = 0;
-    }, { passive: false });
-
-    joyZone.addEventListener('touchmove', e => {
-      e.preventDefault();
-      for (let i = 0; i < e.changedTouches.length; i++) {
-        const t = e.changedTouches[i];
-        if (t.identifier === joyTouchId) {
-          const dx = t.clientX - joyCenter.x;
-          const dy = t.clientY - joyCenter.y;
-          const dist = Math.hypot(dx, dy);
-          const clampedDist = Math.min(maxR, dist);
-          const angle = Math.atan2(dy, dx);
-
-          const moveX = (Math.cos(angle) * clampedDist) / maxR;
-          const moveY = (Math.sin(angle) * clampedDist) / maxR;
-
-          joyMove.x = moveX;
-          joyMove.y = moveY;
-
-          const thumbX = joyCenter.x + Math.cos(angle) * clampedDist;
-          const thumbY = joyCenter.y + Math.sin(angle) * clampedDist;
-          joyThumb.style.left = `${thumbX}px`;
-          joyThumb.style.top = `${thumbY}px`;
-          break;
-        }
-      }
-    }, { passive: false });
-
-    function resetJoystick(e) {
-      if (e) {
-        for (let i = 0; i < e.changedTouches.length; i++) {
-          if (e.changedTouches[i].identifier === joyTouchId) {
-            joyTouchId = null;
-            joyMove.x = 0;
-            joyMove.y = 0;
-            joyBase.style.display = 'none';
-            joyThumb.style.display = 'none';
-            break;
-          }
-        }
+      nativeVibrate('light');
+      if (window.AndroidNative && window.AndroidNative.checkForUpdates) {
+        window.AndroidNative.checkForUpdates();
       } else {
-        joyTouchId = null;
-        joyMove.x = 0;
-        joyMove.y = 0;
-        joyBase.style.display = 'none';
-        joyThumb.style.display = 'none';
+        alert('Check for updates is active when running inside the Android APK.');
       }
-    }
-
-    joyZone.addEventListener('touchend', resetJoystick, { passive: false });
-    joyZone.addEventListener('touchcancel', resetJoystick, { passive: false });
-
-    // Sprint Button
-    const btnSprint = document.getElementById('btn-sprint');
-    btnSprint.addEventListener('touchstart', (e) => {
-      e.preventDefault();
-      player.isSprinting = true;
-      btnSprint.classList.add('active');
-    }, { passive: false });
-    btnSprint.addEventListener('touchend', () => {
-      player.isSprinting = false;
-      btnSprint.classList.remove('active');
     });
 
-    // Touch Screen Swipe Camera Orbit
-    let lastTouchX = null;
-    let lastTouchY = null;
-    let camPitch = 0.25;
-
-    window.addEventListener('touchstart', e => {
-      for (let i = 0; i < e.changedTouches.length; i++) {
-        const t = e.changedTouches[i];
-        if (t.clientX > window.innerWidth * 0.45 && t.clientY < window.innerHeight * 0.75) {
-          lastTouchX = t.clientX;
-          lastTouchY = t.clientY;
-          break;
-        }
+    window.onUpdateResult = function(event, version, downloadUrl) {
+      if (event === 'updateAvailable') {
+        pendingDownloadUrl = downloadUrl;
+        updateTitle.innerText = 'New Update (v' + version + ')';
+        updateDesc.innerText = 'A newer version of Kick Buddy 3D is available on GitHub. Would you like to install it now?';
+        updateModal.style.display = 'flex';
       }
-    }, { passive: true });
+    };
 
-    window.addEventListener('touchmove', e => {
-      for (let i = 0; i < e.changedTouches.length; i++) {
-        const t = e.changedTouches[i];
-        if (lastTouchX !== null) {
-          const dx = t.clientX - lastTouchX;
-          const dy = t.clientY - lastTouchY;
-          player.rotY -= dx * 0.006;
-          camPitch = Math.max(-0.4, Math.min(0.8, camPitch + dy * 0.005));
-          lastTouchX = t.clientX;
-          lastTouchY = t.clientY;
-          break;
-        }
-      }
-    }, { passive: true });
-
-    window.addEventListener('touchend', () => {
-      lastTouchX = null;
-      lastTouchY = null;
+    updateCancelBtn.addEventListener('click', () => {
+      updateModal.style.display = 'none';
     });
 
-    // POV Toggle
-    function togglePOV() {
-      initAudio();
-      playSound('click');
-      nativeVibrate('light');
-      player.firstPerson = !player.firstPerson;
-      playerGroup.visible = !player.firstPerson;
-      document.getElementById('btn-pov').classList.toggle('active', player.firstPerson);
-    }
-
-    // Flashlight Toggle
-    function toggleFlashlight() {
-      initAudio();
-      playSound('click');
-      nativeVibrate('light');
-      flashlightOn = !flashlightOn;
-      flashlight.intensity = flashlightOn ? 2.2 : 0;
-      document.getElementById('btn-light').classList.toggle('active', flashlightOn);
-    }
-
-    function toggleMenu() {
-      initAudio();
-      const m = document.getElementById('menu-modal');
-      m.style.display = m.style.display === 'flex' ? 'none' : 'flex';
-      updateDecorCounter();
-    }
-
-    // Keyboard support for desktop browser testing
-    const keys = {};
-    window.addEventListener('keydown', e => {
-      initAudio();
-      keys[e.key.toLowerCase()] = true;
-      if (e.key === 'e' || e.key === 'E') handlePrimaryAction();
-      if (e.key === 'r' || e.key === 'R') rotateCarriedItem();
-      if (e.key === 'f' || e.key === 'F') toggleFlashlight();
-      if (e.key === 'v' || e.key === 'V') togglePOV();
+    updateConfirmBtn.addEventListener('click', () => {
+      updateModal.style.display = 'none';
+      if (pendingDownloadUrl && window.AndroidNative && window.AndroidNative.downloadAndInstallUpdate) {
+        window.AndroidNative.downloadAndInstallUpdate(pendingDownloadUrl);
+      }
     });
-    window.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
 
     /* ============================================================
-       15. MAIN LOOP & COLLISION RESOLUTION
+       16. MAIN ANIMATION & PHYSICS GAME LOOP
        ============================================================ */
     let lastTime = performance.now();
-    let walkAnimTime = 0;
-
-    function animate(now) {
+    function animate(time) {
       requestAnimationFrame(animate);
-      const dt = Math.min((now - lastTime) / 1000, 0.1);
-      lastTime = now;
 
-      if (!isGameOver) {
-        updateCycle(dt);
-        updateSmiler(dt);
+      const dt = Math.min((time - lastTime) / 1000, 0.1);
+      lastTime = time;
+
+      // Physics step
+      const stepDt = isSlowMo ? dt * 0.3 : dt;
+      world.step(1 / 60, stepDt, 4);
+
+      // Sync Buddy Bodies to Meshes
+      let maxSpeed = 0;
+      for (let i = 0; i < dummyBodies.length; i++) {
+        const body = dummyBodies[i];
+        const mesh = dummyMeshes[i];
+        mesh.position.copy(body.position);
+        mesh.quaternion.copy(body.quaternion);
+        const speed = body.velocity.length();
+        if (speed > maxSpeed) maxSpeed = speed;
       }
+      speedValEl.innerText = maxSpeed.toFixed(1) + ' m/s';
 
-      // Movement Vector
-      let moveX = joyMove.x;
-      let moveZ = joyMove.y;
+      // Update Subsystems
+      updateSyringes(stepDt);
+      checkPitInteractions(stepDt);
+      updateBuddyConditions(stepDt);
+      updateWeather(stepDt);
+      updateParticles();
+      updateCameraShake();
 
-      // Keyboard fallback
-      if (keys['w'] || keys['arrowup']) moveZ = -1;
-      if (keys['s'] || keys['arrowdown']) moveZ = 1;
-      if (keys['a'] || keys['arrowleft']) moveX = -1;
-      if (keys['d'] || keys['arrowright']) moveX = 1;
-      if (keys['shift']) player.isSprinting = true;
-
-      // Stamina system
-      if (player.isSprinting && (moveX !== 0 || moveZ !== 0)) {
-        player.stamina = Math.max(0, player.stamina - dt * 25);
-        if (player.stamina <= 0) player.isSprinting = false;
-      } else {
-        player.stamina = Math.min(100, player.stamina + dt * 18);
-      }
-      staminaFill.style.width = player.stamina + '%';
-
-      const currentSpeed = player.speed * (player.isSprinting ? player.sprintMult : 1.0);
-      const moveMag = Math.hypot(moveX, moveZ);
-
-      if (moveMag > 0.05) {
-        const normX = moveX / Math.max(1, moveMag);
-        const normZ = moveZ / Math.max(1, moveMag);
-
-        // Movement relative to player's view rotation
-        // In third-person, player looks in +Z relative to cam offset at -Z
-        // Pushing joystick UP (dy < 0, moveZ < 0) moves player FORWARD (+Z relative to rotY)
-        // Pushing joystick RIGHT (dx > 0, moveX > 0) moves player RIGHT (+X relative to rotY)
-        const forward = new THREE.Vector3(0, 0, 1).applyAxisAngle(new THREE.Vector3(0, 1, 0), player.rotY);
-        const right = new THREE.Vector3(1, 0, 0).applyAxisAngle(new THREE.Vector3(0, 1, 0), player.rotY);
-
-        const worldDir = new THREE.Vector3()
-          .addScaledVector(forward, -normZ)
-          .addScaledVector(right, normX)
-          .normalize();
-
-        const stepX = worldDir.x * currentSpeed * dt;
-        const stepZ = worldDir.z * currentSpeed * dt;
-
-        // Wall collision check
-        let newX = player.pos.x + stepX;
-        let newZ = player.pos.z + stepZ;
-
-        // Bounding box collision resolution
-        for (let i = 0; i < walls.length; i++) {
-          const w = walls[i];
-          if (
-            newX + player.radius > w.min.x &&
-            newX - player.radius < w.max.x &&
-            player.pos.z + player.radius > w.min.z &&
-            player.pos.z - player.radius < w.max.z
-          ) {
-            newX = player.pos.x; // Block X
-          }
-          if (
-            player.pos.x + player.radius > w.min.x &&
-            player.pos.x - player.radius < w.max.x &&
-            newZ + player.radius > w.min.z &&
-            newZ - player.radius < w.max.z
-          ) {
-            newZ = player.pos.z; // Block Z
-          }
-        }
-
-        player.pos.x = newX;
-        player.pos.z = newZ;
-
-        // Classic Roblox R6 stiff pendulum limb walk animation
-        walkAnimTime += dt * currentSpeed * 2.8;
-        const r6Swing = Math.sin(walkAnimTime) * 0.75;
-        leftLeg.hipPivot.rotation.x = r6Swing;
-        rightLeg.hipPivot.rotation.x = -r6Swing;
-
-        if (!player.carriedItem) {
-          leftArm.shoulderPivot.rotation.x = -r6Swing * 0.75;
-          rightArm.shoulderPivot.rotation.x = r6Swing * 0.75;
-        }
-      } else {
-        // Idle pose (classic stiff Roblox stand)
-        leftLeg.hipPivot.rotation.x = 0;
-        rightLeg.hipPivot.rotation.x = 0;
-        if (!player.carriedItem) {
-          leftArm.shoulderPivot.rotation.x = 0;
-          rightArm.shoulderPivot.rotation.x = 0;
-        }
-      }
-
-      // Sync player group
-      playerGroup.position.copy(player.pos);
-      playerGroup.rotation.y = player.rotY;
-
-      // Update Flashlight
-      flashlight.position.set(player.pos.x, 1.6, player.pos.z);
-      const fwd = new THREE.Vector3(0, -0.15, 1).applyAxisAngle(new THREE.Vector3(0, 1, 0), player.rotY);
-      flashlight.target.position.copy(flashlight.position).add(fwd);
-
-      // Ghost placement projection
-      if (player.carriedItem) {
-        const placeOffset = new THREE.Vector3(0, 0, 2.2).applyAxisAngle(new THREE.Vector3(0, 1, 0), player.rotY);
-        ghostGroup.position.copy(player.pos).add(placeOffset);
-        ghostGroup.position.y = 0;
-        ghostGroup.rotation.y = player.placementRot;
-      }
-
-      // Proximity prompt indicator
-      if (!player.carriedItem) {
-        const target = getNearestFurniture();
-        if (target) {
-          interactPrompt.style.display = 'flex';
-          promptLabel.innerText = `[GRAB] ${target.name}`;
-        } else {
-          interactPrompt.style.display = 'none';
-        }
-      } else {
-        interactPrompt.style.display = 'none';
-      }
-
-      // Camera Positioning
-      if (player.firstPerson) {
-        camera.position.set(player.pos.x, 2.05, player.pos.z);
-        const camDir = new THREE.Vector3(0, camPitch, 1).applyAxisAngle(new THREE.Vector3(0, 1, 0), player.rotY);
-        camera.lookAt(camera.position.clone().add(camDir));
-      } else {
-        // Third Person Orbit
-        const camDist = 5.2;
-        const camY = 3.2 + camPitch * 3;
-        const camOffset = new THREE.Vector3(0, camY, -camDist).applyAxisAngle(new THREE.Vector3(0, 1, 0), player.rotY);
-        camera.position.copy(player.pos).add(camOffset);
-        camera.lookAt(player.pos.x, 1.4, player.pos.z);
+      // Liquid wave animation in pit if active
+      if (pitLiquidMesh && pitMeshGroup.visible) {
+        pitLiquidMesh.position.y = 0.22 + Math.sin(time * 0.004) * 0.04;
       }
 
       renderer.render(scene, camera);
     }
-
-    // Initialize Map, Audio & Save State
-    populateStore();
-    loadBaseFromStorage();
     requestAnimationFrame(animate);
-
-    /* ============================================================
-       16. IN-APP UPDATE SYSTEM
-       ============================================================ */
-    function checkAppUpdate() {
-      initAudio();
-      playSound('click');
-      if (window.AndroidNative && window.AndroidNative.checkForUpdates) {
-        window.AndroidNative.checkForUpdates();
-      } else {
-        alert("Running in web browser mode. On Android, this triggers direct GitHub APK updates.");
-      }
-    }
-
-    window.onUpdateResult = function(event, version, downloadUrl) {
-      if (event === 'updateAvailable') {
-        const modal = document.getElementById('update-modal');
-        document.getElementById('update-desc').innerText = `Version v${version} of Decorate The Backrooms is ready!`;
-        const btn = document.getElementById('btn-download-update');
-        btn.onclick = function() {
-          if (window.AndroidNative && window.AndroidNative.downloadAndInstallUpdate) {
-            window.AndroidNative.downloadAndInstallUpdate(downloadUrl);
-          }
-        };
-        modal.style.display = 'flex';
-      }
-    };
 
     window.addEventListener('resize', () => {
       camera.aspect = window.innerWidth / window.innerHeight;
