@@ -31,7 +31,7 @@ class GameInterface(private val context: Context) {
         context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
     }
 
-    private val currentVersion = "3.5"
+    private val currentVersion = "4.0"
     private val repoOwner = "ianconnell128-hue"
     private val repoName = "crash-dummy-3d"
 
@@ -130,34 +130,16 @@ class GameInterface(private val context: Context) {
     @JavascriptInterface
     fun downloadAndInstallUpdate(downloadUrl: String) {
         (context as? Activity)?.runOnUiThread {
-            Toast.makeText(context, "Downloading update APK...", Toast.LENGTH_SHORT).show()
-        }
-
-        CoroutineScope(Dispatchers.IO).launch {
             try {
-                val url = URL(downloadUrl)
-                val connection = url.openConnection() as HttpURLConnection
-                connection.connect()
-
-                val apkFile = File(context.cacheDir, "update.apk")
-                connection.inputStream.use { input ->
-                    FileOutputStream(apkFile).use { output ->
-                        input.copyTo(output)
-                    }
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(downloadUrl)).apply {
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 }
-
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(context, "Download complete, launching installer...", Toast.LENGTH_SHORT).show()
-                    installApk(apkFile)
-                }
+                context.startActivity(intent)
             } catch (e: Exception) {
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(context, "Failed to download update: ${e.localizedMessage}", Toast.LENGTH_LONG).show()
-                }
+                Toast.makeText(context, "Could not open update link: ${e.localizedMessage}", Toast.LENGTH_SHORT).show()
             }
         }
     }
-
     private fun isNewerVersion(remote: String, local: String): Boolean {
         if (remote.isEmpty()) return false
         val rParts = remote.split(".").mapNotNull { it.toIntOrNull() }
@@ -170,20 +152,6 @@ class GameInterface(private val context: Context) {
             if (r < l) return false
         }
         return false
-    }
-
-    private fun installApk(file: File) {
-        val uri: Uri = FileProvider.getUriForFile(
-            context,
-            "${context.packageName}.provider",
-            file
-        )
-        val intent = Intent(Intent.ACTION_VIEW).apply {
-            setDataAndType(uri, "application/vnd.android.package-archive")
-            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        }
-        context.startActivity(intent)
     }
 
     private fun notifyWebview(event: String, version: String, downloadUrl: String) {

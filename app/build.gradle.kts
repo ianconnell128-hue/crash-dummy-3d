@@ -11,14 +11,27 @@ android {
         applicationId = "com.example.crashdummy3d"
         minSdk = 24
         targetSdk = 36
-        versionCode = 11
-        versionName = "3.5"
+        versionCode = 12
+        versionName = "4.0"
+    }
+
+    signingConfigs {
+        create("release") {
+            storeFile = file("release-key.jks")
+            storePassword = "password123"
+            keyAlias = "releaseKey"
+            keyPassword = "password123"
+        }
     }
 
     buildTypes {
         release {
             isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("release")
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+        }
+        debug {
+            signingConfig = signingConfigs.getByName("release")
         }
     }
     compileOptions {
