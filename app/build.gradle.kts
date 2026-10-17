@@ -11,8 +11,8 @@ android {
         applicationId = "com.example.crashdummy3d"
         minSdk = 24
         targetSdk = 36
-        versionCode = 7
-        versionName = "3.1"
+        versionCode = 8
+        versionName = "3.2"
     }
 
     buildTypes {
